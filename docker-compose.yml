@@ -22,4 +22,6 @@ services:
       && npm start"
     depends_on:
       - backend
+    environment:
+      - WATCHPACK_POLLING=true
 
