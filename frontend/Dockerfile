@@ -1,11 +1,15 @@
 FROM node:20
 
+WORKDIR /cache
+
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
 WORKDIR /frontend
+
+ENV PATH /frontend/node_modules/.bin:$PATH
 
 COPY . .
 
-RUN npm install
-
 EXPOSE 3000
-
-CMD ["npm", "start"]
