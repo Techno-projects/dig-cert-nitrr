@@ -37,3 +37,5 @@ If you need to install any npm package.
 stop the containers
 
 `docker-compose down`
+
+Credits -- https://medium.com/@sudiptob2/properly-setting-up-react-development-environment-using-docker-a2de46464d0b
