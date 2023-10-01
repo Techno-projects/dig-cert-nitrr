@@ -28,7 +28,9 @@ Then, run the following command to start the environment.
 
 To see the logs of your app
 
-`docker-compose logs -f web`
+`docker-compose logs -f frontend` to see the frontend logs and,
+
+`docker-compose logs -f backend` to see the backend logs.
 
 If you need to install any npm package.
 
