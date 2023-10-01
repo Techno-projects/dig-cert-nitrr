@@ -18,26 +18,26 @@ Tool for completely digitizing the certificate generation, signing and verificat
 
 <h3>The developer workflow</h3>
 
-If pulled for the first time or the package.json changed run
+* If pulled for the first time or the package.json changed run
 
-`docker-compose build`
+    `docker-compose build`
 
-Then, run the following command to start the environment.
+* Then, run the following command to start the environment.
 
-`docker-compose up -d`
+    `docker-compose up -d`
 
-To see the logs of your app
+* To see the logs of your app
 
-`docker-compose logs -f frontend` to see the frontend logs and,
+    `docker-compose logs -f frontend` to see the frontend logs and,
 
-`docker-compose logs -f backend` to see the backend logs.
+    `docker-compose logs -f backend` to see the backend logs.
 
-If you need to install any npm package.
+* If you need to install any npm package.
 
-`docker-compose exec web npm install pacakge-name`
+    `docker-compose exec web npm install pacakge-name`
 
-stop the containers
+* stop the containers
 
-`docker-compose down`
+    `docker-compose down`
 
 Credits -- https://medium.com/@sudiptob2/properly-setting-up-react-development-environment-using-docker-a2de46464d0b
