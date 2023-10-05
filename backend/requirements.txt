@@ -4,4 +4,6 @@ django-cors-headers==4.2.0
 sqlparse==0.4.4
 djangorestframework
 djangorestframework-simplejwt
-PyJWT
+psycopg
+pandas
+openpyxl
