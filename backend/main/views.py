@@ -1,3 +1,4 @@
+import pandas as pd
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
 from rest_framework.response import Response
@@ -5,7 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
-
+from .models import Events
+import json
 
 # registering user
 @api_view(["POST"])
@@ -65,3 +67,27 @@ def user_login(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+@api_view(["POST"])
+def register_event(request):
+    data = request.data
+    if 'file' not in request.FILES:
+        return Response({"ok": False, "message": "Please provide an excel file"})
+    
+    try:
+        uploaded_file = request.FILES['file']
+        event_name = data['event_name']
+        df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while reading excel file"})
+    
+    try:
+        event_name = data['event_name']
+        event_data = df.to_json(orient='records')
+        event_data_str = json.dumps(event_data)
+        organisation_code = data['organisation_code']
+
+        Events.objects.create(event_name=event_name, event_data=event_data_str, organisation_code=organisation_code)
+        return Response({"event": event_name, "message": "Uploaded successfully"})
+
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while uploading the data"})

@@ -5,3 +5,5 @@ sqlparse==0.4.4
 djangorestframework
 djangorestframework-simplejwt
 psycopg
+pandas
+openpyxl
