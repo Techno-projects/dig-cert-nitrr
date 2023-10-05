@@ -33,7 +33,6 @@ def user_registration(request):
 
 
 # logging in user
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def user_login(request):
@@ -64,3 +63,5 @@ def user_login(request):
                     {"message": "User not found"}, status=status.HTTP_401_UNAUTHORIZED
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
