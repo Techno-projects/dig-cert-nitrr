@@ -2,11 +2,11 @@ import pandas as pd
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from .models import Events
+from .models import Events, Faculty_Advisors
 import json
 
 # registering user
@@ -31,8 +31,6 @@ def user_registration(request):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 # logging in user
 @api_view(["POST"])
@@ -91,3 +89,44 @@ def register_event(request):
 
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while uploading the data"})
+    
+
+@api_view(["POST"])
+def faculty_registration(request):
+    data = request.data
+    email = data["email"]
+    name = data["name"]
+    password = data["password"]
+    organisation_code = data["organisation_code"]
+
+    try:
+        Faculty_Advisors.objects.create(email=email, name=name, password=password, organisation_code=organisation_code)
+        return Response({"ok": True, "message": "Faculty registered"})
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
+    
+@api_view(["POST"])
+def faculty_login(request):
+    data = request.POST
+    faculties = Faculty_Advisors.objects.all()
+    try:
+        check = faculties.get(email=data["email"])
+        if check.password == data["password"]:
+            org_code = check.organisation_code
+
+            events = Events.objects.all()
+            org_events = events.filter(organisation_code=org_code)
+            
+            message = {"organisation_code": check.organisation_code}
+            events = []
+            for i in org_events:
+                events.append({"event_name": i.event_name, "data": i.event_data})
+            message["events"] = events
+
+            return Response({"ok": True, "message": message})
+        else:
+            return Response({"ok": False, "message": "Wrong Password"})
+    except Faculty_Advisors.DoesNotExist as e:
+        return Response({"ok": False, "message": "Faculty doesn't exist"})
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
