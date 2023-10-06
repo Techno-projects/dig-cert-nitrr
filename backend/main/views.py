@@ -1,11 +1,13 @@
+import pandas as pd
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
-
+from .models import Events, Faculty_Advisors
+import json
 
 # registering user
 @api_view(["POST"])
@@ -30,10 +32,7 @@ def user_registration(request):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 # logging in user
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def user_login(request):
@@ -64,3 +63,70 @@ def user_login(request):
                     {"message": "User not found"}, status=status.HTTP_401_UNAUTHORIZED
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(["POST"])
+def register_event(request):
+    data = request.data
+    if 'file' not in request.FILES:
+        return Response({"ok": False, "message": "Please provide an excel file"})
+    
+    try:
+        uploaded_file = request.FILES['file']
+        event_name = data['event_name']
+        df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while reading excel file"})
+    
+    try:
+        event_name = data['event_name']
+        event_data = df.to_json(orient='records')
+        event_data_str = json.dumps(event_data)
+        organisation_code = data['organisation_code']
+
+        Events.objects.create(event_name=event_name, event_data=event_data_str, organisation_code=organisation_code)
+        return Response({"event": event_name, "message": "Uploaded successfully"})
+
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while uploading the data"})
+    
+
+@api_view(["POST"])
+def faculty_registration(request):
+    data = request.data
+    email = data["email"]
+    name = data["name"]
+    password = data["password"]
+    organisation_code = data["organisation_code"]
+
+    try:
+        Faculty_Advisors.objects.create(email=email, name=name, password=password, organisation_code=organisation_code)
+        return Response({"ok": True, "message": "Faculty registered"})
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
+    
+@api_view(["POST"])
+def faculty_login(request):
+    data = request.POST
+    faculties = Faculty_Advisors.objects.all()
+    try:
+        check = faculties.get(email=data["email"])
+        if check.password == data["password"]:
+            org_code = check.organisation_code
+
+            events = Events.objects.all()
+            org_events = events.filter(organisation_code=org_code)
+            
+            message = {"organisation_code": check.organisation_code}
+            events = []
+            for i in org_events:
+                events.append({"event_name": i.event_name, "data": i.event_data})
+            message["events"] = events
+
+            return Response({"ok": True, "message": message})
+        else:
+            return Response({"ok": False, "message": "Wrong Password"})
+    except Faculty_Advisors.DoesNotExist as e:
+        return Response({"ok": False, "message": "Faculty doesn't exist"})
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
