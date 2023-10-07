@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    organisation_code: ''
   });
   const [error, setError] = useState(null);
 
@@ -18,13 +19,14 @@ const Login = () => {
     e.preventDefault();
 
     try{
-      const response = await fetch('http://localhost:8000/login/', {
+      const response = await fetch('http://localhost:8000/api/user_login ', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formData),
     })
+    
     console.log(response);
     if (response.ok) {
             const data = await response.json();
@@ -49,6 +51,8 @@ const Login = () => {
       <form className="form" onSubmit={handleSubmit}>
         <label htmlFor="email">User ID:</label>
         <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+        <label htmlFor="password">organisation_code:</label>
+        <input type="text" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
         <label htmlFor="password">Password:</label>
         <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
         <button type="submit">Submit</button>

@@ -5,64 +5,51 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from .models import Events, Faculty_Advisors
+from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
+# from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .models import Events, Faculty_Advisors, Users
 import json
+import jwt
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+jwt_auth = JWTStatelessUserAuthentication()
 
 # registering user
 @api_view(["POST"])
 @permission_classes([AllowAny])
-def user_registration(request):
-    if request.method == "POST":
-        serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = User.objects.create(
-                username=serializer.validated_data["email"],
-                email=serializer.validated_data["email"],
-                password=serializer.validated_data["password"],
-            )
-            # generate refresh tokens for user while registration
-            refresh = RefreshToken.for_user(user)
-            return Response(
-                {
-                    "message": "User registered successfully",
-                    "token": str(refresh.access_token),
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def user_register(request):
+    data = request.data
+    try:
+        Users.objects.create(email=data["email"], password=data["password"], organisation_code=data["organisation_code"])
+        return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # logging in user
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def user_login(request):
-    if request.method == "POST":
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data["email"]
-            password = serializer.validated_data["password"]
-            try:
-                user = User.objects.get(email=email)
-                if user.password == password:
-                    refresh = RefreshToken.for_user(user)
-                    return Response(
-                        {
-                            "message": "User logged in successfully",
-                            "token": str(refresh.access_token),
-                        },
-                        status=status.HTTP_200_OK,
-                    )
-                else:
-                    return Response(
-                        {"message": "Invalid login credentials"},
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
+    data = request.data
+    try:
+        user = Users.objects.get(organisation_code=data["organisation_code"])
+        if user.password == data["password"]:
+            refresh = RefreshToken.for_user(user)
+            token = str(refresh.access_token)
 
-            except User.DoesNotExist:
-                return Response(
-                    {"message": "User not found"}, status=status.HTTP_401_UNAUTHORIZED
-                )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # decodedToken = jwt.decode(token, os.environ.get('SECRET_KEY'), algorithms=['HS256'])
+            # print(decodedToken)
+
+            response = Response({"ok": True, "message": "Logged in successfully"}, status=status.HTTP_200_OK)
+            response.set_cookie("login", token)
+            return response
+        else:
+            return Response({"ok": False, "message": "Wrong Password"}, status=status.HTTP_401_UNAUTHORIZED)
+    except Users.DoesNotExist as e:
+        return Response({"ok": False, "message": "User doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception as e:
+        return Response({"ok": False, "error": e, "message": "Error while user login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 @api_view(["POST"])
@@ -73,7 +60,6 @@ def register_event(request):
     
     try:
         uploaded_file = request.FILES['file']
-        event_name = data['event_name']
         df = pd.read_excel(uploaded_file)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while reading excel file"})
@@ -88,7 +74,7 @@ def register_event(request):
         return Response({"event": event_name, "message": "Uploaded successfully"})
 
     except Exception as e:
-        return Response({"ok": False, "error": str(e), "message": "Error while uploading the data"})
+        return Response({"ok": False, "error": e, "message": "Error while uploading the data"})
     
 
 @api_view(["POST"])
