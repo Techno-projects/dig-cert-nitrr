@@ -1,7 +1,8 @@
 from django.db import models
 
-class User(models.Model):
-    email = models.EmailField(unique=True)
+class Users(models.Model):
+    organisation_code = models.CharField(unique=True)
+    email = models.EmailField()
     password = models.CharField(max_length=128)
 
 

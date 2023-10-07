@@ -8,3 +8,4 @@ psycopg
 pandas
 openpyxl
 drf-yasg
+PyJWT
