@@ -54,7 +54,7 @@ const Faculty_Login = () => {
       <div className="form-container">
       <h1 className="title">Login</h1>
       <form className="form" onSubmit={handleSubmit}>
-        <label htmlFor="email">User ID:</label>
+        <label htmlFor="email">Email:</label>
         <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
         <label htmlFor="password">Password:</label>
         <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />

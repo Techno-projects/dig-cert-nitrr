@@ -1,5 +1,5 @@
 from django.urls import path, include, re_path
-from .views import user_register, user_login, register_event, faculty_registration, faculty_login
+from .views import user_register, user_login, register_event, faculty_register, faculty_login
 from drf_yasg.views import get_schema_view
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -21,7 +21,7 @@ urlpatterns = [
     # re_path(r'^playground/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     # re_path(r'^docs/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema redoc'),
     path("user_register", user_register),
-    path("faculty_registration", faculty_registration),
+    path("faculty_register", faculty_register),
     path("user_login", user_login),
     path("faculty_login", faculty_login),
     path("register_event", register_event),

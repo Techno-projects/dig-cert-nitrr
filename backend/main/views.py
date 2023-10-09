@@ -79,7 +79,7 @@ def register_event(request):
     
 
 @api_view(["POST"])
-def faculty_registration(request):
+def faculty_register(request):
     data = request.data
     email = data["email"]
     name = data["name"]

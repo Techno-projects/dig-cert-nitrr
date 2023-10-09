@@ -7,6 +7,7 @@ import AdminRegistration from './components/Admin_of_club';
 import EventManagementPage from './components/event_manager';
 import FacultyRegistration from './components/Faculty';
 import Events from './components/Events';
+import Faculty_Login from './components/Faculty_login';
 import './App.css';
 
 const App = () => {

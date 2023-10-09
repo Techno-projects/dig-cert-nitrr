@@ -66,9 +66,9 @@ const Login = () => {
           <div className="form-container">
             <h1 className="title">Login</h1>
             <form className="form" onSubmit={handleSubmit}>
-              <label htmlFor="email">User ID:</label>
+              <label htmlFor="email">Email:</label>
               <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-              <label htmlFor="password">organisation_code:</label>
+              <label htmlFor="organisation_code">organisation_code:</label>
               <input type="text" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
               <label htmlFor="password">Password:</label>
               <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />

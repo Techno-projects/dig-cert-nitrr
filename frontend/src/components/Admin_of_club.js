@@ -19,7 +19,7 @@ const AdminRegistration = () => {
     // Send form data to the API endpoint
     /* The code is making a POST request to the 'http://localhost:8000/register' endpoint with the form
     data stored in the `formData` state variable. */
-    const response = await fetch('http://localhost:8000/register/', {
+    const response = await fetch('http://localhost:8000/api/user_register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,6 +51,8 @@ const AdminRegistration = () => {
         <input type="text" id="Name" name="Name" required />
         <label htmlFor="password">Password:</label>
         <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+        <label htmlFor="organisation_code">organisation_code:</label>
+        <input type="organisation_code" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
         <label htmlFor="clubName">Club Name:</label>
         <input type="text" id="clubName" name="clubName" required />
         <button type="submit">Submit</button>

@@ -9,8 +9,4 @@ pandas
 openpyxl
 drf-yasg
 PyJWT
-<<<<<<< HEAD
 python-dotenv
-=======
-python-dotenv
->>>>>>> e94a1249e72463200d171744302517182fe4a744
