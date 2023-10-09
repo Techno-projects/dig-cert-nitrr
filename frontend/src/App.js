@@ -6,6 +6,7 @@ import Register from './components/Registration';
 import AdminRegistration from './components/Admin_of_club';
 import EventManagementPage from './components/event_manager';
 import FacultyRegistration from './components/Faculty';
+import Events from './components/Events';
 import './App.css';
 
 const App = () => {
@@ -14,6 +15,7 @@ const App = () => {
       <div className="App">
         <Routes> 
         <Route path="/" element={<Login/>} />
+        <Route path="/events" element={<Events />} />
         <Route path="/register" element={<Register/>} />
         <Route path='/register/faculty' element={<FacultyRegistration/>}></Route>
         <Route path='/register/admin' element={<AdminRegistration/>}></Route>

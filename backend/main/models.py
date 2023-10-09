@@ -1,6 +1,8 @@
 from django.db import models
 
 class Users(models.Model):
+    class Meta:
+        verbose_name_plural = "Organisation Users"
     organisation_code = models.CharField(unique=True)
     email = models.EmailField()
     password = models.CharField(max_length=128)
@@ -8,7 +10,6 @@ class Users(models.Model):
 
 class Events(models.Model):
     class Meta:
-        unique_together = (('organisation_code', 'event_name'))
         verbose_name_plural = "Events"
         
     organisation_code = models.CharField()
@@ -23,3 +24,4 @@ class Faculty_Advisors(models.Model):
     name = models.CharField()
     email = models.CharField(unique=True)
     password = models.CharField()
+

@@ -9,3 +9,4 @@ pandas
 openpyxl
 drf-yasg
 PyJWT
+python-dotenv

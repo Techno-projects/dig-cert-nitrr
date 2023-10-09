@@ -73,6 +73,7 @@ def register_event(request):
         Events.objects.create(event_name=event_name, event_data=event_data_str, organisation_code=organisation_code)
         return Response({"event": event_name, "message": "Uploaded successfully"})
 
+
     except Exception as e:
         return Response({"ok": False, "error": e, "message": "Error while uploading the data"})
     
@@ -93,10 +94,9 @@ def faculty_registration(request):
     
 @api_view(["POST"])
 def faculty_login(request):
-    data = request.POST
-    faculties = Faculty_Advisors.objects.all()
+    data = request.data
+    check = Faculty_Advisors.objects.get(email=data["email"])
     try:
-        check = faculties.get(email=data["email"])
         if check.password == data["password"]:
             org_code = check.organisation_code
 
