@@ -5,7 +5,7 @@ const EventManagementPage = () => {
   const handleFormSubmit = async (formData) => {
     // Send formData to your API endpoint using fetch or Axios
     // Example using fetch:
-    await fetch('https://example.com/api/events', {
+    await fetch('https://localhost:8000/api/register_event', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

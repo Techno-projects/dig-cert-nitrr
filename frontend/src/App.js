@@ -1,11 +1,12 @@
 // App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Link, BrowserRouter, Routes } from 'react-router-dom';
-import Login from './components/Login';
-import Register from './components/Registration';
-import AdminRegistration from './components/Admin_of_club';
+import AdminRegistration from './components/Admin_Registration';
 import EventManagementPage from './components/event_manager';
-import FacultyRegistration from './components/Faculty';
+import FacultyRegistration from './components/Faculty_Registration';
+import Home from './components/Home'
+import FacultyLogin from './components/Faculty_Login'
+import AdminLogin from './components/Admin_Login';
 import './App.css';
 
 const App = () => {
@@ -13,8 +14,9 @@ const App = () => {
     <BrowserRouter>
       <div className="App">
         <Routes> 
-        <Route path="/" element={<Login/>} />
-        <Route path="/register" element={<Register/>} />
+        <Route path="/" element={<Home/>} />
+        <Route path='/login/faculty' element={<FacultyLogin/>}></Route>
+        <Route path='/login/admin' element={<AdminLogin/>}></Route>
         <Route path='/register/faculty' element={<FacultyRegistration/>}></Route>
         <Route path='/register/admin' element={<AdminRegistration/>}></Route>
         <Route path='/Event_management' element={<EventManagementPage/>}></Route>
