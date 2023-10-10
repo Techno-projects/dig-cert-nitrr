@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
 # from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from .models import Events, Faculty_Advisors, Users
+from .models import Events, Faculty_Advisors, Users, Certificates
 import json
 import jwt
 import os
@@ -79,7 +79,7 @@ def register_event(request):
     
 
 @api_view(["POST"])
-def faculty_registration(request):
+def faculty_register(request):
     data = request.data
     email = data["email"]
     name = data["name"]
@@ -106,7 +106,7 @@ def faculty_login(request):
             message = {"organisation_code": check.organisation_code}
             events = []
             for i in org_events:
-                events.append({"event_name": i.event_name, "data": i.event_data})
+                events.append({"event_name": i.event_name, "data": json.loads(i.event_data)})
             message["events"] = events
 
             return Response({"ok": True, "message": message})
@@ -116,3 +116,24 @@ def faculty_login(request):
         return Response({"ok": False, "message": "Faculty doesn't exist"})
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
+    
+
+@api_view(["POST"])
+def approveL0(request):
+    data = request.data
+    event_data = data['event_data']
+    rows = []
+
+    faculty = Faculty_Advisors.objects.get(email=data['faculty_mail'])
+    org_code = faculty.organisation_code
+
+    for i in event_data:
+        tmpObj = Certificates(participant_email=i['Email'], event_name=data['event_name'], faculty_advisor=data["faculty_mail"], organisation_code=org_code, status="0")
+        rows.append(tmpObj)
+
+    try:
+        Certificates.objects.bulk_create(rows)
+    except Exception as e:
+        return Response({"ok": False, "error": e, "message": "Error while uploading data"})
+    
+    return Response({"ok": True, "message": "Approved successfully"})
