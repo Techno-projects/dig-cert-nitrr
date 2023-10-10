@@ -29,10 +29,11 @@ const Faculty_Login = () => {
     
     if (response.ok) {
             const data = await response.json();
+            console.log(data);
             if (data.ok) {
               setEvents(data.message.events);
               navigate("/events", {
-                state: data.message.events,
+                state: {event_data: data.message.events, email: formData.email},
               });
             }
             localStorage.setItem('accessToken', data.access);
