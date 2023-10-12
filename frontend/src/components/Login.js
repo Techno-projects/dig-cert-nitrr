@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Faculty_Login from './Faculty_login';
+import './css/Form.css';
 
 const Login = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,20 +59,20 @@ const Login = () => {
     <>
       {userType == 1 ? <Faculty_Login /> :
         <div>
-          <div>
+          {/* <div>
             <a href='?type=faculty'>
               <input type='button' value="Faculty" />
             </a>
-          </div>
+          </div> */}
           <div className="form-container">
             <h1 className="title">Login</h1>
             <form className="form" onSubmit={handleSubmit}>
-              <label htmlFor="email">User ID:</label>
-              <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-              <label htmlFor="password">organisation_code:</label>
-              <input type="text" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
-              <label htmlFor="password">Password:</label>
-              <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+
+              <input placeholder='User ID:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+              
+              <input placeholder='Organisation Code:' className='input_text' type="text" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
+              
+              <input placeholder='Password' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
               <button type="submit">Submit</button>
             </form>
             <Link to="/register">

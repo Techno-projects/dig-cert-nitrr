@@ -7,6 +7,7 @@ import AdminRegistration from './components/Admin_of_club';
 import EventManagementPage from './components/event_manager';
 import FacultyRegistration from './components/Faculty';
 import Events from './components/Events';
+import HomePage from './components/HomePage';
 import './App.css';
 
 const App = () => {
@@ -14,7 +15,8 @@ const App = () => {
     <BrowserRouter>
       <div className="App">
         <Routes> 
-        <Route path="/" element={<Login/>} />
+        <Route path="/" element={<HomePage/>}/>
+        <Route path="/Login" element={<Login/>} />
         <Route path="/events" element={<Events />} />
         <Route path="/register" element={<Register/>} />
         <Route path='/register/faculty' element={<FacultyRegistration/>}></Route>

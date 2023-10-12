@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import './css/Faculty_login.css';
 
 const Faculty_Login = () => {
   const [formData, setFormData] = useState({
@@ -18,34 +19,34 @@ const Faculty_Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try{
+    try {
       const response = await fetch('http://localhost:8000/api/faculty_login ', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-    
-    if (response.ok) {
-            const data = await response.json();
-            console.log(data);
-            if (data.ok) {
-              setEvents(data.message.events);
-              navigate("/events", {
-                state: {event_data: data.message.events, email: formData.email},
-              });
-            }
-            localStorage.setItem('accessToken', data.access);
-            localStorage.setItem('refreshToken', data.refresh);
-            // Redirect to the desired page on successful authentication
-            // window.location.href = '/Event_management';
-        } else {
-            // Handle authentication failure (display error message, etc.)
-            setError('Authentication failed. Please check your username and password.');
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        if (data.ok) {
+          setEvents(data.message.events);
+          navigate("/events", {
+            state: { event_data: data.message.events, email: formData.email },
+          });
         }
+        localStorage.setItem('accessToken', data.access);
+        localStorage.setItem('refreshToken', data.refresh);
+        // Redirect to the desired page on successful authentication
+        // window.location.href = '/Event_management';
+      } else {
+        // Handle authentication failure (display error message, etc.)
+        setError('Authentication failed. Please check your username and password.');
+      }
     }
-    catch{
+    catch {
       console.error('Error:', error);
     }
   };
@@ -53,21 +54,24 @@ const Faculty_Login = () => {
   return (
     <div>
       <div className="form-container">
-      <h1 className="title">Login</h1>
-      <form className="form" onSubmit={handleSubmit}>
-        <label htmlFor="email">User ID:</label>
-        <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-        <label htmlFor="password">Password:</label>
-        <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
-        <button type="submit">Submit</button>
-      </form>
-      <Link to="/register">
-        <button className="register-button">Register</button>
-      </Link>
+        <h1 className="title">Login</h1>
+
+        <form className="form" onSubmit={handleSubmit}>
+
+          <input placeholder='User ID:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+
+          <input placeholder='Password:' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+
+          <button type="submit">Submit</button>
+
+        </form>
+        <Link to="/register">
+          <button className="register-button">Register</button>
+        </Link>
+      </div>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
-    {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
-    
+
   );
 };
 
