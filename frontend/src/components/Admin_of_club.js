@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './css/Form.css';
 
 const AdminRegistration = () => {
   const [formData, setFormData] = useState({
@@ -42,17 +43,17 @@ const AdminRegistration = () => {
 
 
   return (
-    <div className="container">
+    <div className="form-container">
       <h1 className="title">Admin Registration</h1>
       <form className="form" onSubmit={handleSubmit}>
-        <label htmlFor="email">Email:</label>
-        <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-        <label htmlFor="Name">Name:</label>
-        <input type="text" id="Name" name="Name" required />
-        <label htmlFor="password">Password:</label>
-        <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
-        <label htmlFor="clubName">Club Name:</label>
-        <input type="text" id="clubName" name="clubName" required />
+
+        <input placeholder='Email:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+
+        <input placeholder='Name:' className='input_text' type="text" id="Name" name="Name" required />
+
+        <input placeholder='Password:' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+
+        <input placeholder='Club Name:' className='input_text' type="text" id="clubName" name="clubName" required />
         <button type="submit">Submit</button>
       </form>
     </div>

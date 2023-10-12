@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './css/Form.css';
 
 const FacultyRegistration = () => {
   const [formData, setFormData] = useState({
@@ -27,20 +28,17 @@ const FacultyRegistration = () => {
     const data = await response.json()
   };
   return (
-    <div className="container">
+    <div className="form-container">
       <h1 className="title">Faculty Registration</h1>
       <form className="form" onSubmit={handleSubmit}>
-        <label htmlFor="Email">Email:</label>
-        <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
 
-        <label htmlFor="Name">Name:</label>
-        <input type="text" id="Name" name="name" onChange={handleInputChange} required />
+        <input placeholder='Email:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
 
-        <label htmlFor="Name">Organisation Code:</label>
-        <input type="text" id="Name" name="organisation_code" onChange={handleInputChange} required />
+        <input placeholder='Name:' className='input_text' type="text" id="Name" name="name" onChange={handleInputChange} required />
 
-        <label htmlFor="password">Password:</label>
-        <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+        <input placeholder='Organisation Code:' className='input_text' type="text" id="Name" name="organisation_code" onChange={handleInputChange} required />
+
+        <input placeholder='Password:' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
 
         <button type="submit">Submit</button>
       </form>

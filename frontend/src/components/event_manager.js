@@ -26,7 +26,7 @@ const EventManagementPage = () => {
 
   return (
     <div>
-      <h1>Event Management</h1>
+      
       <EventForm onFormSubmit={handleFormSubmit} />
     </div>
   );

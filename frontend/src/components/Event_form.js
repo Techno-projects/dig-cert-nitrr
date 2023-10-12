@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import './css/Form.css';
+
+
 import axios from 'axios';
 const EventForm = () => {
   const [eventData, setEventData] = useState({
@@ -39,21 +42,23 @@ const EventForm = () => {
   return (
     <div>
       <form>
-        <label htmlFor="event_name">Event Name:</label>
-        <input type="text" id="event_name" name="event_name" value={eventData.event_name} onChange={handleChange} required />
-        <p />
+        <div className='form-container'>
+        <h1 className='title'>Event Management</h1>
 
-        <label htmlFor="organisation_code">Organisation Code:</label>
-        <input type="text" id="eventName" name="organisation_code" value={eventData.organisation_code} onChange={handleChange} required />
-        <p />
+          <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event_name" value={eventData.event_name} onChange={handleChange} required />
+          <p />
 
-        <label htmlFor="participants">Participants:</label>
-        <input type="file" id="participants" onChange={handleFileChange} required />
-        <p />
 
-        {/* <label htmlFor="cdcHead">CDC Head:</label>
+          <input className='input_text' placeholder='Organisation Code:' type="text" id="eventName" name="organisation_code" value={eventData.organisation_code} onChange={handleChange} required />
+          <p />
+
+          <input className='input_text' placeholder='Participants' type="file" id="participants" onChange={handleFileChange} required />
+          <p />
+
+          {/* <label htmlFor="cdcHead">CDC Head:</label>
         <input type="text" id="cdcHead" name="cdcHead" value={eventData.cdcHead} onChange={handleChange} required /> */}
-        <button type="button" onClick={handleSubmit}>Submit</button>
+          <button type="button" onClick={handleSubmit}>Submit</button>
+        </div>
       </form>
     </div>
   );

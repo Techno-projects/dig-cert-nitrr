@@ -5,7 +5,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(to bottom right, #0074d9, #7fdbff);
+  background: linear-gradient(to bottom right, #7bbcf4, #c1e5f3);
 }
 
 .container {
@@ -43,8 +43,12 @@ button {
 }
 
 .register-button {
-  background-color: #add8e6;
+  background-color: #0074d9;;
   margin-top: 20px;
+}
+
+.register-button:hover{
+  background-color: #c1e5f3;
 }
 
 .register-options {
