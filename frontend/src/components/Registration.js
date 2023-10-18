@@ -1,8 +1,9 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import './css/Registration.css';
 
 const Register = () => (
-    <div className="container">
+    <div className="register-container">
       <h1 className="title">Register</h1>
       <div className="register-options">
         <Link to="/register/faculty">

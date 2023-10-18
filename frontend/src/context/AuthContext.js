@@ -1,27 +1,27 @@
-import { createContext, useState, useEffect } from "react"
+// import { createContext, useState, useEffect } from "react"
 
-const AuthContext =  createContext();
+// const AuthContext =  createContext();
 
-export default AuthContext;
+// export default AuthContext;
 
-export const AuthProvider = ({children}) => {
-  const [user, setUser] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
+// export const AuthProvider = ({children}) => {
+//   const [user, setUser] = useState(null);
+//   const [authToken, setAuthToken] = useState(null);
   
-  const loginUser = async (e) => {
-    const response = await fetch('http://localhost:8000/api/token', {
-      method: "POST",
-      headers: {
-        'Content-type': 'application/json'
-      }
-    })
-  }
-  let data = {
-    
-  }
-  return (
-    <AuthContext.Provider value={data}>
-      {children}
-    </AuthContext.Provider>
-  )
-}
+//   const loginUser = async (e) => {
+//     const response = await fetch('http://localhost:8000/api/token', {
+//       method: "POST",
+//       headers: {
+//         'Content-type': 'application/json'
+//       }
+//     })
+//   }
+//   let data = {
+//     tmp: 1
+//   }
+//   return (
+//     <AuthContext.Provider value={data}>
+//       {children}
+//     </AuthContext.Provider>
+//   )
+// }

@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/backend
+      - ./backend:/dig-cert-nitrr/backend
     command: bash -c "python manage.py migrate &&
                       pip install -r requirements.txt &&
                       python manage.py runserver 0.0.0.0:8000"
@@ -16,10 +16,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - "./frontend:/frontend"
-      - "/frontend/node_modules"
+      - "./frontend:/dig-cert-nitrr/frontend"
+      - "/dig-cert-nitrr/frontend/node_modules"
     command: > 
-      bash -c "cp -rfu /cache/node_modules/. /frontend/node_modules/  
+      bash -c "cp -rfu /dig-cert-nitrr/cache/node_modules/. /dig-cert-nitrr/frontend/node_modules/  
       && npm start"
     depends_on:
       - backend
