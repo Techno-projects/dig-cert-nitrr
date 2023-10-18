@@ -47,12 +47,16 @@ const AdminRegistration = () => {
       <form className="form" onSubmit={handleSubmit}>
         <label htmlFor="email">Email:</label>
         <input type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+
         <label htmlFor="Name">Name:</label>
         <input type="text" id="Name" name="Name" required />
+
         <label htmlFor="password">Password:</label>
         <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+
         <label htmlFor="clubName">Club Name:</label>
         <input type="text" id="clubName" name="clubName" required />
+        
         <button type="submit">Submit</button>
       </form>
     </div>

@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Faculty_Login from './Faculty_login';
+import AuthContext from '../context/AuthContext';
 
 const Login = () => {
+  let { name } = useContext(AuthContext);
+  console.log(name);
   const [searchParams, setSearchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
