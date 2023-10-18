@@ -15,22 +15,23 @@ from dotenv import load_dotenv
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
+# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+#     @classmethod
+#     def get_token(cls, user):
+#         token = super().get_token(user)
 
-        # Add custom claims
-        token['username'] = user.username
-        # ...
+#         # Add custom claims
+#         # token['email'] = user.email
+#         # token['faculty'] = user.is_faculty
+#         # token['organisation'] = user.is_org
+#         # ...
 
-        return token
+#         return token
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+# class MyTokenObtainPairView(TokenObtainPairView):
+#     serializer_class = MyTokenObtainPairSerializer
 
 load_dotenv()
-jwt_auth = JWTStatelessUserAuthentication()
 
 # registering user
 @api_view(["POST"])
@@ -38,10 +39,10 @@ jwt_auth = JWTStatelessUserAuthentication()
 def user_register(request):
     data = request.data
     try:
-        Users.objects.create(email=data["email"], password=data["password"], organisation_code=data["organisation_code"])
+        Users.objects.create(email=data["email"], password=data["password"])
         return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": str(e), "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": e, "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # logging in user
 @api_view(["POST"])
@@ -49,16 +50,13 @@ def user_register(request):
 def user_login(request):
     data = request.data
     try:
-        user = Users.objects.get(organisation_code=data["organisation_code"])
+        user = Users.objects.get(email=data['email'])
         if user.password == data["password"]:
-            refresh = RefreshToken.for_user(user)
-            token = str(refresh.access_token)
-
-            # decodedToken = jwt.decode(token, os.environ.get('SECRET_KEY'), algorithms=['HS256'])
-            # print(decodedToken)
-
+            encoded_jwt = jwt.encode({"email": data["email"]}, os.environ.get('SECRET_KEY'), algorithm="HS256")
+            # refresh = RefreshToken.for_user(user)
+            # token = str(refresh.access_token)
             response = Response({"ok": True, "message": "Logged in successfully"}, status=status.HTTP_200_OK)
-            response.set_cookie("login", token)
+            response.set_cookie("login", encoded_jwt)
             return response
         else:
             return Response({"ok": False, "message": "Wrong Password"}, status=status.HTTP_401_UNAUTHORIZED)

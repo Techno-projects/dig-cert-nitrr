@@ -10,7 +10,6 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    organisation_code: ''
   });
   const [userType, setUserType] = useState(0);
   const [error, setError] = useState(null);
@@ -37,6 +36,7 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       })
 
@@ -46,7 +46,7 @@ const Login = () => {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
         // Redirect to the desired page on successful authentication
-        window.location.href = '/Event_management';
+        window.location.href = '/event_management';
       } else {
         // Handle authentication failure (display error message, etc.)
         setError('Authentication failed. Please check your username and password.');
@@ -70,14 +70,11 @@ const Login = () => {
             <h1 className="title">Login</h1>
             <form className="form" onSubmit={handleSubmit}>
 
-              <input placeholder='User ID:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-              
-              <input placeholder='Organisation Code:' className='input_text' type="text" id="organisation_code" name="organisation_code" value={formData.organisation_code} onChange={handleInputChange} required />
-              
+              <input placeholder='Email ID' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+
               <input placeholder='Password' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
               <button type="submit">Submit</button>
             </form>
-           
           </div>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>

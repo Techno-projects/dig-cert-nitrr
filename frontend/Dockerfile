@@ -1,14 +1,14 @@
 FROM node:20
 
-WORKDIR /dig-cert-nitrr/cache
+WORKDIR /cache
 
 COPY package.json .
 COPY package-lock.json .
 RUN npm install
 
-WORKDIR /dig-cert-nitrr/frontend
+WORKDIR /frontend
 
-ENV PATH /dig-cert-nitrr/frontend/node_modules/.bin:$PATH
+ENV PATH /frontend/node_modules/.bin:$PATH
 
 COPY . .
 

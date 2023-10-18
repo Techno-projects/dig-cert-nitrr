@@ -6,7 +6,6 @@ import axios from 'axios';
 const EventForm = () => {
   const [eventData, setEventData] = useState({
     event_name: '',
-    organisation_code: '',
     description: '',
     facultyAdvisor: '',
     cdcHead: ''
