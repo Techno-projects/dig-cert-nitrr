@@ -9,6 +9,7 @@ import FacultyRegistration from './components/Faculty';
 import Events from './components/Events';
 import HomePage from './components/HomePage';
 import Dashboard_Admin from './components/Dashboard_Admin';
+import Certificate from './components/Certificate';
 import './App.css';
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
         <Route path='/register/admin' element={<AdminRegistration/>}></Route>
         <Route path='/Event_management' element={<EventManagementPage/>}></Route>
         <Route path='/DashboardAd' element={<Dashboard_Admin/>}/>
+        <Route path='/Certificate' element={<Certificate/>}/>
         </Routes>
       </div>
     </BrowserRouter>
