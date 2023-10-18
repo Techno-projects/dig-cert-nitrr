@@ -2,7 +2,7 @@ FROM  python:3.12-rc-bookworm
 
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /dig-cert-nitrr/backend
+WORKDIR /backend
 
 # copy from the current directory of the Dockerfile to /backend in the image
 COPY . . 

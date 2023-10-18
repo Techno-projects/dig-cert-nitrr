@@ -4,12 +4,12 @@ from drf_yasg.views import get_schema_view
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
-from .views import MyTokenObtainPairView
+# from .views import MyTokenObtainPairView
 
-from rest_framework_simplejwt.views import (
-    # TokenObtainPairView,
-    TokenRefreshView,
-)
+# from rest_framework_simplejwt.views import (
+#     TokenObtainPairView,
+#     TokenRefreshView,
+# )
 
 
 # schema_view = get_schema_view(
@@ -33,6 +33,6 @@ urlpatterns = [
     path("faculty_login", faculty_login),
     path("register_event", register_event),
     path("approveL0", approveL0),
-    path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
+    # path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 ]
