@@ -75,9 +75,7 @@ const Login = () => {
               <input placeholder='Password' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
               <button type="submit">Submit</button>
             </form>
-            <Link to="/register">
-              <button className="register-button">Register</button>
-            </Link>
+           
           </div>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
