@@ -8,31 +8,26 @@ import EventManagementPage from './components/event_manager';
 import FacultyRegistration from './components/Faculty';
 import Events from './components/Events';
 import HomePage from './components/HomePage';
+import Dashboard_Admin from './components/Dashboard_Admin';
 import './App.css';
 import PrivateRoute from './utils/PrivateRoute';
 
 const App = () => {
   return (
-    // <AuthProvider>
-      <BrowserRouter>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/Login" element={<Login />} />
-            <Route path="/events"
-              element={
-                <PrivateRoute>
-                  <Events />
-                </PrivateRoute>
-              } />
-            <Route path="/register" element={<Register />} />
-            <Route path='/register/faculty' element={<FacultyRegistration />}></Route>
-            <Route path='/register/admin' element={<AdminRegistration />}></Route>
-            <Route path='/Event_management' element={<EventManagementPage />}></Route>
-          </Routes>
-        </div>
-      </BrowserRouter>
-    // </AuthProvider>
+    <BrowserRouter>
+      <div className="App">
+        <Routes> 
+        <Route path="/" element={<HomePage/>}/>
+        <Route path="/Login" element={<Login/>} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/register" element={<Register/>} />
+        <Route path='/register/faculty' element={<FacultyRegistration/>}></Route>
+        <Route path='/register/admin' element={<AdminRegistration/>}></Route>
+        <Route path='/Event_management' element={<EventManagementPage/>}></Route>
+        <Route path='/DashboardAd' element={<Dashboard_Admin/>}/>
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 };
 

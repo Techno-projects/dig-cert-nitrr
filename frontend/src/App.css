@@ -4,8 +4,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: linear-gradient(to bottom right, #7bbcf4, #c1e5f3);
+  height:100vh;
+  background: #cae5fc;
 }
 
 .container {
