@@ -1,6 +1,6 @@
-// App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Link, BrowserRouter, Routes } from 'react-router-dom';
+// import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
 import Register from './components/Registration';
 import AdminRegistration from './components/Admin_of_club';
@@ -10,6 +10,7 @@ import Events from './components/Events';
 import HomePage from './components/HomePage';
 import Dashboard_Admin from './components/Dashboard_Admin';
 import './App.css';
+import PrivateRoute from './utils/PrivateRoute';
 
 const App = () => {
   return (
