@@ -7,6 +7,7 @@ from django.utils import timezone
 class Users(models.Model):
     class Meta:
         verbose_name_plural = "Organisation Users"
+    name = models.CharField()
     email = models.CharField(unique=True)
     password = models.CharField(max_length=128)
     
@@ -51,10 +52,17 @@ class Faculty_Advisors(models.Model):
     class Meta:
         verbose_name_plural = "Faculty_Advisors"
     
-    organisation_code = models.CharField()
-    name = models.CharField()
     email = models.CharField(unique=True)
     password = models.CharField()
+
+
+class Faculty_Org(models.Model):
+    class Meta:
+        verbose_name_plural = "Faculty-Org"
+        unique_together = (('organisation', 'faculty'),)
+    
+    faculty = models.CharField()
+    organisation = models.CharField()
 
 
 class Certificates(models.Model):

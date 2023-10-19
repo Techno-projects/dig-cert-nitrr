@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './css/Faculty_login.css';
+// import './css/Faculty_login.css';
 
 const Faculty_Login = () => {
   const [formData, setFormData] = useState({
@@ -18,7 +18,6 @@ const Faculty_Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const response = await fetch('http://localhost:8000/api/faculty_login ', {
         method: 'POST',
@@ -32,13 +31,12 @@ const Faculty_Login = () => {
         const data = await response.json();
         console.log(data);
         if (data.ok) {
-          setEvents(data.message.events);
           navigate("/events", {
-            state: { event_data: data.message.events, email: formData.email },
+            state: data.message ,
           });
         }
-        localStorage.setItem('accessToken', data.access);
-        localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('login', data.token);
+        // localStorage.setItem('refreshToken', data.refresh);
         // Redirect to the desired page on successful authentication
         // window.location.href = '/Event_management';
       } else {

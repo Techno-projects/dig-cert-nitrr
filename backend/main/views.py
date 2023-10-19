@@ -7,12 +7,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
 # from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from .models import Events, Faculty_Advisors, Users, Certificates
+from .models import Events, Faculty_Advisors, Users, Certificates, Faculty_Org
 import json
 import jwt
 import os
 from dotenv import load_dotenv
-from django.views.decorators.csrf import csrf_exempt
 
 # class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 #     @classmethod
@@ -96,24 +95,35 @@ def faculty_login(request):
     check = Faculty_Advisors.objects.get(email=data["email"])
     try:
         if check.password == data["password"]:
-            org_code = check.organisation_code
+            # message: {org1: [{e1: [list of rows], e2: [list of rows]}], org2: {}, ...}
+            message = {}
 
-            events = Events.objects.all()
-            org_events = events.filter(organisation_code=org_code)
+            orgs = Faculty_Org.objects.filter(faculty=data['email'])
             
-            message = {"organisation_code": check.organisation_code}
-            events = []
-            for i in org_events:
-                events.append({"event_name": i.event_name, "data": json.loads(i.event_data)})
-            message["events"] = events
+            # current faculty is related to all in this list
+            organisations = []
+            for i in orgs:
+                org_email = i.organisation
+                org_name = (Users.objects.get(email=org_email)).name
+                organisations.append([i.organisation, org_name])
+            
+            for i in organisations:
+                tmp = []
+                events_of_org = Events.objects.filter(organisation=i[0])
+                for any_event in events_of_org:
+                    students = pd.read_excel(any_event.event_data)
+                    students = students.to_dict(orient='records')
+                    tmp.append({any_event.event_name: students})
+                message[i[1]] = tmp
 
-            return Response({"ok": True, "message": message})
+            encoded_jwt = jwt.encode({"email": data["email"]}, os.environ.get('SECRET_KEY'), algorithm="HS256")
+            return Response({"ok": True, "message": message, 'token': encoded_jwt})
         else:
             return Response({"ok": False, "message": "Wrong Password"})
     except Faculty_Advisors.DoesNotExist as e:
         return Response({"ok": False, "message": "Faculty doesn't exist"})
     except Exception as e:
-        return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
+        return Response({"ok": False, "error": e, "message": "Error while faculty login"})
     
 
 @api_view(["POST"])

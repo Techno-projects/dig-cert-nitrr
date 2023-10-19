@@ -10,8 +10,9 @@ import Events from './components/Events';
 import HomePage from './components/HomePage';
 import Dashboard_Admin from './components/Dashboard_Admin';
 import Certificate from './components/Certificate';
-import './App.css';
+// import './App.css';
 import PrivateRoute from './utils/PrivateRoute';
+import Table from './components/Table';
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
         <Route path='/Event_management' element={<EventManagementPage/>}></Route>
         <Route path='/DashboardAd' element={<Dashboard_Admin/>}/>
         <Route path='/Certificate' element={<Certificate/>}/>
+        <Route path='/table' element={<Table/>}/>
         </Routes>
       </div>
     </BrowserRouter>

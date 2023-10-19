@@ -1,17 +1,19 @@
 import { useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 // import Compressor from 'image-compressor';
 // import canvasToBlob from 'blueimp-canvas-to-blob';
 import imageCompression from 'browser-image-compression';
 
 const Events = () => {
   const location = useLocation();
-  const [events, setEvents] = useState(location.state.event_data);
-  const [email, setEmail] = useState(location.state.email);
+  const navigate = useNavigate();
+  const [events, setEvents] = useState(location.state);
   const [event_data, setEventData] = useState([]);
   const [clicked, setClicked] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [event_name, setEventName] = useState(null);
+  const [selected_org, setSelectedOrg] = useState(null);
+  const org_names = Object.keys(events);
 
 
   const convertFileToBase64 = (file) => {
@@ -51,81 +53,58 @@ const Events = () => {
     }
   }
 
-  const approveL0 = async () => {
-    // write logic to add image to certificate and store certificate in DB
-    const response = await fetch('http://localhost:8000/api/approveL0', {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({"event_name": event_name, "event_data": event_data, "faculty_mail": email})
-    });
+  // const approveL0 = async () => {
+  //   // write logic to add image to certificate and store certificate in DB
+  //   const response = await fetch('http://localhost:8000/api/approveL0', {
+  //     method: "POST",
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({"event_name": event_name, "event_data": event_data, "faculty_mail": email})
+  //   });
 
-    const data = await response.json();
-    if (data.ok) {
-      alert(data.message);
-    }
+  //   const data = await response.json();
+  //   if (data.ok) {
+  //     alert(data.message);
+  //   }
+  // }
+
+  const loadData = (org_name) => {
+    setSelectedOrg(org_name);
+    setEventData(events[org_name]);
+  }
+  const seeTable = (rows, event_name) => {
+    navigate('/table', {
+      state: {data: rows, event_name: event_name, org_name: selected_org}
+    })
   }
 
-  const showEventData = () => {
-    const DisplayData = event_data.map(
-      info => {
-        return (
-          <tr>
-            <td>{info.Name}</td>
-            <td>{info.Email}</td>
-          </tr>
-        )
-      }
-    )
-    return (
-      <div>
-        {clicked ? <><table class="table table-striped">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {DisplayData}
-          </tbody>
-        </table>
-        <button onClick={approveL0}>Approve All</button>
-        </>
-          :
-          <></>}
-      </div>
-    )
-  }
   return (
     <>
-      <div>
+      {/* <div>
         <div>
             Upload Signature
             <br/>
           <input type="file" accept="image/*" onChange={handleImageChange} />
         </div>
-      </div>
-      <div className="events" style={{ display: 'flex', justifyContent: 'space-between', margin: "10px" }}>
+      </div> */}
 
-        {events.map(event => {
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between', margin: "10px", cursor: "pointer" }}>
-              <button onClick={() => {
-                setEventName(event.event_name)
-                setEventData(JSON.parse(event.data))
-                setClicked(true)
-              }}>
-                {event.event_name}
-              </button>
-            </div>
-          );
-        })}
+      <div style={{ display: 'flex' }}>
+        {org_names.map(org_name => (
+          <div style={{ width: "100px", backgroundColor: 'aliceblue', border: "2px solid black", marginLeft: '20px', cursor: 'pointer' }} onClick={() => loadData(org_name)}>
+            {org_name}
+          </div>
+        ))}
       </div>
       <p></p>
       <div>
-        {showEventData()}
+        {event_data.map(event => {
+          return (
+            <div style={{cursor: 'pointer'}} onClick={() => seeTable(event[Object.keys(event)[0]], Object.keys(event)[0], )}>
+              Event Name: {Object.keys(event)[0]}
+            </div>
+          )
+        })}
       </div>
     </>
   );

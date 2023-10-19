@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './css/Certificate.css'
 import { Form, useLocation } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import axios from 'axios';
 
 const Certificate = () => {

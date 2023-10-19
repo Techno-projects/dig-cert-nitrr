@@ -63,7 +63,7 @@ const Login = () => {
               <input type='button' value="Faculty" />
             </a>
           </div> */}
-          <div className="form-container">
+          <div className="form-container" id='default'>
             <h1 className="title">Login</h1>
             <form className="form" onSubmit={handleSubmit}>
 
