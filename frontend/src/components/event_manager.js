@@ -4,8 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from 'axios';
 import './css/Form.css';
-import './css/Certificate.css'
-import Certificate from './Certificate';
 
 const EventManagementPage = () => {
   const auth = localStorage.getItem('token');
