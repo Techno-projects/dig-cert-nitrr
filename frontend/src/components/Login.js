@@ -43,12 +43,9 @@ const Login = () => {
       console.log(response);
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('accessToken', data.access);
-        localStorage.setItem('refreshToken', data.refresh);
-        // Redirect to the desired page on successful authentication
+        localStorage.setItem('token', data.token);
         window.location.href = '/event_management';
       } else {
-        // Handle authentication failure (display error message, etc.)
         setError('Authentication failed. Please check your username and password.');
       }
     }

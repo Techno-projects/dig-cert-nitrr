@@ -1,5 +1,5 @@
 from django.urls import path, include, re_path
-from .views import user_register, user_login, register_event, faculty_register, faculty_login, approveL0
+from .views import user_register, user_login, register_event, faculty_register, faculty_login, approveL0, get_rows
 from drf_yasg.views import get_schema_view
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -33,6 +33,7 @@ urlpatterns = [
     path("faculty_login", faculty_login),
     path("register_event", register_event),
     path("approveL0", approveL0),
+    path("get_rows", get_rows)
     # path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 ]
