@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Certificate from './Certificate';
 import './css/DashboardAd.css';
 
 const Dashboard_Admin = () => {
@@ -89,9 +90,11 @@ const Dashboard_Admin = () => {
                                 required
                                 className='input_text'
                                 type="file"
+                                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
                                 placeholder="Enter your file"
                                 onChange={handleFileChange}
                             />
+                            
                             <button onClick={handleAddEvent}>+</button>
                         </form>
                     </div>

@@ -51,7 +51,7 @@ const EventForm = () => {
           <input className='input_text' placeholder='Organisation Code:' type="text" id="eventName" name="organisation_code" value={eventData.organisation_code} onChange={handleChange} required />
           <p />
 
-          <input className='input_text' placeholder='Participants' type="file" id="participants" onChange={handleFileChange} required />
+          <input className='input_text' placeholder='Participants' type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" id="participants" onChange={handleFileChange} required />
           <p />
 
           {/* <label htmlFor="cdcHead">CDC Head:</label>
