@@ -24,14 +24,9 @@ const App = () => {
         <Route path="/register" element={<Register/>} />
         <Route path='/register/faculty' element={<FacultyRegistration/>}></Route>
         <Route path='/register/admin' element={<AdminRegistration/>}></Route>
-<<<<<<< HEAD
-        <Route path='/event_management' element={<EventManagementPage/>}></Route>
-        <Route path='/dashboardAd' element={<Dashboard_Admin/>}/>
-=======
         <Route path='/Event_management' element={<EventManagementPage/>}></Route>
         <Route path='/DashboardAd' element={<Dashboard_Admin/>}/>
         <Route path='/Certificate' element={<Certificate/>}/>
->>>>>>> c48399211f7c892ff998145eea8077fe72f532ec
         </Routes>
       </div>
     </BrowserRouter>

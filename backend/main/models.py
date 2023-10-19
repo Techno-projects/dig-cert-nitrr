@@ -31,16 +31,21 @@ class Users(models.Model):
     #     return self.email
 
 def event_data_upload_path(instance, filename):
-    # instance refers to the Events instance, and filename is the original filename of the uploaded file.
-    return f'events/{instance.organisation}/{instance.event_name}/{filename}'
+    return f'events_db/{instance.organisation}/{instance.event_name}/{filename}'
+
+def certificate_upload_path(instance, filename):
+    return f'certificates/{instance.organisation}/{instance.event_name}/{filename}'
 
 class Events(models.Model):
     class Meta:
         verbose_name_plural = "Events"
+        unique_together = (('organisation', 'event_name'),)
         
     organisation = models.CharField()
     event_name = models.CharField(max_length=255)
     event_data = models.FileField(upload_to=event_data_upload_path)
+    certificate = models.FileField(upload_to=certificate_upload_path)
+    coordinates = models.CharField()
 
 class Faculty_Advisors(models.Model):
     class Meta:

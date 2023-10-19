@@ -12,8 +12,7 @@ import json
 import jwt
 import os
 from dotenv import load_dotenv
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from django.views.decorators.csrf import csrf_exempt
 
 # class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 #     @classmethod
@@ -55,7 +54,7 @@ def user_login(request):
             encoded_jwt = jwt.encode({"email": data["email"]}, os.environ.get('SECRET_KEY'), algorithm="HS256")
             # refresh = RefreshToken.for_user(user)
             # token = str(refresh.access_token)
-            response = Response({"ok": True, "message": "Logged in successfully"}, status=status.HTTP_200_OK)
+            response = Response({"ok": True, "message": "Logged in successfully", "token": encoded_jwt}, status=status.HTTP_200_OK)
             response.set_cookie("login", encoded_jwt)
             return response
         else:
@@ -65,32 +64,17 @@ def user_login(request):
     except Exception as e:
         return Response({"ok": False, "error": e, "message": "Error while user login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-
 @api_view(["POST"])
 def register_event(request):
     data = request.data
-    if 'file' not in request.FILES:
-        return Response({"ok": False, "message": "Please provide an excel file"})
-    
+    event_db = data['event_data']
+    certi = data['certificate']
     try:
-        uploaded_file = request.FILES['file']
-        df = pd.read_excel(uploaded_file)
+        Events.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'])
+        return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": str(e), "message": "Error while reading excel file"})
-    
-    try:
-        event_name = data['event_name']
-        event_data = df.to_json(orient='records')
-        event_data_str = json.dumps(event_data)
-        organisation_code = data['organisation_code']
+        return Response({"ok": False, "error": e, "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        Events.objects.create(event_name=event_name, event_data=event_data_str, organisation_code=organisation_code)
-        return Response({"event": event_name, "message": "Uploaded successfully"})
-
-
-    except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while uploading the data"})
-    
 
 @api_view(["POST"])
 def faculty_register(request):
@@ -151,3 +135,17 @@ def approveL0(request):
         return Response({"ok": False, "error": e, "message": "Error while uploading data"})
     
     return Response({"ok": True, "message": "Approved successfully"})
+
+@api_view(["POST"])
+def get_rows(request):
+    data = request.data
+    if 'file' not in request.FILES:
+        return Response({"ok": False, "message": "Please provide an excel file"})
+    
+    try:
+        uploaded_file = request.FILES['file']
+        df = pd.read_excel(uploaded_file)
+        header_rows = df.columns.tolist()
+        return Response({"message": header_rows}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"ok": False, "error": e, "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
