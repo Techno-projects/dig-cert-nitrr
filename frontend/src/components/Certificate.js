@@ -46,7 +46,21 @@ const Certificate = () => {
         const rect = imageRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        coords[selectedField] = { x: x, y: y };
+        // console.log(x, y);
+
+        const imageWidth = imageRef.current.naturalWidth;
+        const imageHeight = imageRef.current.naturalHeight;
+
+        // Get the displayed size of the image in the viewport
+        const displayedWidth = imageRef.current.offsetWidth;
+        const displayedHeight = imageRef.current.offsetHeight;
+
+        // Calculate the coordinates in pixels relative to the image
+        const xInPixels = (x / rect.width) * imageWidth;
+        const yInPixels = (y / rect.height) * imageHeight;
+        // console.log(xInPixels, yInPixels);
+
+        coords[selectedField] = { x: xInPixels, y: yInPixels };
 
         // Create a new rectangle element
         const rectangle = document.createElement("div");
@@ -72,6 +86,8 @@ const Certificate = () => {
         body.append('event', eventData.event);
         body.append('user', eventData.user)
 
+        console.log(coords);
+
         const response = await axios.post("http://localhost:8000/api/register_event", body, {
             headers: {
                 "content-type": "multipart/form-data"
@@ -81,7 +97,7 @@ const Certificate = () => {
     }
 
     return (
-        <div style={{ display: 'flex' }}>
+        <div style={{display: 'flex'}}>
             {!certi && <div>
                 <div>Upload Your certificate below :</div>
                 <input type="file" onChange={handleChange} />
@@ -89,16 +105,21 @@ const Certificate = () => {
             <br />
             <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick} />
             <div ref={rectRef}></div>
-            <button onClick={removeBox}>Remove Last</button>
+            {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
             <div>
                 Which field?
                 <br />
                 {fields.map(field => (
                     <>
                         <input type='radio' id={field} name='selection' value={field} onChange={(e) => setSelected(e.target.value)} />
-                        <label for={field}>{field}</label><br></br>
+                        <label for={field}>{field}</label><br />
                     </>
                 ))}
+                <input type='radio' id="faculty_sign" name='selection' value="faculty_sign" onChange={(e) => setSelected(e.target.value)} />
+                <label for="faculty_sign">Faculty Signature</label><br />
+
+                <input type='radio' id="cdc_sign" name='selection' value="cdc_sign" onChange={(e) => setSelected(e.target.value)} />
+                <label for="cdc_sign">CDC Signature</label><br />
                 <br />
                 <button onClick={submit}>Submit</button>
             </div>
