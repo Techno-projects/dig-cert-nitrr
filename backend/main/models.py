@@ -7,7 +7,7 @@ from django.utils import timezone
 class Users(models.Model):
     class Meta:
         verbose_name_plural = "Organisation Users"
-    name = models.CharField()
+    name = models.CharField(unique=True)
     email = models.CharField(unique=True)
     password = models.CharField(max_length=128)
     
@@ -32,10 +32,10 @@ class Users(models.Model):
     #     return self.email
 
 def event_data_upload_path(instance, filename):
-    return f'events_db/{instance.organisation}/{instance.event_name}/{filename}'
+    return f'events_db/{instance.organisation}/{instance.event_name}/data/{filename}'
 
 def certificate_upload_path(instance, filename):
-    return f'certificates/{instance.organisation}/{instance.event_name}/{filename}'
+    return f'events_db/{instance.organisation}/{instance.event_name}/certificate/{filename}'
 
 class Events(models.Model):
     class Meta:

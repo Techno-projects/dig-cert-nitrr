@@ -10,3 +10,4 @@ openpyxl
 drf-yasg
 PyJWT
 python-dotenv
+pillow

@@ -12,6 +12,7 @@ import json
 import jwt
 import os
 from dotenv import load_dotenv
+from PIL import Image, ImageDraw, ImageFont
 
 # class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 #     @classmethod
@@ -129,22 +130,45 @@ def faculty_login(request):
 @api_view(["POST"])
 def approveL0(request):
     data = request.data
-    event_data = data['event_data']
-    rows = []
+    faculty_sign_image = data['faculty_sign']
 
-    faculty = Faculty_Advisors.objects.get(email=data['faculty_mail'])
-    org_code = faculty.organisation_code
+    # image_data = base64.b64decode(base64_image)
+    # image_array = np.frombuffer(image_data, np.uint8)
+    # img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
-    for i in event_data:
-        tmpObj = Certificates(participant_email=i['Email'], event_name=data['event_name'], faculty_advisor=data["faculty_mail"], organisation_code=org_code, status="0")
-        rows.append(tmpObj)
+    org_email = Users.objects.get(name=data['organisation']).email
+    event_details = Events.objects.get(event_name=data['event_name'], organisation=org_email)
+    coords = event_details.coordinates
+    certificate = event_details.certificate
+    coords = json.loads(coords)
 
-    try:
-        Certificates.objects.bulk_create(rows)
-    except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while uploading data"})
+    del data['organisation']
+    del data['event_name']
+    del data['faculty_sign']
+
+    img = Image.open(certificate)
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype("DejaVuSans.ttf", size=60)
+
+    signatures = []
+    for i in data.keys():
+        text_to_put = data[i]
+        coordinate = coords[i]
+        text_color = (0, 0, 0)
+        draw.text((coordinate['x'], coordinate['y']), str(text_to_put), fill=text_color, font=font,)
     
-    return Response({"ok": True, "message": "Approved successfully"})
+    faculty_sign_image = Image.open('/backend/main/thresh_sign.png')
+    fac_sign_x = coords['faculty_sign']['x']
+    fac_sign_y = coords['faculty_sign']['y']
+    paste_box = (int(fac_sign_x), int(fac_sign_y), int(fac_sign_x + faculty_sign_image.width), int(fac_sign_y + faculty_sign_image.height))
+
+    background = img.convert("RGBA")
+    background.paste(faculty_sign_image, paste_box, faculty_sign_image) 
+    background.save("certi.png", format="png")
+    # img.paste(faculty_sign_image, paste_box)
+    # img.save("/backend/main/results.png")
+
+    return Response({"ok": True})
 
 @api_view(["POST"])
 def get_rows(request):

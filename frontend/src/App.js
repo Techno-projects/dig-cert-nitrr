@@ -10,7 +10,7 @@ import Events from './components/Events';
 import HomePage from './components/HomePage';
 import Dashboard_Admin from './components/Dashboard_Admin';
 import Certificate from './components/Certificate';
-// import './App.css';
+import './App.css';
 import PrivateRoute from './utils/PrivateRoute';
 import Table from './components/Table';
 
