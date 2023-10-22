@@ -15,8 +15,6 @@ const Table = () => {
   const pending_data = location.state.pending;
   const my_signed = location.state.signed;
 
-  console.log(pending_data);
-  console.log(my_signed);
   const [signature, setSignature] = useState(null);
 
   const columnDefs1 = [];
@@ -46,6 +44,8 @@ const Table = () => {
     row_data.event_name = location.state.event_name;
     row_data.faculty_sign = signature;
     row_data.fac_signed_in = fac_signed_in.email;
+    console.log(row_data);
+    row_data.token = auth;
     const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
       headers: {
         'Content-type': 'application/json'
@@ -80,7 +80,7 @@ const Table = () => {
     };
     columnDefs1.push(columnDef);
     for (const key in firstObject) {
-        if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
+      if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
         const columnDef = {
           headerName: key,
           field: key,
@@ -164,7 +164,10 @@ const Table = () => {
           />
         </div>
       </div>
-      <input type='file' accept="image/*" onChange={(e) => handleSign(e)} />
+      <div>
+        <h2>Upload Signature</h2>
+        <input type='file' accept="image/*" onChange={(e) => handleSign(e)} />
+      </div>
     </div>
   );
 };
