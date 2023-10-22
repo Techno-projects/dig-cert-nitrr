@@ -58,6 +58,7 @@ const Table = () => {
         headers: {
           'Content-type': 'application/json'
         }
+
       });
       if (response.data.ok) {
         let copy_pending = [...pending_data];
@@ -72,8 +73,10 @@ const Table = () => {
       }
     }
     catch (error) {
+      console.log(error.response.data);
       alert(error.response.data.message);
       window.location.reload();
+      
     }
   };
 
@@ -228,7 +231,7 @@ const Table = () => {
         {/* <h2>Upload Signature</h2> */}
         <input type='file' accept="image/*" onChange={handleSign} />
         <button onClick={handleSubmission}>Submit Signature</button>
-        {signature && <img src={signature} alt="signature" />}
+        {/* {signature && <img src={signature} alt="signature" />} */}
       </div>
     </div>
   );

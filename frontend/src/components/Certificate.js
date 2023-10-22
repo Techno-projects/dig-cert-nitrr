@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    const auth = localStorage.getItem('token');
+    const auth = localStorage.getItem('login');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
@@ -152,7 +152,7 @@ const Certificate = () => {
         body.append('coords', JSON.stringify(coords));
         body.append('event', eventData.event);
         body.append('user', eventData.user)
-
+        body.append('token', auth);
         try {
             const response = await axios.post("http://localhost:8000/api/register_event", body, {
                 headers: {
