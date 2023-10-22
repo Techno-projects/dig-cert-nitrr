@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import Events, Faculty_Advisors, Users, Faculty_Org
+from .models import Event, Faculty_Advisor, Organisation, Faculty_Org, Certificate
 
 # Register your models here.
-admin.site.register(Events)
-admin.site.register(Faculty_Advisors)
-admin.site.register(Users)
+admin.site.register(Event)
+admin.site.register(Faculty_Advisor)
+admin.site.register(Organisation)
 admin.site.register(Faculty_Org)
+admin.site.register(Certificate)

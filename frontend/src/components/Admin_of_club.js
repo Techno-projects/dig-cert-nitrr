@@ -27,7 +27,7 @@ const AdminRegistration = () => {
       },
       body: JSON.stringify(formData),
     })
-    const data = await response.json()
+    // const data = await response.json()
     // .then(response => response.json())
     // .then(data => {
     //   // Handle the API response here

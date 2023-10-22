@@ -31,8 +31,8 @@ const Faculty_Login = () => {
         const data = await response.json();
         console.log(data);
         if (data.ok) {
-          navigate("/events", {
-            state: data.message ,
+          navigate("/table", {
+            state: {pending: data.pending, signed: data.signed},
           });
         }
         localStorage.setItem('login', data.token);

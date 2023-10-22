@@ -6,7 +6,7 @@ import axios from 'axios';
 import './css/Form.css';
 
 const EventManagementPage = () => {
-  const auth = localStorage.getItem('token');
+  const auth = localStorage.getItem('login');
   const user = decodeToken(auth);
   const navigate = useNavigate();
   const [eventData, setEventData] = useState({
