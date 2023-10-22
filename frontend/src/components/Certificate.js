@@ -168,6 +168,7 @@ const Certificate = () => {
 
     return (
         <div style={{display: 'flex'}}>
+        <div style={{display: 'flex'}}>
             {!certi && <div>
                 <div>Upload Your certificate below :</div>
                 <input type="file" accept='image/*' onChange={handleChange} />
@@ -193,6 +194,7 @@ const Certificate = () => {
                 <br />
                 <button onClick={submit}>Submit</button>
             </div>
+        </div>
         </div>
     )
 }
