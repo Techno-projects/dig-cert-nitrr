@@ -28,6 +28,15 @@ const Table = () => {
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
   };
 
+  const handleSignatureSubmit = () => {
+    const signature = window.prompt('Please enter your signature:');
+    if (signature) {
+      // Handle the signature input here
+      alert('Signature submitted: ' + signature);
+    }
+  };
+
+
   const onCellClicked = async (params) => {
     if (!signature) {
       alert("Please upload your signature")
@@ -179,13 +188,14 @@ const Table = () => {
 
   const handleSign = async (e) => {
     const base64String = await convertFileToBase64(e.target.files[0]);
+    
     setSignature(base64String);
   }
 
   return (
-    <div className="table-container">
+    <div className="table-container" style={{ padding: '4rem' }}>
       <div className='tables' style={{ display: 'flex' }}>
-        <div className="ag-theme-alpine" style={{ height: 400, width: '50vw' }}>
+        <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Pending Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
@@ -194,7 +204,7 @@ const Table = () => {
             rowData={pending_data}
           />
         </div>
-        <div className="ag-theme-alpine" style={{ height: 400, width: '50vw' }}>
+        <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
@@ -203,9 +213,10 @@ const Table = () => {
           />
         </div>
       </div>
-      <div>
-        <h2>Upload Signature</h2>
+      <div className='Table_button' style={{ position: 'relative', marginTop: '4rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
+        {/* <h2>Upload Signature</h2> */}
         <input type='file' accept="image/*" onChange={(e) => handleSign(e)} />
+        <button onClick={handleSignatureSubmit}>Submit Signature</button>
       </div>
     </div>
   );
