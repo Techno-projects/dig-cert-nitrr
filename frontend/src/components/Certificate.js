@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    const auth = localStorage.getItem('login');
+    const auth = localStorage.getItem('token');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
@@ -152,7 +152,6 @@ const Certificate = () => {
         body.append('coords', JSON.stringify(coords));
         body.append('event', eventData.event);
         body.append('user', eventData.user)
-        body.append('token', auth);
 
         try {
             const response = await axios.post("http://localhost:8000/api/register_event", body, {
@@ -168,7 +167,8 @@ const Certificate = () => {
     }
 
     return (
-        <div style={{ display: 'flex' }}>
+        <div style={{display: 'flex'}}>
+        <div style={{display: 'flex'}}>
             {!certi && <div>
                 <div>Upload Your certificate below :</div>
                 <input type="file" accept='image/*' onChange={handleChange} />
@@ -194,6 +194,7 @@ const Certificate = () => {
                 <br />
                 <button onClick={submit}>Submit</button>
             </div>
+        </div>
         </div>
     )
 }
