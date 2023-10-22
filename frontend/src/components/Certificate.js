@@ -8,13 +8,13 @@ const Certificate = () => {
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
+    const [fieldBox, setFieldBox] = useState({});
     const [certi, setCerti] = useState();
     const [certificate, setCertificate] = useState(null);
     const imageRef = useRef(null);
     const rectRef = useRef(null);
     const [ask, setAsk] = useState(false);
     const [selectedField, setSelected] = useState(null);
-
     const [coords, setCoord] = useState({});
 
     useEffect(() => {
@@ -22,18 +22,60 @@ const Certificate = () => {
             const formData = new FormData();
             formData.append('file', eventData.file);
             formData.append('token', auth);
+            console.log(eventData.file);
             try {
                 const response = await axios.post("http://localhost:8000/api/get_rows", formData, {
                     headers: {
                         "content-type": "multipart/form-data"
                     }
                 })
-                console.log(response.data);
                 setFields(response.data.message)
+                const tmpFields = response.data.message;
+                
+                tmpFields.map(tmp_field => {
+                    const box = document.createElement('div');
+                    const title = document.createElement('div');
+                    box.className = "certificateRect";
+                    box.style.width = "125px";
+                    box.style.height = "25px";
+                    box.id = tmp_field;
+                    title.className = "certificateRect";
+                    title.style.border = "none"
+                    title.innerHTML = tmp_field
+                    title.id = tmp_field;
+
+                    fieldBox[tmp_field] = {box: box, title: title}
+                });
+
+                let box = document.createElement('div');
+                let title = document.createElement('div');
+                box.className = "certificateRect";
+                box.style.width = "125px";
+                box.style.height = "25px";
+                title.className = "certificateRect";
+                title.style.border = "none"
+                title.innerHTML = "Faculty Signature";
+                title.id = "faculty_sign";
+                box.id = "faculty_sign";
+                fieldBox['faculty_sign'] = {box: box, title: title}
+                
+                box = document.createElement('div');
+                title = document.createElement('div');
+                box.className = "certificateRect";
+                box.style.width = "125px";
+                box.style.height = "25px";
+                title.className = "certificateRect";
+                title.style.border = "none"
+                title.innerHTML = "CDC Signature";
+                title.id = "cdc_sign";
+                box.id = "cdc_sign";
+                fieldBox['cdc_sign'] = {box: box, title: title}
+
+                console.log(fieldBox);
             }
             catch (error) {
                 alert(error.response.data.message);
-                window.location.href="/";
+                window.location.href = "/";
             }
         }
         getRows();
@@ -70,19 +112,37 @@ const Certificate = () => {
         coords[selectedField] = { x: xInPixels, y: yInPixels };
 
         // Create a new rectangle element
-        const rectangle = document.createElement("div");
-        rectangle.className = "certificateRect";
+        // const rectangle = document.createElement("div");
+        // const title = document.createElement("div");
+        // title.innerHTML = selectedField;
+        // title.style.border = "none"
+        // rectangle.className = "certificateRect";
+        // title.className = "certificateRect";
 
         // Position the rectangle at the click coordinates
-        rectangle.style.left = e.clientX + "px";
-        rectangle.style.top = e.clientY + "px";
+        // rectangle.style.left = e.clientX + "px";
+        // rectangle.style.top = e.clientY + "px";
+        // title.style.left = e.clientX + "px";
+        // title.style.top = e.clientY - 21 + "px";
 
         // Set the dimensions of the rectangle (for example, 125x25 pixels)
-        rectangle.style.width = "125px";
-        rectangle.style.height = "25px";
+        // rectangle.style.width = "125px";
+        // rectangle.style.height = "25px";
+
+        const box = fieldBox[selectedField].box;
+        const title = fieldBox[selectedField].title;
+        title.innerHTML = selectedField;
+        box.style.left = e.clientX + "px";
+        box.style.top = e.clientY + "px";
+        title.style.left = e.clientX + "px";
+        title.style.top = e.clientY - 21 + "px";
+
+        rectRef.current.appendChild(box)
+        rectRef.current.appendChild(title)
 
         // Append the rectangle to the container for rectangles
-        rectRef.current.appendChild(rectangle);
+        // rectRef.current.appendChild(rectangle);
+        // rectRef.current.appendChild(title);
     }
 
     const submit = async () => {
@@ -94,14 +154,17 @@ const Certificate = () => {
         body.append('user', eventData.user)
         body.append('token', auth);
 
-        console.log(coords);
-
-        const response = await axios.post("http://localhost:8000/api/register_event", body, {
-            headers: {
-                "content-type": "multipart/form-data"
-            }
-        })
-        console.log(response);
+        try {
+            const response = await axios.post("http://localhost:8000/api/register_event", body, {
+                headers: {
+                    "content-type": "multipart/form-data"
+                }
+            })
+            alert(response.data.message);
+        }
+        catch (error) {
+            alert(error.response.data.message);
+        }
     }
 
     return (
@@ -119,14 +182,14 @@ const Certificate = () => {
                 <br />
                 {fields.map(field => (
                     <>
-                        <input type='radio' id={field} name='selection' value={field} onChange={(e) => setSelected(e.target.value)} />
+                        <input type='radio' name='selection' value={field} onChange={(e) => setSelected(e.target.value)} />
                         <label for={field}>{field}</label><br />
                     </>
                 ))}
-                <input type='radio' id="faculty_sign" name='selection' value="faculty_sign" onChange={(e) => setSelected(e.target.value)} />
+                <input type='radio' name='selection' value="faculty_sign" onChange={(e) => setSelected(e.target.value)} />
                 <label for="faculty_sign">Faculty Signature</label><br />
 
-                <input type='radio' id="cdc_sign" name='selection' value="cdc_sign" onChange={(e) => setSelected(e.target.value)} />
+                <input type='radio' name='selection' value="cdc_sign" onChange={(e) => setSelected(e.target.value)} />
                 <label for="cdc_sign">CDC Signature</label><br />
                 <br />
                 <button onClick={submit}>Submit</button>

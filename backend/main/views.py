@@ -85,7 +85,7 @@ def register_event(request):
         Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'])
         return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": str(e), "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
@@ -108,56 +108,67 @@ def faculty_login(request):
     try:
         check = Faculty_Advisor.objects.get(email=data["email"])
         if check.password == data["password"]:
-            orgs = Faculty_Org.objects.filter(faculty_id=data['email'])
-            
-            # current faculty is related to all in this list
-            organisations = []
-            for i in orgs:
-                org_email = i.organisation_id
-                org_name = (Organisation.objects.get(email=org_email)).name
-                organisations.append([org_email, org_name])
-            
-            def is_serial_present(serial):
-                return Certificate.objects.filter(serial_no=serial).exists()
-            
-            def is_my_signed(serial):
-                obj = Certificate.objects.filter(serial_no=serial)
-                if (obj.exists()):
-                    who_signed = obj[0].faculty_advisor_id
-                    return who_signed == data['email']
-                return False
-            
-            pending_rows = []
-            signed_rows = []
-            for i in organisations:
-                events_of_org = Event.objects.filter(organisation=i[0])
-                for any_event in events_of_org:
-                    students = pd.read_excel(any_event.event_data)
-                    students.reset_index(drop=False, inplace=True, names='Serial No')
-                    students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.id) + "/" + str(x))
-                    mask = students['Serial No'].apply(lambda x: not is_serial_present(x))
-                    mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
-                    all_unsigend_students = students[mask].to_dict(orient='records')
-                    all_sigend_students = students[mask1].to_dict(orient='records')
-                    for x in all_unsigend_students:
-                        x['Organisation'] = i[1]
-                        x['Event'] = any_event.event_name
-                        pending_rows.append(x)
-                    
-                    for x in all_sigend_students:
-                        x['Organisation'] = i[1]
-                        x['Event'] = any_event.event_name
-                        signed_rows.append(x)
-
             encoded_jwt = jwt.encode({"email": data["email"], "faculty": 1}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-            return Response({"ok": True, "pending": pending_rows, "signed": signed_rows, 'token': encoded_jwt})
+            return Response({"ok": True, 'token': encoded_jwt})
         else:
             return Response({"ok": False, "message": "Wrong Password"})
     except Faculty_Advisor.DoesNotExist as e:
         return Response({"ok": False, "message": "Faculty doesn't exist"})
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
-    
+
+
+@api_view(["POST"])
+def get_event_details(request):
+    data = request.data
+    print(data['email'])
+    try:
+        orgs = Faculty_Org.objects.filter(faculty_id=data['email'])
+        
+        # current faculty is related to all in this list
+        organisations = []
+        for i in orgs:
+            org_email = i.organisation_id
+            org_name = (Organisation.objects.get(email=org_email)).name
+            organisations.append([org_email, org_name])
+        
+        def is_serial_present(serial):
+            return Certificate.objects.filter(serial_no=serial).exists()
+        
+        def is_my_signed(serial):
+            obj = Certificate.objects.filter(serial_no=serial)
+            if (obj.exists()):
+                who_signed = obj[0].faculty_advisor_id
+                return who_signed == data['email']
+            return False
+        
+        pending_rows = []
+        signed_rows = []
+        for i in organisations:
+            events_of_org = Event.objects.filter(organisation=i[0])
+            for any_event in events_of_org:
+                students = pd.read_excel(any_event.event_data)
+                students.reset_index(drop=False, inplace=True, names='Serial No')
+                students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.id) + "/" + str(x))
+                mask = students['Serial No'].apply(lambda x: not is_serial_present(x))
+                mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
+                all_unsigend_students = students[mask].to_dict(orient='records')
+                all_sigend_students = students[mask1].to_dict(orient='records')
+                for x in all_unsigend_students:
+                    x['Organisation'] = i[1]
+                    x['Event'] = any_event.event_name
+                    pending_rows.append(x)
+                
+                for x in all_sigend_students:
+                    x['Organisation'] = i[1]
+                    x['Event'] = any_event.event_name
+                    signed_rows.append(x)
+
+            return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+    except Faculty_Advisor.DoesNotExist as e:
+        return Response({"ok": False, "message": "Faculty doesn't exist"})
+    except Exception as e:
+        return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 @api_view(["POST"])
 def approveL0(request):
