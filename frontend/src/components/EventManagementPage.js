@@ -52,6 +52,7 @@ const EventManagementPage = () => {
     formData.append('file', selectedFile);
     formData.append('user', eventData.user);
     formData.append('event', eventData.event);
+    formData.append('token', auth)
 
     const response = await axios.post("http://localhost:8000/api/register_event", formData, {
       headers: {

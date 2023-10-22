@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    // const auth = localStorage.getItem('token');
+    const auth = localStorage.getItem('login');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
@@ -21,13 +21,20 @@ const Certificate = () => {
         async function getRows() {
             const formData = new FormData();
             formData.append('file', eventData.file);
-            const response = await axios.post("http://localhost:8000/api/get_rows", formData, {
-                headers: {
-                    "content-type": "multipart/form-data"
-                }
-            })
-            console.log(response.data);
-            setFields(response.data.message)
+            formData.append('token', auth);
+            try {
+                const response = await axios.post("http://localhost:8000/api/get_rows", formData, {
+                    headers: {
+                        "content-type": "multipart/form-data"
+                    }
+                })
+                console.log(response.data);
+                setFields(response.data.message)
+            }
+            catch (error) {
+                alert(error.response.data.message);
+                window.location.href="/";
+            }
         }
         getRows();
     }, [])
@@ -85,6 +92,7 @@ const Certificate = () => {
         body.append('coords', JSON.stringify(coords));
         body.append('event', eventData.event);
         body.append('user', eventData.user)
+        body.append('token', auth);
 
         console.log(coords);
 
@@ -97,7 +105,7 @@ const Certificate = () => {
     }
 
     return (
-        <div style={{display: 'flex'}}>
+        <div style={{ display: 'flex' }}>
             {!certi && <div>
                 <div>Upload Your certificate below :</div>
                 <input type="file" accept='image/*' onChange={handleChange} />

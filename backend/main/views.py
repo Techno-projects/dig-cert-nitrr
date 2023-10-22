@@ -52,7 +52,7 @@ def user_register(request):
         Organisation.objects.create(email=data["email"], password=data["password"])
         return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": str(e), "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # logging in user
 @api_view(["POST"])
@@ -71,7 +71,7 @@ def user_login(request):
     except Organisation.DoesNotExist as e:
         return Response({"ok": False, "message": "User doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while user login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": str(e), "message": "Error while user login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(["POST"])
 def register_event(request):
@@ -85,7 +85,7 @@ def register_event(request):
         Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'])
         return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": str(e), "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
@@ -156,7 +156,7 @@ def faculty_login(request):
     except Faculty_Advisor.DoesNotExist as e:
         return Response({"ok": False, "message": "Faculty doesn't exist"})
     except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while faculty login"})
+        return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
     
 
 @api_view(["POST"])
@@ -165,6 +165,7 @@ def approveL0(request):
     if (not is_faculty_auth(data['token'])):
         return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     
+    del data['token']
     faculty_sign_image = data['faculty_sign']
 
     try:
@@ -186,17 +187,17 @@ def approveL0(request):
                 transparent_img.append(item)
         rgba_thresh.putdata(transparent_img)
     except Exception as e:
-        return Response({"ok": False, "message": "Error while removing background", "error": e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "message": "Error while removing background", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
-        org_email = Organisation.objects.get(name=data['organisation']).email
-        event_details = Event.objects.get(event_name=data['event_name'], organisation=org_email)
+        org_email = Organisation.objects.get(name=data['Organisation']).email
+        event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
         coords = event_details.coordinates
         certificate = event_details.certificate
         coords = json.loads(coords)
 
-        del data['organisation']
-        del data['event_name']
+        del data['Organisation']
+        del data['Event']
         del data['faculty_sign']
 
         serial_no = data['Serial No']
@@ -227,12 +228,12 @@ def approveL0(request):
 
         return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "message": "Error while creating certificate", "error": e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "message": "Error while creating certificate", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST"])
 def get_rows(request):
     data = request.data
-    if (not is_faculty_auth(data['token'])):
+    if (not is_org_auth(data['token'])):
         return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     
     if 'file' not in request.FILES:
@@ -244,4 +245,4 @@ def get_rows(request):
         header_rows = df.columns.tolist()
         return Response({"message": header_rows}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"ok": False, "error": e, "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"ok": False, "error": str(e), "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
