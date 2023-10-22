@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './css/Certificate.css'
-import { Form, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    const auth = localStorage.getItem('token');
+    // const auth = localStorage.getItem('token');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
@@ -100,7 +100,7 @@ const Certificate = () => {
         <div style={{display: 'flex'}}>
             {!certi && <div>
                 <div>Upload Your certificate below :</div>
-                <input type="file" onChange={handleChange} />
+                <input type="file" accept='image/*' onChange={handleChange} />
             </div>}
             <br />
             <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick} />

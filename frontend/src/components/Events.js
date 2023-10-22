@@ -7,7 +7,7 @@ import imageCompression from 'browser-image-compression';
 const Events = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [events, setEvents] = useState(location.state);
+  const [events, setEvents] = useState(location.state.pending);
   const [event_data, setEventData] = useState([]);
   const [clicked, setClicked] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
@@ -75,7 +75,7 @@ const Events = () => {
   }
   const seeTable = (rows, event_name) => {
     navigate('/table', {
-      state: {data: rows, event_name: event_name, org_name: selected_org}
+      state: {pending: rows, event_name: event_name, org_name: selected_org}
     })
   }
 

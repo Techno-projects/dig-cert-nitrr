@@ -5,13 +5,22 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 // import './css/Table.css';
+import { decodeToken } from "react-jwt";
 
 const Table = () => {
+  const auth = localStorage.getItem('login');
+  const fac_signed_in = decodeToken(auth);
+
   const location = useLocation()
-  const data = location.state.data;
+  const pending_data = location.state.pending;
+  const my_signed = location.state.signed;
+
+  console.log(pending_data);
+  console.log(my_signed);
   const [signature, setSignature] = useState(null);
 
-  const columnDefs = [];
+  const columnDefs1 = [];
+  const columnDefs2 = [];
   const [selectedCellValue, setSelectedCellValue] = useState(null);
   const filterParams = {
     filter: 'agDateColumnFilter',
@@ -28,43 +37,94 @@ const Table = () => {
       alert("Please upload your signature")
       return;
     }
-    const sendData = {...params}
-    sendData.data.organisation = location.state.org_name;
-    sendData.data.event_name = location.state.event_name;
-    sendData.data.faculty_sign = signature;
-    console.log(sendData.data);
-    const response = await axios.post('http://localhost:8000/api/approveL0', sendData.data, {
+    const row_data = {};
+    const headers = Object.keys(params.data);
+    headers.map(col => {
+      row_data[col] = params.data[col]
+    })
+    row_data.organisation = location.state.org_name;
+    row_data.event_name = location.state.event_name;
+    row_data.faculty_sign = signature;
+    row_data.fac_signed_in = fac_signed_in.email;
+    const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
       headers: {
         'Content-type': 'application/json'
       }
     });
-    console.log(response);
     if (response.data.ok) {
       alert("Signed");
     }
   };
 
-  if (data.length > 0) {
-    const firstObject = data[0];
-    columnDefs.push({
-      headerName: 'Organisation',
-      field: 'organisation',
-      valueGetter: () => location.state.org_name,
-    });
-    columnDefs.push({
-      headerName: 'Event Name',
-      field: 'organisation',
-      valueGetter: () => location.state.event_name,
-    });
+  if (pending_data.length > 0) {
+    const firstObject = pending_data[0];
+    let columnDef = {
+      headerName: "Organisation",
+      field: "Organisation",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs1.push(columnDef);
+    columnDef = {
+      headerName: "Event",
+      field: "Event",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs1.push(columnDef);
+    columnDef = {
+      headerName: "Serial No",
+      field: "Serial No",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs1.push(columnDef);
     for (const key in firstObject) {
-      if (firstObject.hasOwnProperty(key)) {
+        if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
         const columnDef = {
           headerName: key,
           field: key,
           sortable: key === 'sortableColumn',
           filter: key === 'column' ? 'agDateColumnFilter' : 'agSetColumnFilter',
         };
-        columnDefs.push(columnDef);
+        columnDefs1.push(columnDef);
+      }
+    }
+  }
+
+  if (my_signed.length > 0) {
+    const firstObject = my_signed[0];
+    let columnDef = {
+      headerName: "Organisation",
+      field: "Organisation",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs2.push(columnDef);
+    columnDef = {
+      headerName: "Event",
+      field: "Event",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs2.push(columnDef);
+    columnDef = {
+      headerName: "Serial No",
+      field: "Serial No",
+      sortable: 'sortableColumn',
+      filter: 'agSetColumnFilter',
+    };
+    columnDefs2.push(columnDef);
+
+    for (const key in firstObject) {
+      if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
+        const columnDef = {
+          headerName: key,
+          field: key,
+          sortable: key === 'sortableColumn',
+          filter: key === 'column' ? 'agDateColumnFilter' : 'agSetColumnFilter',
+        };
+        columnDefs2.push(columnDef);
       }
     }
   }
@@ -85,13 +145,24 @@ const Table = () => {
 
   return (
     <div className="table-container">
-      <div className="ag-theme-alpine" style={{ height: 400, width: '100vw' }}>
-        {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
-        <AgGridReact
-          onCellClicked={onCellClicked}
-          columnDefs={columnDefs}
-          rowData={data}
-        />
+      <div className='tables' style={{ display: 'flex' }}>
+        <div className="ag-theme-alpine" style={{ height: 400, width: '50vw' }}>
+          <h1>Pending Certificates</h1>
+          {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
+          <AgGridReact
+            onCellClicked={onCellClicked}
+            columnDefs={columnDefs1}
+            rowData={pending_data}
+          />
+        </div>
+        <div className="ag-theme-alpine" style={{ height: 400, width: '50vw' }}>
+          <h1>Your Signed Certificates</h1>
+          {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
+          <AgGridReact
+            columnDefs={columnDefs2}
+            rowData={my_signed}
+          />
+        </div>
       </div>
       <input type='file' accept="image/*" onChange={(e) => handleSign(e)} />
     </div>
