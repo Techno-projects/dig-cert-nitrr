@@ -192,6 +192,17 @@ const Table = () => {
     setSignature(base64String);
   }
 
+
+  const handleSubmission = () => {
+    const storedSignature = localStorage.getItem('signature');
+    if (storedSignature) {
+      setSignature(storedSignature);
+    } else {
+      alert('File has been submitted successfully');
+      localStorage.setItem('signature', signature);
+    }
+  };
+
   return (
     <div className="table-container" style={{ padding: '4rem' }}>
       <div className='tables' style={{ display: 'flex' }}>
@@ -215,8 +226,9 @@ const Table = () => {
       </div>
       <div className='Table_button' style={{ position: 'relative', marginTop: '4rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
         {/* <h2>Upload Signature</h2> */}
-        <input type='file' accept="image/*" onChange={(e) => handleSign(e)} />
-        <button onClick={handleSignatureSubmit}>Submit Signature</button>
+        <input type='file' accept="image/*" onChange={handleSign} />
+        <button onClick={handleSubmission}>Submit Signature</button>
+        {signature && <img src={signature} alt="signature" />}
       </div>
     </div>
   );
