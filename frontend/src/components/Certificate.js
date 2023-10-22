@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    // const auth = localStorage.getItem('token');
+    const auth = localStorage.getItem('token');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);

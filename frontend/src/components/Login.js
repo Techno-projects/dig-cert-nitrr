@@ -43,7 +43,7 @@ const Login = () => {
       console.log(response);
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('login', data.token);
+        localStorage.setItem('token', data.token);
         window.location.href = '/event_management';
       } else {
         setError('Authentication failed. Please check your username and password.');
