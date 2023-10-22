@@ -69,7 +69,6 @@ const Table = () => {
   };
 
   useEffect(() => {
-    console.log({ email: fac_email });
     const getEvents = async () => {
       try {
         const response = await axios.post('http://localhost:8000/api/get_event_details', { email: fac_email }, {

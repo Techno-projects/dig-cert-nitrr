@@ -22,7 +22,6 @@ const Certificate = () => {
             const formData = new FormData();
             formData.append('file', eventData.file);
             formData.append('token', auth);
-            console.log(eventData.file);
             try {
                 const response = await axios.post("http://localhost:8000/api/get_rows", formData, {
                     headers: {
@@ -70,8 +69,6 @@ const Certificate = () => {
                 title.id = "cdc_sign";
                 box.id = "cdc_sign";
                 fieldBox['cdc_sign'] = {box: box, title: title}
-
-                console.log(fieldBox);
             }
             catch (error) {
                 alert(error.response.data.message);
@@ -91,6 +88,10 @@ const Certificate = () => {
     }
 
     function handleClick(e) {
+        if (!selectedField) {
+            alert("Please select at least one field");
+            return;
+        }
         setAsk(true);
         const rect = imageRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -147,12 +148,23 @@ const Certificate = () => {
 
     const submit = async () => {
         const body = new FormData();
-        body.append('event_data', eventData.file);
-        body.append('certificate', certificate);
-        body.append('coords', JSON.stringify(coords));
-        body.append('event', eventData.event);
-        body.append('user', eventData.user)
-        body.append('token', auth);
+        const keys = Object.keys(coords);
+        if (keys.length !== 2 + fields.length) {
+            alert("Please select the required coordinates for the certificate");
+            return;
+        }
+        if (eventData.file !== null && certificate !== null && eventData.event !== null && eventData.user !== null && auth !== null) {
+            body.append('event_data', eventData.file);
+            body.append('certificate', certificate);
+            body.append('coords', JSON.stringify(coords));
+            body.append('event', eventData.event);
+            body.append('user', eventData.user)
+            body.append('token', auth);
+        }
+        else {
+            alert("Looks like some fields are missing");
+            return;
+        }
 
         try {
             const response = await axios.post("http://localhost:8000/api/register_event", body, {
