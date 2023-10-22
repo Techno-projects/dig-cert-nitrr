@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -10,13 +10,11 @@ import { decodeToken } from "react-jwt";
 const Table = () => {
   const auth = localStorage.getItem('login');
   const fac_signed_in = decodeToken(auth);
-
   const location = useLocation()
-  const pending_data = location.state.pending;
-  const my_signed = location.state.signed;
-
+  const [pending_data, set_pending_data] = useState([]);
+  const [my_signed, set_my_signed] = useState([]);
   const [signature, setSignature] = useState(null);
-
+  const fac_email = location.state.email;
   const columnDefs1 = [];
   const columnDefs2 = [];
   const [selectedCellValue, setSelectedCellValue] = useState(null);
@@ -37,6 +35,7 @@ const Table = () => {
     }
     const row_data = {};
     const headers = Object.keys(params.data);
+    console.log(params.data);
     headers.map(col => {
       row_data[col] = params.data[col]
     })
@@ -44,17 +43,57 @@ const Table = () => {
     row_data.event_name = location.state.event_name;
     row_data.faculty_sign = signature;
     row_data.fac_signed_in = fac_signed_in.email;
-    console.log(row_data);
     row_data.token = auth;
-    const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
-      headers: {
-        'Content-type': 'application/json'
+    try {
+      const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
+        headers: {
+          'Content-type': 'application/json'
+        }
+      });
+      if (response.data.ok) {
+        let copy_pending = [...pending_data];
+        const copy_signed = [...my_signed];
+        const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
+        copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
+        copy_signed.push(deleted_row);
+        set_pending_data(copy_pending);
+        set_my_signed(copy_signed);
+        alert("Signed");
+        window.location.reload();
       }
-    });
-    if (response.data.ok) {
-      alert("Signed");
+    }
+    catch (error) {
+      alert(error.response.data.message);
+      window.location.reload();
     }
   };
+
+  useEffect(() => {
+    console.log({ email: fac_email });
+    const getEvents = async () => {
+      try {
+        const response = await axios.post('http://localhost:8000/api/get_event_details', { email: fac_email }, {
+          headers: {
+            "Content-type": "application/json"
+          }
+        });
+        const data = response.data;
+        if (data.ok) {
+          set_my_signed(data.signed)
+          set_pending_data(data.pending)
+        }
+        else {
+          alert("Error logging in");
+          window.location.href = "/login?type=faculty";
+        }
+      }
+      catch (error) {
+        alert(error.response.data.message);
+        window.location.href = "/login?type=faculty";
+      }
+    }
+    getEvents();
+  }, [fac_email]);
 
   if (pending_data.length > 0) {
     const firstObject = pending_data[0];
