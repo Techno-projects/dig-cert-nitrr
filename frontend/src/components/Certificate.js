@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Certificate = () => {
-    const auth = localStorage.getItem('token');
+    const auth = localStorage.getItem('login');
     const location = useLocation();
     const [eventData, setEventData] = useState(location.state);
     const [fields, setFields] = useState([]);
@@ -180,17 +180,17 @@ const Certificate = () => {
     }
 
     return (
+        <div style={{display: 'flex',justifyContent:'center',alignItems:'center'}}>
         <div style={{display: 'flex'}}>
-        <div style={{display: 'flex'}}>
-            {!certi && <div>
-                <div>Upload Your certificate below :</div>
-                <input type="file" accept='image/*' onChange={handleChange} />
+            {!certi && <div className='Certificate_box'>
+                <div className='Certificate_heading'>Upload Your certificate below :</div>
+                <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />
             </div>}
             <br />
-            <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick} />
+            <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick}/>
             <div ref={rectRef}></div>
             {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
-            <div>
+            {certi && <div className='Certificate_fields'>
                 Which field?
                 <br />
                 {fields.map(field => (
@@ -206,7 +206,7 @@ const Certificate = () => {
                 <label for="cdc_sign">CDC Signature</label><br />
                 <br />
                 <button onClick={submit}>Submit</button>
-            </div>
+            </div>}
         </div>
         </div>
     )

@@ -62,9 +62,9 @@ const Faculty_Login = () => {
           <button type="submit">Submit</button>
 
         </form>
-        <Link to="/register">
+        {/* <Link to="/register">
           <button className="register-button">Register</button>
-        </Link>
+        </Link> */}
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>

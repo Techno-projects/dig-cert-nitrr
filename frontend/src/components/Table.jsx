@@ -78,6 +78,7 @@ const Table = () => {
   };
 
   useEffect(() => {
+    console.log({ email: fac_email });
     const getEvents = async () => {
       try {
         const response = await axios.post('http://localhost:8000/api/get_event_details', { email: fac_email }, {
@@ -191,6 +192,17 @@ const Table = () => {
     setSignature(base64String);
   }
 
+  // const [signature, setSignature] = useState('');
+
+  // const convertFileToBase64 = (file) => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(file);
+  //     reader.onload = () => resolve(reader.result);
+  //     reader.onerror = error => reject(error);
+  //   });
+  // };
+
 
   const handleSubmission = () => {
     const storedSignature = localStorage.getItem('signature');
@@ -227,7 +239,7 @@ const Table = () => {
         {/* <h2>Upload Signature</h2> */}
         <input type='file' accept="image/*" onChange={handleSign} />
         <button onClick={handleSubmission}>Submit Signature</button>
-        {signature && <img src={signature} alt="signature" />}
+        {/* {signature && <img src={signature} alt="signature" />} */}
       </div>
     </div>
   );
