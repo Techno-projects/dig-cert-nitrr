@@ -58,7 +58,6 @@ const Table = () => {
         headers: {
           'Content-type': 'application/json'
         }
-
       });
       if (response.data.ok) {
         let copy_pending = [...pending_data];
@@ -73,10 +72,8 @@ const Table = () => {
       }
     }
     catch (error) {
-      console.log(error.response.data);
       alert(error.response.data.message);
       window.location.reload();
-      
     }
   };
 
@@ -194,6 +191,17 @@ const Table = () => {
     
     setSignature(base64String);
   }
+
+  // const [signature, setSignature] = useState('');
+
+  // const convertFileToBase64 = (file) => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(file);
+  //     reader.onload = () => resolve(reader.result);
+  //     reader.onerror = error => reject(error);
+  //   });
+  // };
 
 
   const handleSubmission = () => {
