@@ -72,13 +72,13 @@ const Table = () => {
       }
     }
     catch (error) {
+      console.log(error.response.data);
       alert(error.response.data.message);
-      window.location.reload();
+      // window.location.reload();
     }
   };
 
   useEffect(() => {
-    console.log({ email: fac_email });
     const getEvents = async () => {
       try {
         const response = await axios.post('http://localhost:8000/api/get_event_details', { email: fac_email }, {
@@ -87,18 +87,20 @@ const Table = () => {
           }
         });
         const data = response.data;
+        console.log(data);
         if (data.ok) {
           set_my_signed(data.signed)
           set_pending_data(data.pending)
         }
         else {
           alert("Error logging in");
-          window.location.href = "/login?type=faculty";
+          // window.location.href = "/login?type=faculty";
         }
       }
       catch (error) {
         alert(error.response.data.message);
-        window.location.href = "/login?type=faculty";
+        // history.pushState("/login?type=faculty");
+        // window.location.href = "/login?type=faculty";
       }
     }
     getEvents();
