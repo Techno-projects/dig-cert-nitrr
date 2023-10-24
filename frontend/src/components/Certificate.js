@@ -6,18 +6,21 @@ import axios from 'axios';
 const Certificate = () => {
     const auth = localStorage.getItem('login');
     const location = useLocation();
-    const [eventData, setEventData] = useState(location.state);
+    const eventData = location.state.eventData;
+    const faculties = location.state.faculties;
+
+    const imageRef = useRef(null);
+    const rectRef = useRef(null);
     const [fields, setFields] = useState([]);
     const [fieldBox, setFieldBox] = useState({});
     const [certi, setCerti] = useState();
     const [certificate, setCertificate] = useState(null);
-    const imageRef = useRef(null);
-    const rectRef = useRef(null);
     const [ask, setAsk] = useState(false);
     const [selectedField, setSelected] = useState(null);
     const [coords, setCoord] = useState({});
-
+    
     useEffect(() => {
+        // get headers of event excel file
         async function getRows() {
             const formData = new FormData();
             formData.append('file', eventData.file);
@@ -30,7 +33,8 @@ const Certificate = () => {
                 })
                 setFields(response.data.message)
                 const tmpFields = response.data.message;
-                
+                const tmp = { ...fieldBox };
+
                 tmpFields.map(tmp_field => {
                     const box = document.createElement('div');
                     const title = document.createElement('div');
@@ -42,35 +46,39 @@ const Certificate = () => {
                     title.style.border = "none"
                     title.innerHTML = tmp_field
                     title.id = tmp_field;
-
-                    fieldBox[tmp_field] = {box: box, title: title}
+                    // fieldBox[tmp_field] = { box: box, title: title }
+                    tmp[tmp_field] = { box: box, title: title };
                 });
-
-                let box = document.createElement('div');
-                let title = document.createElement('div');
+                faculties.map(faculty => {
+                    const box = document.createElement('div');
+                    const title = document.createElement('div');
+                    box.className = "certificateRect";
+                    box.style.width = "125px";
+                    box.style.height = "25px";
+                    box.id = faculty;
+                    title.className = "certificateRect";
+                    title.style.border = "none"
+                    title.innerHTML = faculty
+                    title.id = faculty;
+                    tmp[faculty] = { box: box, title: title };
+                    // fieldBox[faculty] = { box: box, title: title }
+                });
+                const box = document.createElement('div');
+                const title = document.createElement('div');
                 box.className = "certificateRect";
                 box.style.width = "125px";
                 box.style.height = "25px";
+                box.id = 'cdc';
                 title.className = "certificateRect";
                 title.style.border = "none"
-                title.innerHTML = "Faculty Signature";
-                title.id = "faculty_sign";
-                box.id = "faculty_sign";
-                fieldBox['faculty_sign'] = {box: box, title: title}
-                
-                box = document.createElement('div');
-                title = document.createElement('div');
-                box.className = "certificateRect";
-                box.style.width = "125px";
-                box.style.height = "25px";
-                title.className = "certificateRect";
-                title.style.border = "none"
-                title.innerHTML = "CDC Signature";
-                title.id = "cdc_sign";
-                box.id = "cdc_sign";
-                fieldBox['cdc_sign'] = {box: box, title: title}
+                title.innerHTML = 'cdc'
+                title.id = 'cdc';
+                tmp['cdc'] = { box: box, title: title };
+                setFieldBox(tmp)
+                // console.log(fieldBox);
             }
             catch (error) {
+                console.log(error);
                 alert(error.response.data.message);
                 window.location.href = "/";
             }
@@ -88,6 +96,7 @@ const Certificate = () => {
     }
 
     function handleClick(e) {
+        console.log(fieldBox);
         if (!selectedField) {
             alert("Please select at least one field");
             return;
@@ -110,7 +119,7 @@ const Certificate = () => {
         const yInPixels = (y / rect.height) * imageHeight;
         // console.log(xInPixels, yInPixels);
 
-        coords[selectedField] = { x: xInPixels, y: yInPixels };
+        coords[selectedField] = { x: xInPixels + 62.5, y: yInPixels + 12.5 };
 
         // Create a new rectangle element
         // const rectangle = document.createElement("div");
@@ -149,10 +158,6 @@ const Certificate = () => {
     const submit = async () => {
         const body = new FormData();
         const keys = Object.keys(coords);
-        if (keys.length !== 2 + fields.length) {
-            alert("Please select the required coordinates for the certificate");
-            return;
-        }
         if (eventData.file !== null && certificate !== null && eventData.event !== null && eventData.user !== null && auth !== null) {
             body.append('event_data', eventData.file);
             body.append('certificate', certificate);
@@ -160,6 +165,8 @@ const Certificate = () => {
             body.append('event', eventData.event);
             body.append('user', eventData.user)
             body.append('token', auth);
+            body.append('cdc', eventData.cdc);
+            console.log(coords);
         }
         else {
             alert("Looks like some fields are missing");
@@ -180,34 +187,38 @@ const Certificate = () => {
     }
 
     return (
-        <div style={{display: 'flex',justifyContent:'center',alignItems:'center'}}>
-        <div style={{display: 'flex',margin:'2rem'}}>
-            {!certi && <div className='Certificate_box'>
-                <div className='Certificate_heading'>Upload Your certificate below :</div>
-                <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />
-            </div>}
-            <br />
-            <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick}/>
-            <div ref={rectRef}></div>
-            {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
-            {certi && <div className='Certificate_fields'>
-                Which field?
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ display: 'flex' }}>
+                {!certi && <div className='Certificate_box'>
+                    <div className='Certificate_heading'>Upload Your certificate below :</div>
+                    <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />
+                </div>}
                 <br />
-                {fields.map(field => (
-                    <>
-                        <input type='radio' name='selection' value={field} onChange={(e) => setSelected(e.target.value)} />
-                        <label for={field}>{field}</label><br />
-                    </>
-                ))}
-                <input type='radio' name='selection' value="faculty_sign" onChange={(e) => setSelected(e.target.value)} />
-                <label for="faculty_sign">Faculty Signature</label><br />
+                <img src={certi} ref={imageRef} height={"550px"} style={{ userSelect: "none" }} onClick={handleClick} />
+                <div ref={rectRef}></div>
+                {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
+                {certi && <div className='Certificate_fields'>
+                    Which field?
+                    <br />
+                    {fields.map(field => (
+                        <>
+                            <input type='radio' name='selection' value={field} onChange={(e) => setSelected(e.target.value)} />
+                            <label for={field}>{field}</label><br />
+                        </>
+                    ))}
+                    {faculties.map(faculty => (
+                        <>
+                            <input type='radio' name='selection' value={faculty} onChange={(e) => setSelected(e.target.value)} />
+                            <label for={faculty}>{faculty} </label><br />
+                        </>
+                    ))}
 
-                <input type='radio' name='selection' value="cdc_sign" onChange={(e) => setSelected(e.target.value)} />
-                <label for="cdc_sign">CDC Signature</label><br />
-                <br />
-                <button onClick={submit}>Submit</button>
-            </div>}
-        </div>
+                    {eventData.cdc && <><input type='radio' name='selection' value="cdc" onChange={(e) => setSelected(e.target.value)} />
+                        <label for="cdc_sign">CDC Signature</label><br /></>}
+                    <br />
+                    <button onClick={submit}>Submit</button>
+                </div>}
+            </div>
         </div>
     )
 }
