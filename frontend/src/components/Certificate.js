@@ -18,7 +18,12 @@ const Certificate = () => {
     const [ask, setAsk] = useState(false);
     const [selectedField, setSelected] = useState(null);
     const [coords, setCoord] = useState({});
-    
+
+    if (!auth) {
+        alert('unauthorized user');
+        window.location.href("/");
+    }
+
     useEffect(() => {
         // get headers of event excel file
         async function getRows() {
@@ -188,7 +193,7 @@ const Certificate = () => {
 
     return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', margin: '10%' }}>
                 {!certi && <div className='Certificate_box'>
                     <div className='Certificate_heading'>Upload Your certificate below :</div>
                     <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />
