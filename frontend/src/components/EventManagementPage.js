@@ -91,10 +91,11 @@ const EventManagementPage = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column'}}>
+    <div style={{flexGrow:'1',overflowY:'auto'}}>
       <form>
         <div className='form-container'>
-          <div className='form-internal' style={{ margin: '4rem' }}>
+          <div className='form-internal' style={{textAlign:'center',margin:'10%'}}>
             <h1 className='title'>Event Management</h1>
 
             <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event" value={eventData.event} onChange={handleChange} required />
@@ -119,6 +120,7 @@ const EventManagementPage = () => {
           </div>
         </div>
       </form>
+      </div>
     </div>
   );
 };
