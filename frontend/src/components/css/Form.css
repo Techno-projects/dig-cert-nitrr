@@ -1,4 +1,4 @@
-.form-container {
+.form-internal {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6,8 +6,18 @@
   background: rgba(255, 255, 255, 0.15);
   border-radius: 15px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  /* border: 2px solid red; */
+  margin-top: 8rem;
+  position: relative;
+  width: 25%;
+}
+
+.form-container{
+  display: flex;
+  justify-content: center;
+  align-items: center ;
+  /* border: 2px solid red; */
+  flex-direction: column;
 }
 
 .input_text {
@@ -19,4 +29,10 @@
   backdrop-filter: blur(5px);
   /* transition: background 0.3s; */
   color: #333;
+}
+
+@media screen and (max-width:1100px) {
+  .form-internal{
+    margin-top: 4rem;
+  }
 }

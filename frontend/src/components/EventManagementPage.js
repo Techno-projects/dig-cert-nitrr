@@ -66,18 +66,20 @@ const EventManagementPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <form>
         <div className='form-container'>
-          <h1 className='title'>Event Management</h1>
+          <div className='form-internal'>
+            <h1 className='title'>Event Management</h1>
 
-          <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event" value={eventData.event} onChange={handleChange} required />
-          <p />
+            <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event" value={eventData.event} onChange={handleChange} required />
+            <p />
 
-          <input className='input_text' placeholder='Participants' type="file" id="participants" onChange={handleFileChange} required />
-          <p />
+            <input className='input_text' placeholder='Participants' type="file" id="participants" onChange={handleFileChange} required />
+            <p />
 
 
-          {/* <label htmlFor="cdcHead">CDC Head:</label>
+            {/* <label htmlFor="cdcHead">CDC Head:</label>
         <input type="text" id="cdcHead" name="cdcHead" value={eventData.cdcHead} onChange={handleChange} required /> */}
-          <button type="button" onClick={upload}>Upload Certificate</button>
+            <button type="button" onClick={upload}>Upload Certificate</button>
+          </div>
         </div>
       </form>
     </div>

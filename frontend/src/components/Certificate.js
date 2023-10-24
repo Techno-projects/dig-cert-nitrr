@@ -181,7 +181,7 @@ const Certificate = () => {
 
     return (
         <div style={{display: 'flex',justifyContent:'center',alignItems:'center'}}>
-        <div style={{display: 'flex'}}>
+        <div style={{display: 'flex',margin:'2rem'}}>
             {!certi && <div className='Certificate_box'>
                 <div className='Certificate_heading'>Upload Your certificate below :</div>
                 <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />

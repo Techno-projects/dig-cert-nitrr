@@ -1,0 +1,77 @@
+/* Navbar container */
+/* .navbar-container{
+  width: 100%;
+  position: relative;
+} */
+
+.navbar {
+  color: #0074d9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 10%;
+  /* border: 2px solid red; */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Logo styling */
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-left: 1rem;
+}
+
+/* Navigation links */
+.nav-links {
+  list-style: none;
+  display: flex;
+}
+
+.nav-links li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* border: 2px solid red; */
+  padding-bottom: 25%;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #0074d9;
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+/* Logout button */
+.nav-links button {
+  background-color: #0074d9;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+/* Hover effect on links and buttons */
+.nav-links a:hover,
+.nav-links button:hover {
+  background-color: lightblue;
+
+  border-radius: 5px;
+}
+
+
+@media screen and (max-width:1100px) {
+  .navbar{
+    height: 5%;
+  }
+
+  .nav-links li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* border: 2px solid red; */
+    padding-bottom: 10%;
+  }
+}
