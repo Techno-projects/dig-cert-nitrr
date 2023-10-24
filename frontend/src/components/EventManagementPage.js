@@ -94,7 +94,7 @@ const EventManagementPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <form>
         <div className='form-container'>
-          <div className='form-internal'>
+          <div className='form-internal' style={{margin:'4rem'}}>
             <h1 className='title'>Event Management</h1>
 
             <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event" value={eventData.event} onChange={handleChange} required />
