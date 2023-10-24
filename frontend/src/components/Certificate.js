@@ -8,7 +8,7 @@ const Certificate = () => {
     const location = useLocation();
     const eventData = location.state.eventData;
     const faculties = location.state.faculties;
-
+    
     const imageRef = useRef(null);
     const rectRef = useRef(null);
     const [fields, setFields] = useState([]);
@@ -159,6 +159,7 @@ const Certificate = () => {
         const body = new FormData();
         const keys = Object.keys(coords);
         if (eventData.file !== null && certificate !== null && eventData.event !== null && eventData.user !== null && auth !== null) {
+            let required_faculties = [];
             body.append('event_data', eventData.file);
             body.append('certificate', certificate);
             body.append('coords', JSON.stringify(coords));
@@ -166,7 +167,12 @@ const Certificate = () => {
             body.append('user', eventData.user)
             body.append('token', auth);
             body.append('cdc', eventData.cdc);
-            console.log(coords);
+            Object.keys(coords).map(key => {
+                if (faculties.includes(key)) {
+                    required_faculties.push(key)
+                }
+            })
+            body.append('faculties', JSON.stringify(required_faculties));
         }
         else {
             alert("Looks like some fields are missing");
