@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -49,7 +49,6 @@ const Table = () => {
     }
     const row_data = {};
     const headers = Object.keys(params.data);
-    console.log(params.data);
     headers.map(col => {
       row_data[col] = params.data[col]
     })
@@ -92,12 +91,12 @@ const Table = () => {
           }
         });
         const data = response.data;
-        console.log(data);
         if (data.ok) {
           set_my_signed(data.signed)
           set_pending_data(data.pending)
         }
         else {
+          console.log();
           alert("Error logging in");
           // window.location.href = "/login?type=faculty";
         }
@@ -118,6 +117,9 @@ const Table = () => {
       field: "Organisation",
       sortable: 'sortableColumn',
       filter: 'agSetColumnFilter',
+      headerCheckboxSelection: true,
+      headerCheckboxSelectionFilteredOnly: true,
+      checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
     columnDef = {
@@ -125,6 +127,9 @@ const Table = () => {
       field: "Event",
       sortable: 'sortableColumn',
       filter: 'agSetColumnFilter',
+      // headerCheckboxSelection: true,
+      // headerCheckboxSelectionFilteredOnly: true,
+      // checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
     columnDef = {
@@ -132,6 +137,9 @@ const Table = () => {
       field: "Serial No",
       sortable: 'sortableColumn',
       filter: 'agSetColumnFilter',
+      // headerCheckboxSelection: true,
+      // headerCheckboxSelectionFilteredOnly: true,
+      // checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
     for (const key in firstObject) {
@@ -141,6 +149,9 @@ const Table = () => {
           field: key,
           sortable: key === 'sortableColumn',
           filter: key === 'column' ? 'agDateColumnFilter' : 'agSetColumnFilter',
+          // headerCheckboxSelection: true,
+          // headerCheckboxSelectionFilteredOnly: true,
+          // checkboxSelection: true,
         };
         columnDefs1.push(columnDef);
       }
@@ -221,6 +232,45 @@ const Table = () => {
     }
   };
 
+  const gridApi1 = useRef(null);
+  const submitSelectedRows = async () => {
+    const selectedRows = gridApi1.current.getSelectedRows();
+    if (!signature) {
+      alert("Please upload your signature")
+      return;
+    }
+    for (let i = 0; i < selectedRows.length; i++) {
+      selectedRows[i].organisation = location.state.org_name;
+      selectedRows[i].event_name = location.state.event_name;
+      selectedRows[i].faculty_sign = signature;
+      selectedRows[i].fac_signed_in = fac_signed_in.email;
+      selectedRows[i].token = auth;
+    }
+    try {
+      const response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
+        headers: {
+          'Content-type': 'application/json'
+        }
+      });
+      if (response.data.ok) {
+        // let copy_pending = [...pending_data];
+        // const copy_signed = [...my_signed];
+        // const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
+        // copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
+        // copy_signed.push(deleted_row);
+        // set_pending_data(copy_pending);
+        // set_my_signed(copy_signed);
+        alert("Signed");
+        // window.location.reload();
+      }
+    }
+    catch (error) {
+      console.log(error.response.data);
+      alert(error.response.data.message);
+      // window.location.reload();
+    }
+  }
+
   return (
     <div className="table-container" style={{ padding: '4rem' }}>
       <div className='tables' style={{ display: 'flex' }}>
@@ -228,10 +278,15 @@ const Table = () => {
           <h1>Pending Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
-            onCellClicked={onCellClicked}
+            onGridReady={(params) => {
+              gridApi1.current = params.api;
+            }}
+            // onCellClicked={onCellClicked}
             columnDefs={columnDefs1}
             rowData={pending_data}
+            rowSelection={'multiple'}
           />
+          <button onClick={submitSelectedRows}>Submit</button>
         </div>
         <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>
@@ -242,11 +297,9 @@ const Table = () => {
           />
         </div>
       </div>
-      <div className='Table_button' style={{ position: 'relative', marginTop: '4rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
-        {/* <h2>Upload Signature</h2> */}
+      <div className='Table_button' style={{ position: 'relative', marginTop: '10rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
         <input type='file' accept="image/*" onChange={handleSign} />
         <button onClick={handleSubmission}>Submit Signature</button>
-        {/* {signature && <img src={signature} alt="signature" />} */}
       </div>
     </div>
   );

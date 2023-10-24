@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Event, Faculty_Advisor, Organisation, Certificate, Faculty_Org
+from .models import Event, Faculty_Advisor, Organisation, Certificate, Faculty_Org, Faculty_Events
 import json
 import jwt
 import os
@@ -83,13 +83,24 @@ def register_event(request):
     if (not is_org_auth(data['token'])):
         return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     
-    event_db = data['event_data']
-    certi = data['certificate']
-    isCDC = False
+    event_db = data['event_data']           # event's excel file
+    certi = data['certificate']             # event's certificate file
+    isCDC = False                           # is cdc signature required for this event
+    faculties_required = json.loads(data['faculties'])
+    print(faculties_required)
     if data['cdc'] == 'true':
         isCDC = True
     try:
         Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'], isCDC=isCDC)
+        current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
+        faculty_events = []
+        for i in faculties_required:
+            print(i)
+            faculty_i = Faculty_Advisor.objects.get(email=i)
+            current_event = Event.objects.get(id=current_event_id)
+            faculty_events.append(Faculty_Events(faculty=faculty_i, event=current_event))
+        Faculty_Events.objects.bulk_create(faculty_events)
+
         return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -129,61 +140,56 @@ def faculty_login(request):
 @api_view(["POST"])
 def get_event_details(request):
     data = request.data
+    fac_email = data['email']
+
     try:
-        orgs = Faculty_Org.objects.filter(faculty_id=data['email'])
-        
-        # current faculty is related to all in this list
-        organisations = []
-        for i in orgs:
-            org_name = i.organisation_id
-            org_email = (Organisation.objects.get(name=org_name)).email
-            organisations.append([org_email, org_name])
-        
+        fac_events = Faculty_Events.objects.filter(faculty=fac_email)
+
         def is_serial_present(serial):
             return Certificate.objects.filter(serial_no=serial).exists()
-        
+
         def is_my_signed(serial):
             obj = Certificate.objects.filter(serial_no=serial)
             if (obj.exists()):
-                who_signed = obj[0].faculty_advisor_id
-                return who_signed == data['email']
+                who_signed = json.loads(obj[0].faculty_advisor)
+                return data['email'] in who_signed
             return False
-        
+
         pending_rows = []
         signed_rows = []
-        for i in organisations:
-            events_of_org = Event.objects.filter(organisation=i[0])
-            for any_event in events_of_org:
-                students = pd.read_excel(any_event.event_data)
-                students.reset_index(drop=False, inplace=True, names='Serial No')
-                students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.id) + "/" + str(x))
-                mask = students['Serial No'].apply(lambda x: not is_serial_present(x))
-                mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
-                all_unsigend_students = students[mask].to_dict(orient='records')
-                all_sigend_students = students[mask1].to_dict(orient='records')
-                for x in all_unsigend_students:
-                    x['Organisation'] = i[1]
-                    x['Event'] = any_event.event_name
-                    pending_rows.append(x)
-                
-                for x in all_sigend_students:
-                    x['Organisation'] = i[1]
-                    x['Event'] = any_event.event_name
-                    signed_rows.append(x)
+        for any_event in fac_events:
+            event_file = any_event.event.event_data
+            students = pd.read_excel(event_file)
+            students.reset_index(drop=False, inplace=True, names='Serial No')
+            students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.event.id) + "/" + str(x))
+            mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
+            mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
+            all_unsigend_students = students[mask].to_dict(orient='records')
+            all_signed_students = students[mask1].to_dict(orient='records')
 
-            return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+            org_name = Organisation.objects.get(email=any_event.event.organisation).name
+            for x in all_unsigend_students:
+                x['Organisation'] = org_name
+                x['Event'] = any_event.event.event_name
+                pending_rows.append(x)
+            
+            for x in all_signed_students:
+                x['Organisation'] = org_name
+                x['Event'] = any_event.event.event_name
+                signed_rows.append(x)
+        
+
+        return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
     except Faculty_Advisor.DoesNotExist as e:
         return Response({"ok": False, "message": "Faculty doesn't exist"})
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
-@api_view(["POST"])
-def approveL0(request):
-    data = request.data
+def approve(data):
+    # data = request.data
     if (not is_faculty_auth(data['token'])):
         return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-    
     current_fac_email = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
     current_fac_email = current_fac_email['email']
     del data['token']
@@ -225,7 +231,15 @@ def approveL0(request):
         fac_signed_in = data['fac_signed_in']
         del data['Serial No']
         del data['fac_signed_in']
+        file_extension = os.path.splitext(certificate.path)[1]
+        output_filename = serial_no.replace("/", '_') + file_extension
+        file_location = f"/backend/signed_certificates/{output_filename}"
         img = Image.open(certificate)
+        certi_exists = False
+        if os.path.isfile(file_location):
+            img = Image.open(file_location)
+            certi_exists = True
+
         image_width, image_height = img.size
         font_percentage = 0.03
         font_size = int(min(image_width, image_height) * font_percentage)
@@ -238,21 +252,48 @@ def approveL0(request):
             text_color = (0, 0, 0)
             draw.text((coordinate['x'], coordinate['y']), str(text_to_put), fill=text_color, font=font,)
         
-        fac_sign_x = coords[current_fac_email]['x']
-        fac_sign_y = coords[current_fac_email]['y']
+        try:
+            fac_sign_x = coords[current_fac_email]['x']
+            fac_sign_y = coords[current_fac_email]['y']
+        except KeyError as e:
+            return Response({"ok": False, "message": "You can't sign this certificate", "error": str(e)}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
         img = img.convert("RGBA")
         rgba_thresh = rgba_thresh.convert("RGBA")
-        file_extension = os.path.splitext(certificate.path)[1]
+        
         paste_box = (int(fac_sign_x), int(fac_sign_y), int(fac_sign_x + rgba_thresh.width), int(fac_sign_y + rgba_thresh.height))
         output_filename = serial_no.replace("/", '_') + file_extension
         img.paste(rgba_thresh, paste_box, rgba_thresh)
         img.save(f"/backend/signed_certificates/{output_filename}", format=file_extension[1:])
-        Certificate.objects.create(faculty_advisor_id=fac_signed_in, serial_no=serial_no, status="0")
+
+        if certi_exists:
+            fac_ids = Certificate.objects.get(serial_no=serial_no).faculty_advisor
+            fac_ids = json.loads(fac_ids)
+            fac_ids.append(current_fac_email)
+            fac_ids = json.dumps(fac_ids)
+            Certificate.objects.filter(serial_no=serial_no).update(faculty_advisor=fac_ids)
+        else:
+            Certificate.objects.create(faculty_advisor=json.dumps([fac_signed_in]), serial_no=serial_no, status="0")
 
         return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "message": "Error while creating certificate", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def approveL0(request):
+    data = request.data
+    print(len(data))
+    for i in range(0, len(data)):
+        res = approve(data[i])
+        if not res.data['ok']:
+            return res
+        
+    return Response({"ok": True, "message": "Signed successfully"})
+
+
+# @api_view(["POST"])
 
 
 @api_view(["POST"])
@@ -297,18 +338,68 @@ def get_all_org(request):
 @api_view(["POST"])
 def get_faculties(request):
     data = request.data
-    faculties = []
+    faculties = set()
 
     current_org = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
     current_org = current_org['email']
     current_org_name = Organisation.objects.get(email=current_org).name
     current_facs = Faculty_Org.objects.filter(organisation_id=current_org_name)
     for i in current_facs:
-        faculties.append(i.faculty_id)
+        faculties.add(i.faculty_id)
 
     for i in data['partners']:
         faculties_of_i = Faculty_Org.objects.filter(organisation_id=i)
         for j in faculties_of_i:
-            faculties.append(j.faculty_id)
+            faculties.add(j.faculty_id)
 
-    return Response({"ok": True, "message": faculties}, status=status.HTTP_200_OK)
+    return Response({"ok": True, "message": list(faculties)}, status=status.HTTP_200_OK)
+
+
+
+# try:
+        # orgs = Faculty_Org.objects.filter(faculty_id=data['email'])
+
+        # current faculty is related to all in this list
+        # organisations = []
+        # for i in orgs:
+        #     org_name = i.organisation_id
+        #     org_email = (Organisation.objects.get(name=org_name)).email
+        #     organisations.append([org_email, org_name])
+        
+        # def is_serial_present(serial):
+        #     return Certificate.objects.filter(serial_no=serial).exists()
+        
+        # def is_my_signed(serial):
+        #     obj = Certificate.objects.filter(serial_no=serial)
+        #     if (obj.exists()):
+        #         who_signed = obj[0].faculty_advisor_id
+        #         return who_signed == data['email']
+        #     return False
+        
+        # pending_rows = []
+        # signed_rows = []
+        # for i in organisations:
+        #     events_of_org = Event.objects.filter(organisation=i[0])
+        #     for any_event in events_of_org:
+        #         students = pd.read_excel(any_event.event_data)
+        #         students.reset_index(drop=False, inplace=True, names='Serial No')
+
+        #         current_event = Event.objects.get(id=any_event.id)
+        #         current_faculty = Faculty_Advisor.objects.get(email=data['email'])
+        #         if (not Faculty_Events.objects.filter(event=current_event, faculty=current_faculty).exists()):
+        #             continue
+
+        #         students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.id) + "/" + str(x))
+        #         mask = students['Serial No'].apply(lambda x: not is_serial_present(x))
+        #         mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
+        #         all_unsigend_students = students[mask].to_dict(orient='records')
+        #         all_sigend_students = students[mask1].to_dict(orient='records')
+        #         for x in all_unsigend_students:
+        #             x['Organisation'] = i[1]
+        #             x['Event'] = any_event.event_name
+        #             pending_rows.append(x)
+                
+        #         for x in all_sigend_students:
+        #             x['Organisation'] = i[1]
+        #             x['Event'] = any_event.event_name
+        #             signed_rows.append(x)

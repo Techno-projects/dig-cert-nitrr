@@ -8,7 +8,7 @@ class Organisation(models.Model):
     password = models.CharField(max_length=128)
 
     def __str__(self):
-        return self.name
+        return f"{self.id}-{self.name}"
 
 
 def event_data_upload_path(instance, filename):
@@ -29,6 +29,9 @@ class Event(models.Model):
     coordinates = models.CharField()
     isCDC = models.BooleanField(default=True)
 
+    def __str__(self):
+        return f"{self.id}-{self.organisation}-{self.event_name}"
+
 class Faculty_Advisor(models.Model):
     class Meta:
         verbose_name_plural = "Faculty_Advisors"
@@ -37,7 +40,7 @@ class Faculty_Advisor(models.Model):
     password = models.CharField()
 
     def __str__(self):
-        return self.email
+        return f"{self.id}-{self.email}"
 
 
 class Faculty_Org(models.Model):
@@ -57,6 +60,11 @@ class Certificate(models.Model):
         verbose_name_plural = "Certificates"
         unique_together = (('faculty_advisor', 'serial_no'),)
     
-    faculty_advisor = models.ForeignKey(Faculty_Advisor, to_field='email', on_delete=models.DO_NOTHING)
+    faculty_advisor = models.CharField()
     serial_no = models.CharField(unique=True)
     status = models.CharField()
+
+
+class Faculty_Events(models.Model):
+    faculty = models.ForeignKey(Faculty_Advisor, to_field="email", on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
