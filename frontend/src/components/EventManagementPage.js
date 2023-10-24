@@ -94,7 +94,7 @@ const EventManagementPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <form>
         <div className='form-container'>
-          <div className='form-internal' style={{margin:'4rem'}}>
+          <div className='form-internal' style={{ margin: '4rem' }}>
             <h1 className='title'>Event Management</h1>
 
             <input className='input_text' placeholder='Event Name:' type="text" id="event_name" name="event" value={eventData.event} onChange={handleChange} required />
@@ -102,18 +102,18 @@ const EventManagementPage = () => {
 
             <input className='input_text' placeholder='Participants' type="file" id="participants" onChange={handleFileChange} required />
             <p />
+            <div className='input_class'>
+            <input type='checkbox'style={{display:'inline-block',verticalAlign:'top',width:'14px',height:'14px'}} name='cdc' checked={eventData.cdc} onChange={handleChange} /> CDC Signature Required?
+            <p />
+            </div>
+            <label for="partners">Partner Organisation:</label>
 
-          <input type='checkbox' name='cdc' checked={eventData.cdc} onChange={handleChange} /> CDC Signature Required?
-          <p />
-
-          <label for="partners">Partner Organisation:</label>
-
-          {partners.map(partner => (
-            <>
-              <input type='checkbox' value={partner} onChange={handlePartners} /> {partner}
-            </>
-          ))}
-          {/* <label htmlFor="cdcHead">CDC Head:</label>
+            {partners.map(partner => (
+              <>
+                <input type='checkbox' value={partner} onChange={handlePartners} /> {partner}
+              </>
+            ))}
+            {/* <label htmlFor="cdcHead">CDC Head:</label>
         <input type="text" id="cdcHead" name="cdcHead" value={eventData.cdcHead} onChange={handleChange} required /> */}
             <button type="button" onClick={upload}>Upload Certificate</button>
           </div>
