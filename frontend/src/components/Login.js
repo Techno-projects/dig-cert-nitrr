@@ -1,15 +1,19 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import Faculty_Login from './Faculty_login';
-import AuthContext from '../context/AuthContext';
-import './css/Form.css';
+import React, { useEffect, useState, useContext } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import Faculty_Login from "./Faculty_login";
+import AuthContext from "../context/AuthContext";
+import "./css/Form.css";
+import { LoginContext } from "../App";
 
 const Login = () => {
   // let { name } = useContext(AuthContext);
+
+  const { setUserLoggedIn } = useContext(LoginContext);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [userType, setUserType] = useState(0);
   const [error, setError] = useState(null);
@@ -27,55 +31,78 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    console.log(e.target)
+    console.log(e.target);
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:8000/api/user_login ', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8000/api/user_login ", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(formData),
-      })
+      });
 
       console.log(response);
       if (response.ok) {
+        setUserLoggedIn(true);
         const data = await response.json();
-        localStorage.setItem('login', data.token);
-        window.location.href = '/event_management';
+        localStorage.setItem("login", data.token);
+        window.location.href = "/event_management";
       } else {
-        setError('Authentication failed. Please check your username and password.');
+        setError(
+          "Authentication failed. Please check your username and password."
+        );
       }
-    }
-    catch {
-      console.error('Error:', error);
+    } catch {
+      console.error("Error:", error);
     }
   };
 
   return (
     <>
-      {userType == 1 ? <Faculty_Login /> :
+      {userType == 1 ? (
+        <Faculty_Login />
+      ) : (
         <div>
           {/* <div>
             <a href='?type=faculty'>
               <input type='button' value="Faculty" />
             </a>
           </div> */}
-          <div className="form-container" id='default'>
-            <h1 className="title">Login</h1>
-            <form className="form" onSubmit={handleSubmit}>
+          <div className="form-container" id="default">
+            <div className="form-internal">
+              <h1 className="title">Login</h1>
+              <form className="form" onSubmit={handleSubmit}>
+                <input
+                  placeholder="Email ID"
+                  className="input_text"
+                  type="text"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
 
-              <input placeholder='Email ID' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-
-              <input placeholder='Password' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
-              <button type="submit">Submit</button>
-            </form>
+                <input
+                  placeholder="Password"
+                  className="input_text"
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+                <button type="submit">Submit</button>
+              </form>
+            </div>
+            {error && <p style={{ color: "red" }}>{error}</p>}
           </div>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
-      }
+      )}
     </>
   );
 };

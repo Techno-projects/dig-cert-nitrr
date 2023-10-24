@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 // import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
@@ -13,11 +13,46 @@ import Certificate from './components/Certificate';
 import './App.css';
 // import PrivateRoute from './utils/PrivateRoute';
 import Table from './components/Table';
+import Navbar from './components/Navbar';
+import { useState } from 'react';
+import Footer from './components/Footer';
+
+
+export const LoginContext=createContext();
+
 
 const App = () => {
+  const [userLoggedIn,setUserLoggedIn]=useState(false);
+  const [facultyLoggedIn,setFacultyLoggedIn]=useState(false);
+  
+  const userLogout=()=>{
+
+      //api call to backend from here
+
+    setUserLoggedIn(false);
+  }
+
+  const facultyLogout=()=>{
+
+    //
+
+    setFacultyLoggedIn(false);
+  }
+
+  const info={
+    userLoggedIn,
+    setUserLoggedIn,
+    facultyLoggedIn,
+    setFacultyLoggedIn,
+    userLogout,
+    facultyLogout,
+  }
+
   return (
+    <LoginContext.Provider value={info}>
     <Router>
       <div className="App">
+        <Navbar/>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/Login" element={<Login />} />
@@ -30,8 +65,11 @@ const App = () => {
           <Route path='/Certificate' element={<Certificate />} />
           <Route path='/table' element={<Table />} />
         </Routes>
+
+        <Footer/>
       </div>
     </Router>
+    </LoginContext.Provider>
   );
 };
 

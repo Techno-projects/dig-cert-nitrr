@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LoginContext } from '../App';
+import './css/Form.css';
 // import './css/Faculty_login.css';
 
 const Faculty_Login = () => {
+
+  const {setFacultyLoggedIn} = useContext(LoginContext);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,6 +33,7 @@ const Faculty_Login = () => {
       })
 
       if (response.ok) {
+        setFacultyLoggedIn(true);
         const data = await response.json();
         if (data.ok) {
           navigate("/table", {
@@ -51,6 +57,7 @@ const Faculty_Login = () => {
   return (
     <div>
       <div className="form-container">
+        <div className='form-internal'>
         <h1 className="title">Login</h1>
 
         <form className="form" onSubmit={handleSubmit}>
@@ -65,6 +72,7 @@ const Faculty_Login = () => {
         {/* <Link to="/register">
           <button className="register-button">Register</button>
         </Link> */}
+      </div>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
