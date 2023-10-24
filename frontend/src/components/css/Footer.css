@@ -3,13 +3,13 @@
   color: #0074d9;
   text-align: center;
   /* padding: 10px; */
-  /* position: fixed; */
-  position: relative;
+  position: fixed;
+  /* position: relative; */
   /* position: absolute; */
   bottom: 0;
   left: 0;
   width: 100%;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Copyright notice */

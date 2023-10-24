@@ -23,6 +23,11 @@ const Table = () => {
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
   };
 
+  if (!auth) {
+    alert('unauthorized user');
+    window.location.href("/");
+  }
+
   const dateFilterParams = {
     filter: 'agTextColumnFilter', // Use text filter for date column
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
@@ -190,7 +195,7 @@ const Table = () => {
 
   const handleSign = async (e) => {
     const base64String = await convertFileToBase64(e.target.files[0]);
-    
+
     setSignature(base64String);
   }
 
