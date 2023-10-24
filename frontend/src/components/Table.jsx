@@ -23,6 +23,11 @@ const Table = () => {
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
   };
 
+  if (!auth) {
+    alert('unauthorized user');
+    window.location.href("/");
+  }
+
   const dateFilterParams = {
     filter: 'agTextColumnFilter', // Use text filter for date column
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],

@@ -5,11 +5,15 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="footer">
-      <div className="copyright">
-      Team Technocracy &copy; {currentYear} 
+    <>
+    
+    <div className="footer">
+      <div className='copyright'>
+        Team Technocracy 2023
       </div>
-    </footer>
+    </div>
+    
+  </>
   );
 };
 

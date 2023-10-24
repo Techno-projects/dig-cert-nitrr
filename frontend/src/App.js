@@ -65,10 +65,9 @@ const App = () => {
           <Route path='/Certificate' element={<Certificate />} />
           <Route path='/table' element={<Table />} />
         </Routes>
-
-        <Footer/>
       </div>
     </Router>
+    <Footer/>
     </LoginContext.Provider>
   );
 };

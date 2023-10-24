@@ -1,12 +1,15 @@
 /* src/App.css */
 body {
   margin: 0;
+  box-sizing: border-box;
   /* display: flex; */
   /* justify-content: center; */
   /* align-items: center; */
-  height:100vh;
+  /* height:100vh; */
   background: #cae5fc;
-  overflow: hidden;
+  overflow-x: hidden;
+  min-height: 100vh;
+  /* height: 100%; */
 }
 
 /* .container {
@@ -28,10 +31,10 @@ body {
   /* margin-top: 20px; */
 }
 
-.form label,
+/* .form label,
 .form input {
   margin: 10px;
-}
+} */
 
 button {
   margin-top: 20px;
