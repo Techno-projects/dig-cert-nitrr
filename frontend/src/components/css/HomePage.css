@@ -5,7 +5,8 @@
     justify-content: center;   
     height:50vh; 
     /* border: 2px solid red; */
-    margin: 8rem;
+    position: relative;
+    margin: 12.5%;
     width:50%;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 15px;
@@ -16,6 +17,7 @@
 .HomePage-Container{
     display:flex;
     justify-content: center;
+    align-items: center;
 }
 
 .logo img{
