@@ -40,9 +40,11 @@ def is_org_auth(token):
     except Exception as e:
         return False
 
+
 @api_view(['GET'])
 def home(request):
     return Response({"message": "I am backend, the most powerful"})
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -53,6 +55,7 @@ def user_register(request):
         return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # logging in user
 @api_view(["POST"])
@@ -72,7 +75,8 @@ def user_login(request):
         return Response({"ok": False, "message": "User doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while user login"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+
 @api_view(["POST"])
 def register_event(request):
     data = request.data
@@ -81,8 +85,11 @@ def register_event(request):
     
     event_db = data['event_data']
     certi = data['certificate']
+    isCDC = False
+    if data['cdc'] == 'true':
+        isCDC = True
     try:
-        Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'])
+        Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'], isCDC=isCDC)
         return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -101,7 +108,8 @@ def faculty_register(request):
         return Response({"ok": True, "message": "Faculty registered"})
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
-    
+
+
 @api_view(["POST"])
 def faculty_login(request):
     data = request.data
@@ -121,15 +129,14 @@ def faculty_login(request):
 @api_view(["POST"])
 def get_event_details(request):
     data = request.data
-    print(data['email'])
     try:
         orgs = Faculty_Org.objects.filter(faculty_id=data['email'])
         
         # current faculty is related to all in this list
         organisations = []
         for i in orgs:
-            org_email = i.organisation_id
-            org_name = (Organisation.objects.get(email=org_email)).name
+            org_name = i.organisation_id
+            org_email = (Organisation.objects.get(name=org_name)).email
             organisations.append([org_email, org_name])
         
         def is_serial_present(serial):
@@ -170,12 +177,15 @@ def get_event_details(request):
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
+
 @api_view(["POST"])
 def approveL0(request):
     data = request.data
     if (not is_faculty_auth(data['token'])):
         return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     
+    current_fac_email = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+    current_fac_email = current_fac_email['email']
     del data['token']
     faculty_sign_image = data['faculty_sign']
 
@@ -216,8 +226,11 @@ def approveL0(request):
         del data['Serial No']
         del data['fac_signed_in']
         img = Image.open(certificate)
+        image_width, image_height = img.size
+        font_percentage = 0.03
+        font_size = int(min(image_width, image_height) * font_percentage)
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype("DejaVuSans.ttf", size=60)
+        font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
 
         for i in data.keys():
             text_to_put = data[i]
@@ -225,8 +238,8 @@ def approveL0(request):
             text_color = (0, 0, 0)
             draw.text((coordinate['x'], coordinate['y']), str(text_to_put), fill=text_color, font=font,)
         
-        fac_sign_x = coords['faculty_sign']['x']
-        fac_sign_y = coords['faculty_sign']['y']
+        fac_sign_x = coords[current_fac_email]['x']
+        fac_sign_y = coords[current_fac_email]['y']
 
         img = img.convert("RGBA")
         rgba_thresh = rgba_thresh.convert("RGBA")
@@ -240,6 +253,7 @@ def approveL0(request):
         return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "message": "Error while creating certificate", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(["POST"])
 def get_rows(request):
@@ -257,3 +271,44 @@ def get_rows(request):
         return Response({"message": header_rows}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"ok": False, "error": str(e), "message": "Error while uploading events"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def get_all_org(request):
+    data = request.data
+    decoded = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+    email = decoded['email']
+
+    if (not is_org_auth(data['token'])):
+        return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        orgs = Organisation.objects.all()
+        org_names = []
+        for i in orgs:
+            if (i.email == email):
+                continue
+            org_names.append(i.name)
+        return Response({"ok": True, "message": org_names}, status=status.HTTP_200_OK)
+    except:
+        return Response({"ok": False, "message": "Error fetching organisation"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def get_faculties(request):
+    data = request.data
+    faculties = []
+
+    current_org = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+    current_org = current_org['email']
+    current_org_name = Organisation.objects.get(email=current_org).name
+    current_facs = Faculty_Org.objects.filter(organisation_id=current_org_name)
+    for i in current_facs:
+        faculties.append(i.faculty_id)
+
+    for i in data['partners']:
+        faculties_of_i = Faculty_Org.objects.filter(organisation_id=i)
+        for j in faculties_of_i:
+            faculties.append(j.faculty_id)
+
+    return Response({"ok": True, "message": faculties}, status=status.HTTP_200_OK)
