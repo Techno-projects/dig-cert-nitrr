@@ -116,7 +116,9 @@ const EventManagementPage = () => {
 
               {partners.map(partner => (
                 <>
-                  <input type='checkbox' value={partner} onChange={handlePartners} /> {partner}
+                  <div className='input_class'>
+                    <input type='checkbox' value={partner} onChange={handlePartners} /> {partner}
+                  </div>
                 </>
               ))}
               {/* <label htmlFor="cdcHead">CDC Head:</label>

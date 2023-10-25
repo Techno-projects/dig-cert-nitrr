@@ -124,7 +124,7 @@ const Certificate = () => {
         const yInPixels = (y / rect.height) * imageHeight;
         // console.log(xInPixels, yInPixels);
 
-        coords[selectedField] = { x: xInPixels + 62.5, y: yInPixels + 12.5 };
+        coords[selectedField] = { x: xInPixels, y: yInPixels };
 
         // Create a new rectangle element
         // const rectangle = document.createElement("div");

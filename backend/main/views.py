@@ -240,28 +240,50 @@ def approve(data):
             img = Image.open(file_location)
             certi_exists = True
 
-        image_width, image_height = img.size
-        font_percentage = 0.03
-        font_size = int(min(image_width, image_height) * font_percentage)
+        def find_max_font_size(draw, text, font, max_width, max_height):
+            font_size = 1
+            while True:
+                text_width = font.getmask(text).getbbox()[2]
+                text_height = font.getmask(text).getbbox()[3]
+
+                if text_width < max_width and text_height < max_height:
+                    font_size += 1
+                    font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+                else:
+                    return font_size - 1
+
+        box_width = 559.5415632615322
+        box_height = 111.90831265230646
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
+        font = ImageFont.truetype("DejaVuSans.ttf", size=20)
+        max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
+        font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
+        
 
         for i in data.keys():
             text_to_put = data[i]
             coordinate = coords[i]
             text_color = (0, 0, 0)
-            draw.text((coordinate['x'], coordinate['y']), str(text_to_put), fill=text_color, font=font,)
+            font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
+            x = coordinate['x'] + (125 / 2)
+            y = coordinate['y'] + (25 / 2)
+            # draw.rectangle([x, y, x + box_width, y + box_height], outline="red")
+            # draw.text((x, y), str(text_to_put), fill=text_color, font=font,)
+            text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+            text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+            draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
         
         try:
-            fac_sign_x = coords[current_fac_email]['x']
-            fac_sign_y = coords[current_fac_email]['y']
+            fac_sign_x = coords[current_fac_email]['x'] + (125 / 2)
+            fac_sign_y = coords[current_fac_email]['y'] + (25 / 2)
         except KeyError as e:
             return Response({"ok": False, "message": "You can't sign this certificate", "error": str(e)}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
         img = img.convert("RGBA")
         rgba_thresh = rgba_thresh.convert("RGBA")
-        
+        rgba_thresh = rgba_thresh.resize((int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
+
         paste_box = (int(fac_sign_x), int(fac_sign_y), int(fac_sign_x + rgba_thresh.width), int(fac_sign_y + rgba_thresh.height))
         output_filename = serial_no.replace("/", '_') + file_extension
         img.paste(rgba_thresh, paste_box, rgba_thresh)
