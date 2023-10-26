@@ -65,6 +65,6 @@ class Certificate(models.Model):
     status = models.CharField()
 
 
-class Faculty_Events(models.Model):
+class Faculty_Event(models.Model):
     faculty = models.ForeignKey(Faculty_Advisor, to_field="email", on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)

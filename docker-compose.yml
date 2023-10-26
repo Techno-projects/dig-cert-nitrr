@@ -9,6 +9,7 @@ services:
     command: bash -c "python manage.py migrate &&
                       pip install -r requirements.txt &&
                       python manage.py runserver 0.0.0.0:8000"
+    image: piyushthedock/dig-cert-nitrr-backend:v1
 
   frontend:
     restart: always
@@ -25,6 +26,7 @@ services:
       - backend
     environment:
       - WATCHPACK_POLLING=true
+    image: piyushthedock/dig-cert-nitrr-frontend:v1
 
   db:
     image: postgres
