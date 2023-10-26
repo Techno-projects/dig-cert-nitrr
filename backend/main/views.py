@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Event, Faculty_Advisor, Organisation, Certificate, Faculty_Org, Faculty_Events
+from .models import Event, Faculty_Advisor, Organisation, Certificate, Faculty_Org, Faculty_Event
 import json
 import jwt
 import os
@@ -98,8 +98,8 @@ def register_event(request):
             print(i)
             faculty_i = Faculty_Advisor.objects.get(email=i)
             current_event = Event.objects.get(id=current_event_id)
-            faculty_events.append(Faculty_Events(faculty=faculty_i, event=current_event))
-        Faculty_Events.objects.bulk_create(faculty_events)
+            faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
+        Faculty_Event.objects.bulk_create(faculty_events)
 
         return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
@@ -143,7 +143,7 @@ def get_event_details(request):
     fac_email = data['email']
 
     try:
-        fac_events = Faculty_Events.objects.filter(faculty=fac_email)
+        fac_events = Faculty_Event.objects.filter(faculty=fac_email)
 
         def is_serial_present(serial):
             return Certificate.objects.filter(serial_no=serial).exists()
@@ -233,7 +233,9 @@ def approve(data):
         del data['fac_signed_in']
         file_extension = os.path.splitext(certificate.path)[1]
         output_filename = serial_no.replace("/", '_') + file_extension
+        os.makedirs("/backend/signed_certificates/", exist_ok=True)
         file_location = f"/backend/signed_certificates/{output_filename}"
+        
         img = Image.open(certificate)
         certi_exists = False
         if os.path.isfile(file_location):

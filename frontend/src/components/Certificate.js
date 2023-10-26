@@ -147,10 +147,10 @@ const Certificate = () => {
         const box = fieldBox[selectedField].box;
         const title = fieldBox[selectedField].title;
         title.innerHTML = selectedField;
-        box.style.left = e.clientX + "px";
-        box.style.top = e.clientY + "px";
-        title.style.left = e.clientX + "px";
-        title.style.top = e.clientY - 21 + "px";
+        box.style.left = (e.clientX + window.scrollX) + "px";
+        box.style.top = (e.clientY + window.scrollY) + "px";
+        title.style.left = (e.clientX + window.scrollX)+ "px";
+        title.style.top = (e.clientY + window.scrollY) - 21 + "px";
 
         rectRef.current.appendChild(box)
         rectRef.current.appendChild(title)
@@ -191,6 +191,7 @@ const Certificate = () => {
                 }
             })
             alert(response.data.message);
+            window.location.href = "/Event_management";
         }
         catch (error) {
             alert(error.response.data.message);
@@ -199,7 +200,7 @@ const Certificate = () => {
 
     return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ display: 'flex', margin: '10%' }}>
+            <div style={{ display: 'flex', marginTop: '4rem' }}>
                 {!certi && <div className='Certificate_box'>
                     <div className='Certificate_heading'>Upload Your certificate below :</div>
                     <input className='Certificate_file' type="file" accept='image/*' onChange={handleChange} />

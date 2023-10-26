@@ -18,6 +18,7 @@ const Table = () => {
   const columnDefs1 = [];
   const columnDefs2 = [];
   const [selectedCellValue, setSelectedCellValue] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const filterParams = {
     filter: 'agDateColumnFilter',
     filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
@@ -91,12 +92,12 @@ const Table = () => {
           }
         });
         const data = response.data;
+        console.log(data);
         if (data.ok) {
           set_my_signed(data.signed)
           set_pending_data(data.pending)
         }
         else {
-          console.log();
           alert("Error logging in");
           // window.location.href = "/login?type=faculty";
         }
@@ -234,6 +235,7 @@ const Table = () => {
 
   const gridApi1 = useRef(null);
   const submitSelectedRows = async () => {
+    setSubmitting(true);
     const selectedRows = gridApi1.current.getSelectedRows();
     if (!signature) {
       alert("Please upload your signature")
@@ -261,14 +263,16 @@ const Table = () => {
         // set_pending_data(copy_pending);
         // set_my_signed(copy_signed);
         alert("Signed");
-        // window.location.reload();
+        window.location.reload();
       }
     }
     catch (error) {
       console.log(error.response.data);
       alert(error.response.data.message);
+      setSubmitting(false);
       // window.location.reload();
     }
+    setSubmitting(false);
   }
 
   return (
@@ -286,7 +290,7 @@ const Table = () => {
             rowData={pending_data}
             rowSelection={'multiple'}
           />
-          <button onClick={submitSelectedRows}>Submit</button>
+          {submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
         </div>
         <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>
