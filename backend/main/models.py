@@ -28,6 +28,7 @@ class Event(models.Model):
     certificate = models.FileField(upload_to=certificate_upload_path)
     coordinates = models.CharField()
     isCDC = models.BooleanField(default=True)
+    dispatch = models.CharField()
 
     def __str__(self):
         return f"{self.id}-{self.organisation}-{self.event_name}"
@@ -66,5 +67,7 @@ class Certificate(models.Model):
 
 
 class Faculty_Event(models.Model):
+    class Meta:
+        verbose_name_plural = "Faculty_Events"
     faculty = models.ForeignKey(Faculty_Advisor, to_field="email", on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)

@@ -8,7 +8,8 @@ const Certificate = () => {
     const location = useLocation();
     const eventData = location.state.eventData;
     const faculties = location.state.faculties;
-    
+    const dispatch = location.state.dispatch;
+
     const imageRef = useRef(null);
     const rectRef = useRef(null);
     const [fields, setFields] = useState([]);
@@ -79,8 +80,20 @@ const Certificate = () => {
                 title.innerHTML = 'cdc'
                 title.id = 'cdc';
                 tmp['cdc'] = { box: box, title: title };
+
+                const box_serial = document.createElement('div');
+                const title_serial = document.createElement('div');
+                box_serial.className = "certificateRect";
+                box_serial.style.width = "125px";
+                box_serial.style.height = "25px";
+                box_serial.id = 'serial';
+                title_serial.className = "certificateRect";
+                title_serial.style.border = "none"
+                title_serial.innerHTML = 'serial'
+                title_serial.id = 'serial';
+                tmp['Serial No'] = { box: box_serial, title: title_serial };
+
                 setFieldBox(tmp)
-                // console.log(fieldBox);
             }
             catch (error) {
                 console.log(error);
@@ -149,7 +162,7 @@ const Certificate = () => {
         title.innerHTML = selectedField;
         box.style.left = (e.clientX + window.scrollX) + "px";
         box.style.top = (e.clientY + window.scrollY) + "px";
-        title.style.left = (e.clientX + window.scrollX)+ "px";
+        title.style.left = (e.clientX + window.scrollX) + "px";
         title.style.top = (e.clientY + window.scrollY) - 21 + "px";
 
         rectRef.current.appendChild(box)
@@ -172,6 +185,7 @@ const Certificate = () => {
             body.append('user', eventData.user)
             body.append('token', auth);
             body.append('cdc', eventData.cdc);
+            body.append('dispatch', dispatch);
             Object.keys(coords).map(key => {
                 if (faculties.includes(key)) {
                     required_faculties.push(key)
@@ -218,6 +232,7 @@ const Certificate = () => {
                             <label for={field}>{field}</label><br />
                         </>
                     ))}
+
                     {faculties.map(faculty => (
                         <>
                             <input type='radio' name='selection' value={faculty} onChange={(e) => setSelected(e.target.value)} />
@@ -227,7 +242,10 @@ const Certificate = () => {
 
                     {eventData.cdc && <><input type='radio' name='selection' value="cdc" onChange={(e) => setSelected(e.target.value)} />
                         <label for="cdc_sign">CDC Signature</label><br /></>}
-                    <br />
+
+                    <input type='radio' name='selection' value="Serial No" onChange={(e) => setSelected(e.target.value)} />
+                    <label for="Serial No">Serial No.</label><br />
+                    
                     <button onClick={submit}>Submit</button>
                 </div>}
             </div>
