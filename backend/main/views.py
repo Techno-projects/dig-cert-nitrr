@@ -91,11 +91,10 @@ def register_event(request):
     if data['cdc'] == 'true':
         isCDC = True
     try:
-        Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'], isCDC=isCDC)
+        Event.objects.create(organisation=data['user'], event_data=event_db, certificate=certi, coordinates=data['coords'], event_name=data['event'], isCDC=isCDC, dispatch=data['dispatch'])
         current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
         faculty_events = []
         for i in faculties_required:
-            print(i)
             faculty_i = Faculty_Advisor.objects.get(email=i)
             current_event = Event.objects.get(id=current_event_id)
             faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
@@ -159,9 +158,10 @@ def get_event_details(request):
         signed_rows = []
         for any_event in fac_events:
             event_file = any_event.event.event_data
+            dispatch = any_event.event.dispatch
             students = pd.read_excel(event_file)
             students.reset_index(drop=False, inplace=True, names='Serial No')
-            students['Serial No'] = students['Serial No'].apply(lambda x: str(any_event.event.id) + "/" + str(x))
+            students['Serial No'] = students['Serial No'].apply(lambda x: dispatch + "/" + str(any_event.event.id) + "/" + str(x))
             mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
             mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
             all_unsigend_students = students[mask].to_dict(orient='records')
@@ -219,6 +219,10 @@ def approve(data):
     try:
         org_email = Organisation.objects.get(name=data['Organisation']).email
         event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
+        isCDC = event_details.isCDC
+        certi_status = "0"
+        if not isCDC:
+            certi_status = "1"
         coords = event_details.coordinates
         certificate = event_details.certificate
         coords = json.loads(coords)
@@ -229,7 +233,6 @@ def approve(data):
 
         serial_no = data['Serial No']
         fac_signed_in = data['fac_signed_in']
-        del data['Serial No']
         del data['fac_signed_in']
         file_extension = os.path.splitext(certificate.path)[1]
         output_filename = serial_no.replace("/", '_') + file_extension
@@ -298,7 +301,7 @@ def approve(data):
             fac_ids = json.dumps(fac_ids)
             Certificate.objects.filter(serial_no=serial_no).update(faculty_advisor=fac_ids)
         else:
-            Certificate.objects.create(faculty_advisor=json.dumps([fac_signed_in]), serial_no=serial_no, status="0")
+            Certificate.objects.create(faculty_advisor=json.dumps([fac_signed_in]), serial_no=serial_no, status=certi_status)
 
         return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
     except Exception as e:
@@ -308,7 +311,6 @@ def approve(data):
 @api_view(["POST"])
 def approveL0(request):
     data = request.data
-    print(len(data))
     for i in range(0, len(data)):
         res = approve(data[i])
         if not res.data['ok']:

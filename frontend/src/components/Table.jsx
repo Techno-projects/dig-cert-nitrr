@@ -238,7 +238,8 @@ const Table = () => {
     setSubmitting(true);
     const selectedRows = gridApi1.current.getSelectedRows();
     if (!signature) {
-      alert("Please upload your signature")
+      alert("Please upload your signature");
+      setSubmitting(false);
       return;
     }
     for (let i = 0; i < selectedRows.length; i++) {
@@ -290,7 +291,7 @@ const Table = () => {
             rowData={pending_data}
             rowSelection={'multiple'}
           />
-          {submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
+          {!submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
         </div>
         <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>

@@ -24,6 +24,7 @@ const EventManagementPage = () => {
   const [fields, setFields] = useState({});
   const [partners, setPartners] = useState([]);
   const [selectedPartners, setSelectedPartners] = useState({});
+  const [dispatch, setDispatch] = useState("CDC");
   const [faculties, setFaculties] = useState([]);
 
   useEffect(() => {
@@ -66,6 +67,10 @@ const EventManagementPage = () => {
     setSelectedPartners(tmp);
   }
 
+  const handleDispatch = (e) => {
+    setDispatch(e.target.value);
+  }
+
   const [certi, setFile] = useState();
   const imageRef = useRef(null);
   const rectRef = useRef(null);
@@ -82,7 +87,7 @@ const EventManagementPage = () => {
           }
         });
         navigate('/certificate', {
-          state: { eventData: eventData, faculties: response.data.message }
+          state: { eventData: eventData, faculties: response.data.message, dispatch: dispatch }
         })
       }
       catch (error) {
@@ -112,8 +117,16 @@ const EventManagementPage = () => {
                 <input type='checkbox' style={{ display: 'inline-block', verticalAlign: 'top', width: '14px', height: '14px' }} name='cdc' checked={eventData.cdc} onChange={handleChange} /> CDC Signature Required?
                 <p />
               </div>
-              <label for="partners">Partner Organisation:</label>
 
+              <label for="dispatch">Dispatched by:</label>
+              <div className='input_class'>
+                <input type='radio' name="dispatch" value="CDC" onChange={handleDispatch} /> CDC
+              </div>
+              <div className='input_class'>
+                <input type='radio' name="dispatch" value="DSW" onChange={handleDispatch} /> DSW
+              </div>
+
+              <label for="partners">Partner Organisation:</label>
               {partners.map(partner => (
                 <>
                   <div className='input_class'>
