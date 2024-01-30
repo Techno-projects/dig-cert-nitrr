@@ -17,9 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from main.views import home
+from django.conf.urls.static import static
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 urlpatterns = [
     path("", home),
     path('api/', include("main.urls")),
     path('admin/', admin.site.urls),
 ]
+
+urlpatterns += static('/signed_certificates/',
+                      document_root=os.path.join(BASE_DIR,
+                                                 'signed_certificates'))

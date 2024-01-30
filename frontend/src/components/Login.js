@@ -9,7 +9,7 @@ const Login = () => {
 
   const { setUserLoggedIn } = useContext(LoginContext);
 
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const [formData, setFormData] = useState({
     email: "",
     password: "",

@@ -98,17 +98,45 @@ const Table = () => {
           set_pending_data(data.pending)
         }
         else {
-          alert("Error logging in");
+          alert("Error while fetching events");
           // window.location.href = "/login?type=faculty";
         }
       }
       catch (error) {
         alert(error.response.data.message);
         // history.pushState("/login?type=faculty");
-        // window.location.href = "/login?type=faculty";
+        window.location.href = "/login?type=faculty";
       }
     }
-    getEvents();
+    const getCDCEvents = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/get_cdc_events', {
+          headers: {
+            "Content-type": "application/json"
+          }
+        });
+        const data = response.data;
+        if (data.ok) {
+          set_my_signed(data.signed)
+          set_pending_data(data.pending)
+        }
+        else {
+          alert("Error while fetching events");
+          // window.location.href = "/login?type=faculty";
+        }
+      }
+      catch (error) {
+        alert(error.response.data.message);
+        // history.pushState("/login?type=faculty");
+        window.location.href = "/login?type=faculty";
+      }
+    }
+    if (!fac_signed_in.iscdc) {
+      getEvents();
+    }
+    else {
+      getCDCEvents();
+    }
   }, [fac_email]);
 
   if (pending_data.length > 0) {
@@ -238,7 +266,8 @@ const Table = () => {
     setSubmitting(true);
     const selectedRows = gridApi1.current.getSelectedRows();
     if (!signature) {
-      alert("Please upload your signature")
+      alert("Please upload your signature");
+      setSubmitting(false);
       return;
     }
     for (let i = 0; i < selectedRows.length; i++) {
@@ -249,11 +278,21 @@ const Table = () => {
       selectedRows[i].token = auth;
     }
     try {
-      const response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
-        headers: {
-          'Content-type': 'application/json'
-        }
-      });
+      let response;
+      if (!fac_signed_in.iscdc) {
+        response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
+          headers: {
+            'Content-type': 'application/json'
+          }
+        });
+      }
+      else {
+        response = await axios.post('http://localhost:8000/api/approveL1', selectedRows, {
+          headers: {
+            'Content-type': 'application/json'
+          }
+        });
+      }
       if (response.data.ok) {
         // let copy_pending = [...pending_data];
         // const copy_signed = [...my_signed];
@@ -267,7 +306,7 @@ const Table = () => {
       }
     }
     catch (error) {
-      console.log(error.response.data);
+      console.error(error.response.data);
       alert(error.response.data.message);
       setSubmitting(false);
       // window.location.reload();
@@ -290,7 +329,7 @@ const Table = () => {
             rowData={pending_data}
             rowSelection={'multiple'}
           />
-          {submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
+          {!submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
         </div>
         <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>

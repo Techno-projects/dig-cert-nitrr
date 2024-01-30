@@ -13,3 +13,4 @@ python-dotenv
 pillow
 # opencv-python
 opencv-python-headless
+pylint-django

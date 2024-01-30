@@ -1,0 +1,13 @@
+[MASTER]
+ignore=migrations,__pycache__
+
+[MESSAGES CONTROL]
+disable=missing-function-docstring, missing-module-docstring, missing-class-docstring, W0718, too-many-return-statements
+
+[INDENTATION]
+# Set the indentation to 2 spaces
+indent-string = '  '
+
+[BASIC]
+function-naming-style = snake_case
+variable-naming-style = camelCase
