@@ -16,7 +16,6 @@ import numpy as np
 
 load_dotenv()
 
-
 def is_faculty_auth(token):
     try:
         decoded = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])

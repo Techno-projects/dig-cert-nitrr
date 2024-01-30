@@ -17,71 +17,71 @@ const Table = () => {
   const fac_email = location.state.email;
   const columnDefs1 = [];
   const columnDefs2 = [];
-  const [selectedCellValue, setSelectedCellValue] = useState(null);
+  const selectedCellValue = null;
   const [submitting, setSubmitting] = useState(false);
-  const filterParams = {
-    filter: 'agDateColumnFilter',
-    filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
-  };
+  // const filterParams = {
+  //   filter: 'agDateColumnFilter',
+  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
+  // };
 
   if (!auth) {
     alert('unauthorized user');
     window.location.href("/");
   }
 
-  const dateFilterParams = {
-    filter: 'agTextColumnFilter', // Use text filter for date column
-    filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
-  };
+  // const dateFilterParams = {
+  //   filter: 'agTextColumnFilter', // Use text filter for date column
+  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
+  // };
 
-  const handleSignatureSubmit = () => {
-    const signature = window.prompt('Please enter your signature:');
-    if (signature) {
-      // Handle the signature input here
-      alert('Signature submitted: ' + signature);
-    }
-  };
+  // const handleSignatureSubmit = () => {
+  //   const signature = window.prompt('Please enter your signature:');
+  //   if (signature) {
+  //     // Handle the signature input here
+  //     alert('Signature submitted: ' + signature);
+  //   }
+  // };
 
 
-  const onCellClicked = async (params) => {
-    if (!signature) {
-      alert("Please upload your signature")
-      return;
-    }
-    const row_data = {};
-    const headers = Object.keys(params.data);
-    headers.map(col => {
-      row_data[col] = params.data[col]
-    })
-    row_data.organisation = location.state.org_name;
-    row_data.event_name = location.state.event_name;
-    row_data.faculty_sign = signature;
-    row_data.fac_signed_in = fac_signed_in.email;
-    row_data.token = auth;
-    try {
-      const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
-        headers: {
-          'Content-type': 'application/json'
-        }
-      });
-      if (response.data.ok) {
-        let copy_pending = [...pending_data];
-        const copy_signed = [...my_signed];
-        const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
-        copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
-        copy_signed.push(deleted_row);
-        set_pending_data(copy_pending);
-        set_my_signed(copy_signed);
-        alert("Signed");
-        window.location.reload();
-      }
-    }
-    catch (error) {
-      console.log(error.response.data);
-      alert(error.response.data.message);
-      // window.location.reload();
-    }
-  };
+  // const onCellClicked = async (params) => {
+  //   if (!signature) {
+  //     alert("Please upload your signature")
+  //     return;
+  //   }
+  //   const row_data = {};
+  //   const headers = Object.keys(params.data);
+  //   headers.map(col => {
+  //     row_data[col] = params.data[col]
+  //   })
+  //   row_data.organisation = location.state.org_name;
+  //   row_data.event_name = location.state.event_name;
+  //   row_data.faculty_sign = signature;
+  //   row_data.fac_signed_in = fac_signed_in.email;
+  //   row_data.token = auth;
+  //   try {
+  //     const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
+  //       headers: {
+  //         'Content-type': 'application/json'
+  //       }
+  //     });
+  //     if (response.data.ok) {
+  //       let copy_pending = [...pending_data];
+  //       const copy_signed = [...my_signed];
+  //       const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
+  //       copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
+  //       copy_signed.push(deleted_row);
+  //       set_pending_data(copy_pending);
+  //       set_my_signed(copy_signed);
+  //       alert("Signed");
+  //       window.location.reload();
+  //     }
+  //   }
+  //   catch (error) {
+  //     console.log(error.response.data);
+  //     alert(error.response.data.message);
+  //     // window.location.reload();
+  //   }
+  // };
 
   useEffect(() => {
     const getEvents = async () => {

@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import EventForm from './Event_form';
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from 'axios';
 import './css/Form.css';
@@ -21,10 +20,8 @@ const EventManagementPage = () => {
     window.location.href("/");
   }
   const [selectedFile, setSelectedFile] = useState(null);
-  const [fields, setFields] = useState({});
   const [partners, setPartners] = useState([]);
   const [selectedPartners, setSelectedPartners] = useState({});
-  const [faculties, setFaculties] = useState([]);
 
   useEffect(() => {
     if (!auth || !user) {
@@ -45,7 +42,7 @@ const EventManagementPage = () => {
       }
     }
     get_orgs();
-  }, []);
+  });
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -65,10 +62,6 @@ const EventManagementPage = () => {
     tmp[e.target.value] = e.target.checked;
     setSelectedPartners(tmp);
   }
-
-  const [certi, setFile] = useState();
-  const imageRef = useRef(null);
-  const rectRef = useRef(null);
 
   const upload = async () => {
     if (eventData.event !== "" && selectedFile !== null) {

@@ -5,7 +5,6 @@ const Dashboard_Admin = () => {
     const [name, setName] = useState('');
     const [club, setClub] = useState('');
     const [events, setEvents] = useState([]);
-    const [status, setStatus] = useState();
     const [selectedFile, setSelectedFile] = useState(null);
     const [newEvent, setNewEvent] = useState({ name: '', faculty: '', expectedDate: '', status: 'Unsigned' });
 
@@ -16,19 +15,13 @@ const Dashboard_Admin = () => {
             }
         }
         setEvents([...events, newEvent]);
-        setNewEvent({ name: '', faculty: '', expectedDate: '', status: 'Unsigned', fileName: '${selectedFile.name}' });
+        setNewEvent({ name: '', faculty: '', expectedDate: '', status: 'Unsigned', fileName: `${selectedFile.name}` });
     };
 
     const handleFileChange = (e) => {
         setSelectedFile(e.target.files[0]);
 
     };
-
-    const handleStatus = () => {
-        //status code from backend after signatures will be used to modify the status
-
-    };
-
     const handleRemoveEvent = (index) => {
         const updatedEvents = [...events];
         updatedEvents.splice(index, 1);
