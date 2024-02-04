@@ -17,71 +17,71 @@ const Table = () => {
   const fac_email = location.state.email;
   const columnDefs1 = [];
   const columnDefs2 = [];
-  const [selectedCellValue, setSelectedCellValue] = useState(null);
+  const selectedCellValue = null;
   const [submitting, setSubmitting] = useState(false);
-  const filterParams = {
-    filter: 'agDateColumnFilter',
-    filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
-  };
+  // const filterParams = {
+  //   filter: 'agDateColumnFilter',
+  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
+  // };
 
   if (!auth) {
     alert('unauthorized user');
     window.location.href("/");
   }
 
-  const dateFilterParams = {
-    filter: 'agTextColumnFilter', // Use text filter for date column
-    filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
-  };
+  // const dateFilterParams = {
+  //   filter: 'agTextColumnFilter', // Use text filter for date column
+  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
+  // };
 
-  const handleSignatureSubmit = () => {
-    const signature = window.prompt('Please enter your signature:');
-    if (signature) {
-      // Handle the signature input here
-      alert('Signature submitted: ' + signature);
-    }
-  };
+  // const handleSignatureSubmit = () => {
+  //   const signature = window.prompt('Please enter your signature:');
+  //   if (signature) {
+  //     // Handle the signature input here
+  //     alert('Signature submitted: ' + signature);
+  //   }
+  // };
 
 
-  const onCellClicked = async (params) => {
-    if (!signature) {
-      alert("Please upload your signature")
-      return;
-    }
-    const row_data = {};
-    const headers = Object.keys(params.data);
-    headers.map(col => {
-      row_data[col] = params.data[col]
-    })
-    row_data.organisation = location.state.org_name;
-    row_data.event_name = location.state.event_name;
-    row_data.faculty_sign = signature;
-    row_data.fac_signed_in = fac_signed_in.email;
-    row_data.token = auth;
-    try {
-      const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
-        headers: {
-          'Content-type': 'application/json'
-        }
-      });
-      if (response.data.ok) {
-        let copy_pending = [...pending_data];
-        const copy_signed = [...my_signed];
-        const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
-        copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
-        copy_signed.push(deleted_row);
-        set_pending_data(copy_pending);
-        set_my_signed(copy_signed);
-        alert("Signed");
-        window.location.reload();
-      }
-    }
-    catch (error) {
-      console.log(error.response.data);
-      alert(error.response.data.message);
-      // window.location.reload();
-    }
-  };
+  // const onCellClicked = async (params) => {
+  //   if (!signature) {
+  //     alert("Please upload your signature")
+  //     return;
+  //   }
+  //   const row_data = {};
+  //   const headers = Object.keys(params.data);
+  //   headers.map(col => {
+  //     row_data[col] = params.data[col]
+  //   })
+  //   row_data.organisation = location.state.org_name;
+  //   row_data.event_name = location.state.event_name;
+  //   row_data.faculty_sign = signature;
+  //   row_data.fac_signed_in = fac_signed_in.email;
+  //   row_data.token = auth;
+  //   try {
+  //     const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
+  //       headers: {
+  //         'Content-type': 'application/json'
+  //       }
+  //     });
+  //     if (response.data.ok) {
+  //       let copy_pending = [...pending_data];
+  //       const copy_signed = [...my_signed];
+  //       const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
+  //       copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
+  //       copy_signed.push(deleted_row);
+  //       set_pending_data(copy_pending);
+  //       set_my_signed(copy_signed);
+  //       alert("Signed");
+  //       window.location.reload();
+  //     }
+  //   }
+  //   catch (error) {
+  //     console.log(error.response.data);
+  //     alert(error.response.data.message);
+  //     // window.location.reload();
+  //   }
+  // };
 
   useEffect(() => {
     const getEvents = async () => {
@@ -98,17 +98,45 @@ const Table = () => {
           set_pending_data(data.pending)
         }
         else {
-          alert("Error logging in");
+          alert("Error while fetching events");
           // window.location.href = "/login?type=faculty";
         }
       }
       catch (error) {
         alert(error.response.data.message);
         // history.pushState("/login?type=faculty");
-        // window.location.href = "/login?type=faculty";
+        window.location.href = "/login?type=faculty";
       }
     }
-    getEvents();
+    const getCDCEvents = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/get_cdc_events', {
+          headers: {
+            "Content-type": "application/json"
+          }
+        });
+        const data = response.data;
+        if (data.ok) {
+          set_my_signed(data.signed)
+          set_pending_data(data.pending)
+        }
+        else {
+          alert("Error while fetching events");
+          // window.location.href = "/login?type=faculty";
+        }
+      }
+      catch (error) {
+        alert(error.response.data.message);
+        // history.pushState("/login?type=faculty");
+        window.location.href = "/login?type=faculty";
+      }
+    }
+    if (!fac_signed_in.iscdc) {
+      getEvents();
+    }
+    else {
+      getCDCEvents();
+    }
   }, [fac_email]);
 
   if (pending_data.length > 0) {
@@ -250,11 +278,21 @@ const Table = () => {
       selectedRows[i].token = auth;
     }
     try {
-      const response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
-        headers: {
-          'Content-type': 'application/json'
-        }
-      });
+      let response;
+      if (!fac_signed_in.iscdc) {
+        response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
+          headers: {
+            'Content-type': 'application/json'
+          }
+        });
+      }
+      else {
+        response = await axios.post('http://localhost:8000/api/approveL1', selectedRows, {
+          headers: {
+            'Content-type': 'application/json'
+          }
+        });
+      }
       if (response.data.ok) {
         // let copy_pending = [...pending_data];
         // const copy_signed = [...my_signed];
@@ -268,7 +306,7 @@ const Table = () => {
       }
     }
     catch (error) {
-      console.log(error.response.data);
+      console.error(error.response.data);
       alert(error.response.data.message);
       setSubmitting(false);
       // window.location.reload();

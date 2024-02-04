@@ -1,0 +1,7 @@
+{
+  "pylint.args": [
+    "--rcfile=backend/.pylintrc",
+    "--load-plugins=pylint_django",
+    "--django-settings-module=backend.settings"
+  ],
+}

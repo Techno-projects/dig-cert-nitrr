@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import Faculty_Login from "./Faculty_login";
-import AuthContext from "../context/AuthContext";
+import { useSearchParams } from "react-router-dom";
+import FacultyLogin from "./FacultyLogin";
 import "./css/Form.css";
 import { LoginContext } from "../App";
 
@@ -10,7 +9,7 @@ const Login = () => {
 
   const { setUserLoggedIn } = useContext(LoginContext);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -62,8 +61,8 @@ const Login = () => {
 
   return (
     <>
-      {userType == 1 ? (
-        <Faculty_Login />
+      {userType === 1 ? (
+        <FacultyLogin />
       ) : (
         <div>
           {/* <div>

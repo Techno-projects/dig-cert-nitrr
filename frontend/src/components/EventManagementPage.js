@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import EventForm from './Event_form';
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from 'axios';
 import './css/Form.css';
@@ -21,7 +20,6 @@ const EventManagementPage = () => {
     window.location.href("/");
   }
   const [selectedFile, setSelectedFile] = useState(null);
-  const [fields, setFields] = useState({});
   const [partners, setPartners] = useState([]);
   const [selectedPartners, setSelectedPartners] = useState({});
   const [dispatch, setDispatch] = useState("CDC");
@@ -46,7 +44,7 @@ const EventManagementPage = () => {
       }
     }
     get_orgs();
-  }, []);
+  });
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
