@@ -36,3 +36,17 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+  # rabbitmq:
+  #   image: "rabbitmq:management"
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+
+  # celery:
+  #   build: ./backend
+  #   command: celery -A backend worker --loglevel=info
+  #   volumes:
+  #     - ./backend:/backend
+  #   depends_on:
+  #     - rabbitmq
