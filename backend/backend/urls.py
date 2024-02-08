@@ -30,5 +30,6 @@ urlpatterns = [
 ]
 
 urlpatterns += static('/signed_certificates/',
-                      document_root=os.path.join(BASE_DIR,
-                                                 'signed_certificates'))
+                      document_root=os.path.join(BASE_DIR, 'signed_certificates'))
+
+urlpatterns += static('/static/', document_root=os.path.join(BASE_DIR, 'static'))

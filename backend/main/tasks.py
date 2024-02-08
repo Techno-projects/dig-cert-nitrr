@@ -1,16 +1,9 @@
-from celery import shared_task
+from celery import Celery
+from main.services.mail import send_email
+
+celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
 
-@shared_task
-def add(x, y):
-  return x + y
-
-
-@shared_task
-def mul(x, y):
-  return x * y
-
-
-@shared_task
-def xsum(numbers):
-  return sum(numbers)
+@celery.task
+def send_email_queue(subject, body, recipients):
+  send_email(subject, body, recipients)
