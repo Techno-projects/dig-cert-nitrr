@@ -2,7 +2,10 @@ services:
   backend:
     image: piyushthedock/dig-cert-nitrr-backend:latest
     restart: always
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
@@ -15,7 +18,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_PORT=5432
       - SECRET_KEY=django-secret
-    
+
     depends_on:
       - db
 
@@ -51,24 +54,16 @@ services:
     image: redis:latest
 
   celery_worker:
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - backend
     volumes:
       - "./backend:/backend"
     environment:
       - C_FORCE_ROOT=true
       - CELERY_BROKER=redis://redis:6379/0
     command: python -m celery -A main.tasks worker --loglevel=DEBUG
-
-  # rabbitmq:
-  #   image: "rabbitmq:management"
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
-
-  # celery:
-  #   build: ./backend
-  #   command: celery -A backend worker --loglevel=info
-  #   volumes:
-  #     - ./backend:/backend
-  #   depends_on:
-  #     - rabbitmq
