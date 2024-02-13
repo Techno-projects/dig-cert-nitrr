@@ -1,16 +1,29 @@
 services:
   backend:
+    image: piyushthedock/dig-cert-nitrr-backend:latest
     restart: always
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/backend
     command: bash -c "python manage.py migrate &&
-                      pip install -r requirements.txt &&
                       python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - POSTGRES_NAME=digcert
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+      - SECRET_KEY=django-secret
+
+    depends_on:
+      - db
 
   frontend:
+    image: piyushthedock/dig-cert-nitrr-frontend:latest
     restart: always
     build: ./frontend
     ports:
@@ -33,20 +46,24 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=digcert
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  # rabbitmq:
-  #   image: "rabbitmq:management"
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
+  redis:
+    image: redis:latest
 
-  # celery:
-  #   build: ./backend
-  #   command: celery -A backend worker --loglevel=info
-  #   volumes:
-  #     - ./backend:/backend
-  #   depends_on:
-  #     - rabbitmq
+  celery_worker:
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - backend
+    volumes:
+      - "./backend:/backend"
+    environment:
+      - C_FORCE_ROOT=true
+      - CELERY_BROKER=redis://redis:6379/0
+    command: python -m celery -A main.tasks worker --loglevel=DEBUG

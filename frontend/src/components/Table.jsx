@@ -19,6 +19,7 @@ const Table = () => {
   const columnDefs2 = [];
   const selectedCellValue = null;
   const [submitting, setSubmitting] = useState(false);
+
   // const filterParams = {
   //   filter: 'agDateColumnFilter',
   //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
@@ -140,7 +141,10 @@ const Table = () => {
   }, [fac_email]);
 
   if (pending_data.length > 0) {
-    const firstObject = pending_data[0];
+    console.log(pending_data);
+    // const firstObject = pending_data[3];
+    let allProperties = Array.from(new Set(pending_data.flatMap(obj => Object.keys(obj))));
+    console.log(allProperties);
     let columnDef = {
       headerName: "Organisation",
       field: "Organisation",
@@ -171,8 +175,8 @@ const Table = () => {
       // checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
-    for (const key in firstObject) {
-      if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
+    for (const key of allProperties) {
+      if (key !== "Organisation" && key !== "Event" && key !== "Serial No") {
         const columnDef = {
           headerName: key,
           field: key,
@@ -188,7 +192,8 @@ const Table = () => {
   }
 
   if (my_signed.length > 0) {
-    const firstObject = my_signed[0];
+    // const firstObject = my_signed[0];
+    let allProperties = Array.from(new Set(my_signed.flatMap(obj => Object.keys(obj))));
     let columnDef = {
       headerName: "Organisation",
       field: "Organisation",
@@ -211,8 +216,8 @@ const Table = () => {
     };
     columnDefs2.push(columnDef);
 
-    for (const key in firstObject) {
-      if (firstObject.hasOwnProperty(key) && key !== "Organisation" && key !== "Event" && key !== "Serial No") {
+    for (const key of allProperties) {
+      if (key !== "Organisation" && key !== "Event" && key !== "Serial No") {
         const columnDef = {
           headerName: key,
           field: key,

@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 import cv2
 import base64
 import numpy as np
+from main.tasks import send_email_queue
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ def is_faculty_auth(token):
       return False
     return faculty
   except Exception as e:
+    print(e)
     return False
 
 
@@ -185,6 +187,12 @@ def get_event_details(request):
     return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
+def send_certi_email(recipient_email, faculty_email, serial_no, event_name, org_name):
+  body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has beed signed by the faculty {faculty_email}.<br/> You can view the ceritificate once it is signed completely, by visting at <u>getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
+
+  send_email_queue.delay("Certificate signed by dig-cert-nitrr", body, [recipient_email])
+
+
 def approveCDC(data):
   if (not is_faculty_auth(data['token'])):
     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -225,6 +233,12 @@ def approveCDC(data):
     coords = event_details.coordinates
     certificate = event_details.certificate
     coords = json.loads(coords)
+
+    org_name = data['Organisation']
+    event_name = data['Event']
+    recipient_email = data.get('email', '')
+    if recipient_email == '':
+      recipient_email = data.get('Email', '')
 
     del data['Organisation']
     del data['Event']
@@ -292,6 +306,15 @@ def approveCDC(data):
 
     if certi_exists:
       Certificate.objects.filter(serial_no=serial_no).update(status="1")
+      if recipient_email != "":
+        send_certi_email(
+            recipient_email,
+            current_fac_email,
+            serial_no.replace(
+                "/",
+                '_'),
+            event_name,
+            org_name)
     else:
       return Response({"ok": False, "message": "Certificate is not signed by the faculty advisor"},
                       status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -622,7 +645,13 @@ def register_event(request):
   certi = data['certificate']             # event's certificate file
   isCDC = False                           # is cdc signature required for this event
   faculties_required = json.loads(data['faculties'])
-  print(faculties_required)
+
+  org_name = Organisation.objects.get(email=data['user']).name
+  mail_subject = "Event assigned by dig-cert-nitrr app"
+  mail_body = f"<h3>Greetings professor,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college.<br/><br/>Thanking You."
+
+  res = send_email_queue.delay(
+      mail_subject, mail_body, faculties_required)
   if data['cdc'] == 'true':
     isCDC = True
   try:
@@ -667,21 +696,25 @@ def faculty_register(request):
     return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
 
 
-@api_view(["POST"])
-def faculty_login(request):
-  data = request.data
-  try:
-    check = Faculty_Advisor.objects.get(email=data["email"])
-    if check.password == data["password"]:
-      encoded_jwt = jwt.encode(
-          {"email": data["email"], "faculty": 1}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-      return Response({"ok": True, 'token': encoded_jwt})
-    else:
-      return Response({"ok": False, "message": "Wrong Password"})
-  except Faculty_Advisor.DoesNotExist as e:
-    return Response({"ok": False, "message": "Faculty doesn't exist"})
-  except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
+# @api_view(["POST"])
+# def faculty_login(request):
+#   data = request.data
+#   try:
+#     check = Faculty_Advisor.objects.get(email=data["email"])
+#     cdc = 0
+
+#     if check.isCDC:
+#       cdc = 1
+#     if check.password == data["password"]:
+#       encoded_jwt = jwt.encode(
+#           {"email": data["email"], "iscdc": cdc}, os.environ.get('SECRET_KEY'), algorithm="HS256")
+#       return Response({"ok": True, 'token': encoded_jwt})
+#     else:
+#       return Response({"ok": False, "message": "Wrong Password"})
+#   except Faculty_Advisor.DoesNotExist as e:
+#     return Response({"ok": False, "message": "Faculty doesn't exist"})
+#   except Exception as e:
+#     return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
 
 
 @api_view(["POST"])
@@ -736,7 +769,7 @@ def get_event_details(request):
 
 def approve(data):
   # data = request.data
-  
+
   if (not is_faculty_auth(data['token'])):
     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
   current_fac_email = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
@@ -776,7 +809,8 @@ def approve(data):
     coords = event_details.coordinates
     certificate = event_details.certificate
     coords = json.loads(coords)
-
+    event_name = data['Event']
+    org_name = data['Organisation']
     del data['Organisation']
     del data['Event']
     del data['faculty_sign']
@@ -814,9 +848,15 @@ def approve(data):
     max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
     font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
 
+    recipient_email = ""
     for i in data.keys():
       text_to_put = data[i]
-      coordinate = coords[i]
+      coordinate = coords.get(i, None)
+      recipient_email = data.get('email', '')
+      if recipient_email == '':
+        recipient_email = data.get('Email', '')
+      if not coordinate:
+        continue
       text_color = (0, 0, 0)
       font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
       x = coordinate['x'] + (125 / 2)
@@ -858,6 +898,15 @@ def approve(data):
       fac_ids.append(current_fac_email)
       fac_ids = json.dumps(fac_ids)
       Certificate.objects.filter(serial_no=serial_no).update(faculty_advisor=fac_ids)
+      if recipient_email != '':
+        send_certi_email(
+            recipient_email,
+            current_fac_email,
+            serial_no.replace(
+                "/",
+                '_'),
+            event_name,
+            org_name)
     else:
       Certificate.objects.create(
           faculty_advisor=json.dumps(
@@ -865,6 +914,16 @@ def approve(data):
           serial_no=serial_no,
           status=certi_status,
           certificate_path=f"/backend/signed_certificates/{output_filename}")
+
+      if recipient_email != '':
+        send_certi_email(
+            recipient_email,
+            current_fac_email,
+            serial_no.replace(
+                "/",
+                '_'),
+            event_name,
+            org_name)
 
     return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
   except Exception as e:
