@@ -30,7 +30,7 @@
 //         formData.set(key, eventData[key]);
 //       }
 //     }
-//     const response = await axios.post("http://localhost:8000/api/register_event", formData, {
+//     const response = await axios.post("/api/register_event", formData, {
 //       headers: {
 //         "content-type": "multipart/form-data"
 //       }

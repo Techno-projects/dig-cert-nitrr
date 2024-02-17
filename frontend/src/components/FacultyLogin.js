@@ -2,6 +2,9 @@ import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoginContext } from "../App";
 import "./css/Form.css";
+import urls from '../urls.json';
+
+const server = urls.SERVER_URL;
 // import './css/Faculty_login.css';
 
 const FacultyLogin = () => {
@@ -22,7 +25,7 @@ const FacultyLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8000/api/faculty_login ", {
+      const response = await fetch(`${server}/api/faculty_login `, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

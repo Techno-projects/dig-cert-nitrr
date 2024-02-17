@@ -6,6 +6,9 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 // import './css/Table.css';
 import { decodeToken } from "react-jwt";
+import urls from '../urls.json';
+
+const server = urls.SERVER_URL;
 
 const Table = () => {
   const auth = localStorage.getItem('login');
@@ -60,7 +63,7 @@ const Table = () => {
   //   row_data.fac_signed_in = fac_signed_in.email;
   //   row_data.token = auth;
   //   try {
-  //     const response = await axios.post('http://localhost:8000/api/approveL0', row_data, {
+  //     const response = await axios.post('/api/approveL0', row_data, {
   //       headers: {
   //         'Content-type': 'application/json'
   //       }
@@ -87,7 +90,7 @@ const Table = () => {
   useEffect(() => {
     const getEvents = async () => {
       try {
-        const response = await axios.post('http://localhost:8000/api/get_event_details', { email: fac_email }, {
+        const response = await axios.post(`${server}/api/get_event_details`, { email: fac_email }, {
           headers: {
             "Content-type": "application/json"
           }
@@ -111,7 +114,7 @@ const Table = () => {
     }
     const getCDCEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/get_cdc_events', {
+        const response = await axios.get(`${server}/api/get_cdc_events`, {
           headers: {
             "Content-type": "application/json"
           }
@@ -240,7 +243,6 @@ const Table = () => {
 
   const handleSign = async (e) => {
     const base64String = await convertFileToBase64(e.target.files[0]);
-
     setSignature(base64String);
   }
 
@@ -279,20 +281,20 @@ const Table = () => {
       selectedRows[i].organisation = location.state.org_name;
       selectedRows[i].event_name = location.state.event_name;
       selectedRows[i].faculty_sign = signature;
-      selectedRows[i].fac_signed_in = fac_signed_in.email;
+      // selectedRows[i].fac_signed_in = fac_signed_in.email;
       selectedRows[i].token = auth;
     }
     try {
       let response;
       if (!fac_signed_in.iscdc) {
-        response = await axios.post('http://localhost:8000/api/approveL0', selectedRows, {
+        response = await axios.post(`${server}/api/approveL0`, selectedRows, {
           headers: {
             'Content-type': 'application/json'
           }
         });
       }
       else {
-        response = await axios.post('http://localhost:8000/api/approveL1', selectedRows, {
+        response = await axios.post(`${server}/api/approveL1`, selectedRows, {
           headers: {
             'Content-type': 'application/json'
           }
@@ -347,7 +349,7 @@ const Table = () => {
       </div>
       <div className='Table_button' style={{ position: 'relative', marginTop: '10rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
         <input type='file' accept="image/*" onChange={handleSign} />
-        <button onClick={handleSubmission}>Submit Signature</button>
+        {/* <button onClick={handleSubmission}>Submit Signature</button> */}
       </div>
     </div>
   );

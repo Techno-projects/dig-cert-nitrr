@@ -2,3 +2,6 @@ events_db/
 certificates/
 db/
 .venv/
+build/
+nginx/static/
+backend/static/

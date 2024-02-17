@@ -9,7 +9,7 @@
 //   const [authToken, setAuthToken] = useState(null);
   
 //   const loginUser = async (e) => {
-//     const response = await fetch('http://localhost:8000/api/token', {
+//     const response = await fetch('/api/token', {
 //       method: "POST",
 //       headers: {
 //         'Content-type': 'application/json'

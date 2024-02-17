@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import FacultyLogin from "./FacultyLogin";
 import "./css/Form.css";
 import { LoginContext } from "../App";
+import urls from '../urls.json';
+
+const server = urls.SERVER_URL;
+
 
 const Login = () => {
   // let { name } = useContext(AuthContext);
@@ -34,7 +38,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8000/api/user_login ", {
+      const response = await fetch(`${server}/api/user_login `, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

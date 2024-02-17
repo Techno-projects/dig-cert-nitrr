@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react'
 import './css/Certificate.css'
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import urls from '../urls.json';
+
+const server = urls.SERVER_URL;
 
 const Certificate = () => {
     const auth = localStorage.getItem('login');
@@ -32,7 +35,7 @@ const Certificate = () => {
             formData.append('file', eventData.file);
             formData.append('token', auth);
             try {
-                const response = await axios.post("http://localhost:8000/api/get_rows", formData, {
+                const response = await axios.post(`${server}/api/get_rows`, formData, {
                     headers: {
                         "content-type": "multipart/form-data"
                     }
@@ -199,7 +202,7 @@ const Certificate = () => {
         }
 
         try {
-            const response = await axios.post("http://localhost:8000/api/register_event", body, {
+            const response = await axios.post(`${server}/api/register_event`, body, {
                 headers: {
                     "content-type": "multipart/form-data"
                 }

@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from "axios";
 import "./css/Form.css";
+import urls from '../urls.json';
+
+const server = urls.SERVER_URL;
 
 const EventManagementPage = () => {
   const auth = localStorage.getItem("login");
@@ -32,7 +35,7 @@ const EventManagementPage = () => {
     const get_orgs = async () => {
       try {
         const response = await axios.post(
-          "http://localhost:8000/api/get_all_org",
+          `${server}/api/get_all_org`,
           { token: auth },
           {
             headers: {
@@ -82,7 +85,7 @@ const EventManagementPage = () => {
       const tmpBody = { partners: selectedPartners, token: auth };
       try {
         const response = await axios.post(
-          "http://localhost:8000/api/get_faculties",
+          `${server}/api/get_faculties`,
           tmpBody,
           {
             headers: {

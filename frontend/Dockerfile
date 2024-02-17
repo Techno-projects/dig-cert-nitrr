@@ -1,15 +1,14 @@
-FROM node:20
+FROM node:20 as build
 
-WORKDIR /cache
+WORKDIR /frontend
 
 COPY package.json .
 COPY package-lock.json .
 RUN npm install
 
-WORKDIR /frontend
-
 ENV PATH /frontend/node_modules/.bin:$PATH
 
 COPY . .
+
 
 EXPOSE 3000

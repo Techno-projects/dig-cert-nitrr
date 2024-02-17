@@ -55,7 +55,7 @@ const Events = () => {
 
   // const approveL0 = async () => {
   //   // write logic to add image to certificate and store certificate in DB
-  //   const response = await fetch('http://localhost:8000/api/approveL0', {
+  //   const response = await fetch('/api/approveL0', {
   //     method: "POST",
   //     headers: {
   //       'Content-Type': 'application/json',

@@ -4,7 +4,7 @@ let baseURL = "";
 if (process.env.NODE_ENV === "production") {
   baseURL = "https://App-name.herokuapp.com";
 } else {
-  baseURL = "http://localhost:8000";
+  baseURL = "";
 }
 
 export default axios.create({

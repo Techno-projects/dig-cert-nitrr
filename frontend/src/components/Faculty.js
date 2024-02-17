@@ -18,7 +18,7 @@ const FacultyRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('http://localhost:8000/api/faculty_register', {
+    const response = await fetch('/api/faculty_register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

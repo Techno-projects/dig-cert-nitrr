@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './css/Form.css';
+import urls from '../urls.json';
 
 const AdminRegistration = () => {
   const [formData, setFormData] = useState({
@@ -18,9 +19,9 @@ const AdminRegistration = () => {
     e.preventDefault();
 
     // Send form data to the API endpoint
-    /* The code is making a POST request to the 'http://localhost:8000/register' endpoint with the form
+    /* The code is making a POST request to the '/register' endpoint with the form
     data stored in the `formData` state variable. */
-    const response = await fetch('http://localhost:8000/register/', {
+    const response = await fetch(`/register/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

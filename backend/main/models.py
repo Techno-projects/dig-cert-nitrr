@@ -68,8 +68,10 @@ class Certificate(models.Model):
 
   faculty_advisor = models.CharField()
   serial_no = models.CharField(unique=True)
+  faculty_signatures = models.CharField()
+  cdc_signature = models.CharField()
   status = models.CharField()
-  certificate_path = models.CharField()
+  # certificate_path = models.CharField()
 
 
 class Faculty_Event(models.Model):
