@@ -374,11 +374,12 @@ def put_image_on_image(image_to_put_base64, coordinate, image):
     else:
       transparent_img.append(item)
   rgba_thresh.putdata(transparent_img)
-
+  box_width = event_data.rel_width * image.size[0]
+  box_height = event_data.rel_height * image.size[1]
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
   rgba_thresh = rgba_thresh.resize(
-      (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
+      (int(box_width), int(box_height)), Image.LANCZOS)
 
   paste_box = (
       int(coordinate['x']),
