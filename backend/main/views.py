@@ -374,8 +374,8 @@ def put_image_on_image(image_to_put_base64, coordinate, image):
     else:
       transparent_img.append(item)
   rgba_thresh.putdata(transparent_img)
-  box_width = event_data.rel_width * image.size[0]
-  box_height = event_data.rel_height * image.size[1]
+  #box_width = event_data.rel_width * image.size[0]
+  #box_height = event_data.rel_height * image.size[1]
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
   rgba_thresh = rgba_thresh.resize(
