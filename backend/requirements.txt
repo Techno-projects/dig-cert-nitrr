@@ -13,7 +13,7 @@ click-plugins==1.1.1
 click-repl==0.3.0
 colorama==0.4.6
 dill==0.3.8
-Django==4.2.5
+Django==4.2.10
 django-celery-results==2.5.1
 django-cors-headers==4.2.0
 djangorestframework==3.14.0
