@@ -8,8 +8,6 @@ body = "<h3> Dear <b> test </b> Your LDAP Account has been activated to access t
 sender = 'aavartan@nitrr.ac.in'
 recipients = ["thisissahupiyush@gmail.com", "piyush.at.googl@gmail.com"]
 password = 'ovhl bmxi gsms ytnp'
-# ovhl bmxi gsms ytnp
-# techno#aavartan_2024
 
 
 def send_email(subject, body, recipients):
