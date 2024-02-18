@@ -33,7 +33,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Collect static files
-        run: python manage.py collectstatic --no-input
+        run: |
+          cd ./backend
+          python manage.py collectstatic --no-input
 
       - name: Copy static files to nginx directory
         run: mkdir ./nginx/static/ && cp -r ./backend/backend/django_static/* ./nginx/static/
