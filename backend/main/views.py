@@ -612,7 +612,6 @@ def sign_by_fa(data):
   serial_no = data['Serial No']
   faculty_sign_image_base64 = data['faculty_sign']
 
-  del data['email']
   del data['Serial No']
   del data['faculty_sign']
 
