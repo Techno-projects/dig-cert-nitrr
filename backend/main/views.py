@@ -335,7 +335,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
       text_width = font.getmask(text).getbbox()[2]
       text_height = font.getmask(text).getbbox()[3]
 
-      if text_width < max_width and text_height < max_height:
+      if text_height < max_height:
         font_size += 1
         font = ImageFont.truetype("DejaVuSans.ttf", font_size)
       else:
@@ -345,7 +345,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
   box_height = event_data.rel_height * image.size[1]
   draw = ImageDraw.Draw(image)
   font = ImageFont.truetype("DejaVuSans.ttf", size=20)
-  max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
   font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
   text_color = (0, 0, 0)
   x = coordinate['x'] + (125 / 2)
@@ -428,7 +428,7 @@ def get_certificate(request):
 
   serial_coord = coordinates.get("Serial No", None)
   if serial_coord:
-    image = put_text_on_image(serial, serial_coord, image)
+    image = put_text_on_image(serial, serial_coord, image, event_data)
 
   for i in coordinates:
     faculty_key = i
