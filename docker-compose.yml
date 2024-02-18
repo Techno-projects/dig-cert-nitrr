@@ -20,7 +20,9 @@ services:
   frontend:
     image: piyushthedock/dig-cert-nitrr-frontend:latest
     restart: always
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
@@ -47,7 +49,8 @@ services:
     image: redis:latest
 
   celery_worker:
-    # build: ./backend
+    image: piyushthedock/dig-cert-nitrr-celery_worker
+    restart: always
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -60,3 +63,9 @@ services:
       - C_FORCE_ROOT=true
       - CELERY_BROKER=redis://redis:6379/0
     command: python -m celery -A main.tasks worker --loglevel=DEBUG
+
+  nginx:
+    image: piyushthedock/dig-cert-nitrr-nginx
+    build: ./nginx
+    ports:
+      - "8080:80"

@@ -1,0 +1,50 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push DB image
+        uses: docker/build-push-action@v5
+        with: 
+          context: ./backend
+          push: true
+          tags: technocracynitrr/dig-cert-nitrr-backend
+
+      - name: Install npm dependencies and build frontend
+        run: |
+          cd ./frontend
+          npm install
+          npm run build
+        
+      - name: Copy frontend build to Nginx directory
+        run: cp -r ./frontend/build ./nginx/
+
+      - name: Build Nginx Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          push: true
+          tags: technocracynitrr/dig-cert-nitrr-nginx
+
+      - name: Build celery worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: technocracynitrr/dig-cert-nitrr-celery_worker
