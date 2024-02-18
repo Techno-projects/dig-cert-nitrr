@@ -31,6 +31,8 @@ jobs:
           cd ./frontend
           npm install
           npm run build
+        env: 
+          CI: ""
         
       - name: Copy frontend build to Nginx directory
         run: cp -r ./frontend/build ./nginx/
