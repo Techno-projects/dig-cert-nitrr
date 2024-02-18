@@ -12,6 +12,9 @@ import cv2
 import base64
 import numpy as np
 from main.tasks import send_email_queue
+import io
+import re
+from collections import Counter
 
 load_dotenv()
 
@@ -187,153 +190,10 @@ def get_event_details(request):
     return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
-def send_certi_email(recipient_email, faculty_email, serial_no, event_name, org_name):
-  body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has beed signed by the faculty {faculty_email}.<br/> You can view the ceritificate once it is signed completely, by visting at <u>getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
+def send_certi_email(recipient_email, serial_no, event_name, org_name):
+  body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has beed signed by the college authority.<br/> You can view the ceritificate by visting at <u>https://digcert.nitrr.ac.in/getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
 
   send_email_queue.delay("Certificate signed by dig-cert-nitrr", body, [recipient_email])
-
-
-def approveCDC(data):
-  if (not is_faculty_auth(data['token'])):
-    return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-  current_fac_email = jwt.decode(data['token'], secret_key, algorithms=['HS256'])
-  current_fac_email = current_fac_email['email']
-  del data['token']
-  faculty_sign_image = data['faculty_sign']
-
-  # remove white bg from signature image
-  try:
-    image_data = base64.b64decode(data['faculty_sign'])
-    image_array = np.frombuffer(image_data, np.uint8)
-    faculty_sign_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-
-    gray_img = cv2.cvtColor(faculty_sign_image, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray_img, 0, 255, cv2.THRESH_OTSU)
-    pil_thresh = Image.fromarray(thresh)
-    rgba_thresh = pil_thresh.convert("RGBA")
-    datas = rgba_thresh.getdata()
-    transparent_img = []
-    for item in datas:
-      if item[0] == 255 and item[1] == 255 and item[2] == 255:
-        transparent_img.append((255, 255, 255, 0))
-      else:
-        transparent_img.append(item)
-    rgba_thresh.putdata(transparent_img)
-  except Exception as e:
-    return Response({"ok": False, "message": "Error while removing background",
-                    "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-  try:
-    org_email = Organisation.objects.get(name=data['Organisation']).email
-    event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
-    isCDC = event_details.isCDC
-    certi_status = "0"
-    if not isCDC:
-      certi_status = "1"
-    coords = event_details.coordinates
-    certificate = event_details.certificate
-    coords = json.loads(coords)
-
-    org_name = data['Organisation']
-    event_name = data['Event']
-    recipient_email = data.get('email', '')
-    if recipient_email == '':
-      recipient_email = data.get('Email', '')
-
-    del data['Organisation']
-    del data['Event']
-    del data['faculty_sign']
-
-    serial_no = data['Serial No']
-    fac_signed_in = data['fac_signed_in']
-    del data['fac_signed_in']
-    file_extension = os.path.splitext(certificate.path)[1]
-    output_filename = serial_no.replace("/", '_') + file_extension
-    os.makedirs("/backend/signed_certificates/", exist_ok=True)
-    file_location = f"/backend/signed_certificates/{output_filename}"
-
-    img = Image.open(certificate)
-    certi_exists = False
-    if os.path.isfile(file_location):
-      img = Image.open(file_location)
-      certi_exists = True
-
-    # find a suitable font size to write inside the box
-    def find_max_font_size(draw, text, font, max_width, max_height):
-      font_size = 1
-      while True:
-        text_width = font.getmask(text).getbbox()[2]
-        text_height = font.getmask(text).getbbox()[3]
-
-        if text_width < max_width and text_height < max_height:
-          font_size += 1
-          font = ImageFont.truetype("DejaVuSans.ttf", font_size)
-        else:
-          return font_size - 1
-
-    box_width = 559.5415632615322
-    box_height = 111.90831265230646
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("DejaVuSans.ttf", size=20)
-    max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
-    font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
-
-    # now put the faculty sign on the certificate image
-    try:
-      fac_sign_x = coords['cdc']['x'] + (125 / 2)
-      fac_sign_y = coords['cdc']['y'] + (25 / 2)
-    except KeyError as e:
-      return Response({"ok": False, "message": "You can't sign this certificate",
-                      "error": str(e)}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    img = img.convert("RGBA")
-    rgba_thresh = rgba_thresh.convert("RGBA")
-    rgba_thresh = rgba_thresh.resize(
-        (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
-
-    paste_box = (
-        int(fac_sign_x),
-        int(fac_sign_y),
-        int(
-            fac_sign_x +
-            rgba_thresh.width),
-        int(
-            fac_sign_y +
-            rgba_thresh.height))
-    output_filename = serial_no.replace("/", '_') + file_extension
-    img.paste(rgba_thresh, paste_box, rgba_thresh)
-    img.save(f"/backend/signed_certificates/{output_filename}", format=file_extension[1:])
-
-    if certi_exists:
-      Certificate.objects.filter(serial_no=serial_no).update(status="1")
-      if recipient_email != "":
-        send_certi_email(
-            recipient_email,
-            current_fac_email,
-            serial_no.replace(
-                "/",
-                '_'),
-            event_name,
-            org_name)
-    else:
-      return Response({"ok": False, "message": "Certificate is not signed by the faculty advisor"},
-                      status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
-  except Exception as e:
-    return Response({"ok": False, "message": "Error while creating certificate",
-                    "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(["POST"])
-def approveL1(request):
-  data = request.data
-  for i in range(0, len(data)):
-    res = approveCDC(data[i])
-    if not res.data['ok']:
-      return res
-
-  return Response({"ok": True, "message": "Signed successfully"})
 
 
 # return the headers of the excel file
@@ -400,13 +260,35 @@ def get_faculties(request):
   return Response({"ok": True, "message": list(faculties)}, status=status.HTTP_200_OK)
 
 
-def get_certi_by_serial(serial_no):
+def cdc_get_certi_by_serial(serial_no, certificate):
   serial_list = serial_no.split("/")
   dispatch = serial_list[0]
   event_id = serial_list[1]
   row_id = int(serial_list[2])
 
   event = Event.objects.get(id=event_id)
+
+  if certificate:
+    coordinates = json.loads(event.coordinates)
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    faculties_required = []
+
+    for item in list(coordinates.keys()):
+      if re.match(email_pattern, item):
+        faculties_required.append(item)
+
+    faculties_signed = json.loads(certificate.faculty_advisor)
+
+    c1 = Counter(faculties_required)
+    c2 = Counter(faculties_signed)
+
+    print(serial_no)
+    print(faculties_required)
+    print(faculties_signed)
+
+    if c1 != c2:
+      return
+
   org_name = Organisation.objects.get(email=event.organisation).name
   event_name = event.event_name
   event_data = event.event_data
@@ -426,13 +308,89 @@ def get_cdc_events(request):
   pending_rows = []
   signed_rows = []
   for certi in pending_certis:
-    row_i = get_certi_by_serial(certi.serial_no)
+    row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
+    if not row_i:
+      continue
     pending_rows.append(row_i)
 
   for certi in signed_certis:
-    row_i = get_certi_by_serial(certi.serial_no)
+    row_i = cdc_get_certi_by_serial(certi.serial_no, None)
+    if not row_i:
+      continue
     signed_rows.append(row_i)
   return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+
+
+def pil_image_to_base64(image):
+  img_byte_array = io.BytesIO()
+  image.save(img_byte_array, format='PNG')
+  encoded_image = base64.b64encode(img_byte_array.getvalue()).decode('utf-8')
+  return encoded_image
+
+
+def put_text_on_image(text_to_put, coordinate, image):
+  def find_max_font_size(draw, text, font, max_width, max_height):
+    font_size = 1
+    while True:
+      text_width = font.getmask(text).getbbox()[2]
+      text_height = font.getmask(text).getbbox()[3]
+
+      if text_width < max_width and text_height < max_height:
+        font_size += 1
+        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+      else:
+        return font_size - 1
+
+  box_width = 559.5415632615322
+  box_height = 111.90831265230646
+  draw = ImageDraw.Draw(image)
+  font = ImageFont.truetype("DejaVuSans.ttf", size=20)
+  max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
+  font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
+  text_color = (0, 0, 0)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
+
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
+
+  return image
+
+
+def put_image_on_image(image_to_put_base64, coordinate, image):
+  image_data = base64.b64decode(image_to_put_base64)
+  image_array = np.frombuffer(image_data, np.uint8)
+  faculty_sign_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+  gray_img = cv2.cvtColor(faculty_sign_image, cv2.COLOR_BGR2GRAY)
+  ret, thresh = cv2.threshold(gray_img, 0, 255, cv2.THRESH_OTSU)
+  pil_thresh = Image.fromarray(thresh)
+  rgba_thresh = pil_thresh.convert("RGBA")
+  datas = rgba_thresh.getdata()
+  transparent_img = []
+  for item in datas:
+    if item[0] == 255 and item[1] == 255 and item[2] == 255:
+      transparent_img.append((255, 255, 255, 0))
+    else:
+      transparent_img.append(item)
+  rgba_thresh.putdata(transparent_img)
+
+  image = image.convert("RGBA")
+  rgba_thresh = rgba_thresh.convert("RGBA")
+  rgba_thresh = rgba_thresh.resize(
+      (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
+
+  paste_box = (
+      int(coordinate['x']),
+      int(coordinate['y']),
+      int(
+          coordinate['x'] +
+          rgba_thresh.width),
+      int(
+          coordinate['y'] +
+          rgba_thresh.height))
+  image.paste(rgba_thresh, paste_box, rgba_thresh)
+  return image
 
 
 @api_view(['GET'])
@@ -440,12 +398,55 @@ def get_certificate(request):
   serial = request.GET.get('serial')
   serial = serial.replace("_", "/")
   certificate = Certificate.objects.filter(serial_no=serial)
-  if (not certificate):
+  event_id = serial.split('/')[1]
+  event_data = Event.objects.get(id=event_id)
+
+  if not certificate:
     return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
 
-  certi_ext = certificate[0].certificate_path.split('.')[1]
-  serial = serial.replace("/", "_")
-  return Response({"certificate": f"/signed_certificates/{serial}.{certi_ext}"})
+  if certificate[0].status != "1":
+    return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
+
+  faculty_signatures = json.loads(certificate[0].faculty_signatures)
+  coordinates = json.loads(event_data.coordinates)
+  candidate_data = json.loads(certificate[0].event_data)
+  image = event_data.certificate
+  image = Image.open(image)
+
+  cdc_signature_base64 = certificate[0].cdc_signature
+  cdc_coordinate = coordinates.get('cdc', None)
+
+  for i in coordinates:
+    key = i
+    key_coordinate = coordinates.get(key, None)
+    text_to_put = candidate_data.get(key, None)
+
+    if not key_coordinate or not text_to_put:
+      continue
+
+    image = put_text_on_image(text_to_put, key_coordinate, image)
+
+  serial_coord = coordinates.get("Serial No", None)
+  if serial_coord:
+    image = put_text_on_image(serial, serial_coord, image)
+
+  for i in coordinates:
+    faculty_key = i
+
+    key_coordinate = coordinates.get(faculty_key, None)
+    signature_base64 = faculty_signatures.get(faculty_key, None)
+
+    if not signature_base64:
+      continue
+
+    image = put_image_on_image(signature_base64, key_coordinate, image)
+
+  if cdc_signature_base64:
+    if cdc_coordinate:
+      image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image)
+
+  image_base64 = pil_image_to_base64(image)
+  return Response({"certificate": image_base64})
 
 
 @api_view(["POST"])
@@ -498,8 +499,7 @@ def register_event(request):
   mail_subject = "Event assigned by dig-cert-nitrr app"
   mail_body = f"<h3>Greetings professor,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college.<br/><br/>Thanking You."
 
-  res = send_email_queue.delay(
-      mail_subject, mail_body, faculties_required)
+  # res = send_email_queue.delay(mail_subject, mail_body, faculties_required)
   if data['cdc'] == 'true':
     isCDC = True
   try:
@@ -544,27 +544,6 @@ def faculty_register(request):
     return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
 
 
-# @api_view(["POST"])
-# def faculty_login(request):
-#   data = request.data
-#   try:
-#     check = Faculty_Advisor.objects.get(email=data["email"])
-#     cdc = 0
-
-#     if check.isCDC:
-#       cdc = 1
-#     if check.password == data["password"]:
-#       encoded_jwt = jwt.encode(
-#           {"email": data["email"], "iscdc": cdc}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-#       return Response({"ok": True, 'token': encoded_jwt})
-#     else:
-#       return Response({"ok": False, "message": "Wrong Password"})
-#   except Faculty_Advisor.DoesNotExist as e:
-#     return Response({"ok": False, "message": "Faculty doesn't exist"})
-#   except Exception as e:
-#     return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
-
-
 @api_view(["POST"])
 def get_event_details(request):
   data = request.data
@@ -594,11 +573,11 @@ def get_event_details(request):
           lambda x: dispatch + "/" + str(any_event.event.id) + "/" + str(x))
       mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
       mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
-      all_unsigend_students = students[mask].to_dict(orient='records')
+      all_unsigned_students = students[mask].to_dict(orient='records')
       all_signed_students = students[mask1].to_dict(orient='records')
 
       org_name = Organisation.objects.get(email=any_event.event.organisation).name
-      for x in all_unsigend_students:
+      for x in all_unsigned_students:
         x['Organisation'] = org_name
         x['Event'] = any_event.event.event_name
         pending_rows.append(x)
@@ -615,208 +594,109 @@ def get_event_details(request):
     return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
-def approve(data):
-  if (not is_faculty_auth(data['token'])):
-    return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-  current_fac_email = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
-  current_fac_email = current_fac_email['email']
-  del data['token']
-  faculty_sign_image = data['faculty_sign']
-
-  try:
-    # remove white bg from image
-    image_data = base64.b64decode(data['faculty_sign'])
-    image_array = np.frombuffer(image_data, np.uint8)
-    faculty_sign_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-
-    gray_img = cv2.cvtColor(faculty_sign_image, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray_img, 0, 255, cv2.THRESH_OTSU)
-    pil_thresh = Image.fromarray(thresh)
-    rgba_thresh = pil_thresh.convert("RGBA")
-    datas = rgba_thresh.getdata()
-    transparent_img = []
-    for item in datas:
-      if item[0] == 255 and item[1] == 255 and item[2] == 255:
-        transparent_img.append((255, 255, 255, 0))
-      else:
-        transparent_img.append(item)
-    rgba_thresh.putdata(transparent_img)
-  except Exception as e:
-    return Response({"ok": False, "message": "Error while removing background",
-                    "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-  # try:
-  org_email = Organisation.objects.get(name=data['Organisation']).email
-  event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
-  isCDC = event_details.isCDC
-  certi_status = "0"
-  if not isCDC:
-    certi_status = "1"
-  coords = event_details.coordinates
-  certificate = event_details.certificate
-  coords = json.loads(coords)
-  event_name = data['Event']
-  org_name = data['Organisation']
-  del data['Organisation']
-  del data['Event']
-  del data['faculty_sign']
-
-  serial_no = data['Serial No']
-  fac_signed_in = data['fac_signed_in']
-  del data['fac_signed_in']
-  file_extension = os.path.splitext(certificate.path)[1]
-  output_filename = serial_no.replace("/", '_') + file_extension
-  os.makedirs("/backend/signed_certificates/", exist_ok=True)
-  file_location = f"/backend/signed_certificates/{output_filename}"
-
-  img = Image.open(certificate)
-  certi_exists = False
-  if os.path.isfile(file_location):
-    img = Image.open(file_location)
-    certi_exists = True
-
-  def find_max_font_size(draw, text, font, max_width, max_height):
-    font_size = 1
-    while True:
-      text_width = font.getmask(text).getbbox()[2]
-      text_height = font.getmask(text).getbbox()[3]
-
-      if text_width < max_width and text_height < max_height:
-        font_size += 1
-        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
-      else:
-        return font_size - 1
-
-  box_width = 559.5415632615322
-  box_height = 111.90831265230646
-  draw = ImageDraw.Draw(img)
-  font = ImageFont.truetype("DejaVuSans.ttf", size=20)
-  max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
-  font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
-
-  recipient_email = ""
-  for i in data.keys():
-    text_to_put = data[i]
-    coordinate = coords.get(i, None)
-    recipient_email = data.get('email', '')
-    if recipient_email == '':
-      recipient_email = data.get('Email', '')
-    if not coordinate:
-      continue
-    text_color = (0, 0, 0)
-    font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
-    x = coordinate['x'] + (125 / 2)
-    y = coordinate['y'] + (25 / 2)
-    # draw.rectangle([x, y, x + box_width, y + box_height], outline="red")
-    # draw.text((x, y), str(text_to_put), fill=text_color, font=font,)
-    text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
-    text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
-    draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
-
-  try:
-    fac_sign_x = coords[current_fac_email]['x'] + (125 / 2)
-    fac_sign_y = coords[current_fac_email]['y'] + (25 / 2)
-  except KeyError as e:
-    return Response({"ok": False, "message": "You can't sign this certificate",
-                    "error": str(e)}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  img = img.convert("RGBA")
-  rgba_thresh = rgba_thresh.convert("RGBA")
-  rgba_thresh = rgba_thresh.resize(
-      (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
-
-  paste_box = (
-      int(fac_sign_x),
-      int(fac_sign_y),
-      int(
-          fac_sign_x +
-          rgba_thresh.width),
-      int(
-          fac_sign_y +
-          rgba_thresh.height))
-  output_filename = serial_no.replace("/", '_') + file_extension
-  img.paste(rgba_thresh, paste_box, rgba_thresh)
-  print(file_extension)
-  img.save(f"/backend/signed_certificates/{output_filename}", format=file_extension[1:])
-
-  if certi_exists:
-    fac_ids = Certificate.objects.get(serial_no=serial_no).faculty_advisor
-    fac_ids = json.loads(fac_ids)
-    fac_ids.append(current_fac_email)
-    fac_ids = json.dumps(fac_ids)
-    Certificate.objects.filter(serial_no=serial_no).update(faculty_advisor=fac_ids)
-    if recipient_email != '':
-      send_certi_email(
-          recipient_email,
-          current_fac_email,
-          serial_no.replace(
-              "/",
-              '_'),
-          event_name,
-          org_name)
-  else:
-    Certificate.objects.create(
-        faculty_advisor=json.dumps(
-            [fac_signed_in]),
-        serial_no=serial_no,
-        status=certi_status,
-        certificate_path=f"/backend/signed_certificates/{output_filename}")
-
-    if recipient_email != '':
-      send_certi_email(
-          recipient_email,
-          current_fac_email,
-          serial_no.replace(
-              "/",
-              '_'),
-          event_name,
-          org_name)
-
-  return Response({"ok": True, "message": "Signed"}, status=status.HTTP_200_OK)
-  # except Exception as e:
-  #   print('3', e)
-  #   return Response({"ok": False, "message": "Error while creating certificate",
-  #                   "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 def sign_by_fa(data):
   if (not is_faculty_auth(data['token'])):
     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-  current_fac_email = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+  current_fac_data = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
   del data['token']
 
   org_email = Organisation.objects.get(name=data['Organisation']).email
   event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
   isCDC = event_details.isCDC
+
   certi_status = "0"
   if not isCDC:
     certi_status = "1"
 
-  current_fac_email = current_fac_email['email']
+  current_fac_email = current_fac_data['email']
   serial_no = data['Serial No']
-  faculty_sign_image = data['faculty_sign']
+  faculty_sign_image_base64 = data['faculty_sign']
+
+  del data['email']
+  del data['Serial No']
+  del data['faculty_sign']
 
   certi = Certificate.objects.filter(serial_no=serial_no)
 
   if len(certi) == 0:
     Certificate.objects.create(
-          faculty_advisor=json.dumps(
-              [current_fac_email]),
-          serial_no=serial_no,
-          status=certi_status,
-          certificate_path=f"/backend/signed_certificates/{output_filename}")
+        faculty_advisor=json.dumps([current_fac_email]),
+        serial_no=serial_no,
+        status=certi_status,
+        event_data=json.dumps(data),
+        faculty_signatures=json.dumps({current_fac_email: faculty_sign_image_base64})
+    )
   else:
     fac_ids = certi[0].faculty_advisor
     fac_ids = json.loads(fac_ids)
     fac_ids.append(current_fac_email)
     fac_ids = json.dumps(fac_ids)
-    certi[0].update(faculty_advisor=fac_ids)
+
+    fac_signs_base64 = json.loads(certi[0].faculty_signatures)
+    fac_signs_base64[current_fac_email] = faculty_sign_image_base64
+    fac_signs_base64 = json.dumps(fac_signs_base64)
+
+    Certificate.objects.filter(
+        serial_no=serial_no).update(
+        faculty_advisor=fac_ids,
+        faculty_signatures=fac_signs_base64)
+  return Response({"ok": True, "message": "Signed"}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
 def approveL0(request):
   data = request.data
   for i in range(0, len(data)):
-    res = approve(data[i])
+    res = sign_by_fa(data[i])
+    print(res)
+    if not res.data['ok']:
+      return res
+
+  return Response({"ok": True, "message": "Signed successfully"})
+
+
+def approveCDC(data):
+  if (not is_faculty_auth(data['token'])):
+    return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+  current_fac_email = jwt.decode(data['token'], secret_key, algorithms=['HS256'])
+  current_fac_email = current_fac_email['email']
+  del data['token']
+
+  try:
+    serial_no = data['Serial No']
+    certificate = Certificate.objects.filter(serial_no=serial_no)
+
+    if not certificate:
+      return Response({'ok': False, 'message': "Certificate doesn't exist"},
+                      status=status.HTTP_400_BAD_REQUEST)
+
+    certificate = certificate[0]
+    cdc_sign = data['faculty_sign']
+
+    if not cdc_sign:
+      return Response({'ok': False, 'message': "Invalid signature"},
+                      status=status.HTTP_400_BAD_REQUEST)
+
+    Certificate.objects.filter(serial_no=serial_no).update(cdc_signature=cdc_sign, status="1")
+
+    receipient_email = data.get('email', None)
+    if not receipient_email:
+      receipient_email = data.get('Email', None)
+
+    if receipient_email:
+      serial_no = serial_no.replace("/", "_")
+      send_certi_email(receipient_email, serial_no, data['Event'], data['Organisation'])
+    return Response({'ok': True, 'message': 'Signed'})
+  except Exception as e:
+    return Response({'ok': False, 'error': str(
+        e), 'message': "Error while signing the certificate"})
+
+
+@api_view(["POST"])
+def approveL1(request):
+  data = request.data
+  for i in range(0, len(data)):
+    res = approveCDC(data[i])
     if not res.data['ok']:
       return res
 
