@@ -38,7 +38,7 @@ jobs:
           python manage.py collectstatic --no-input
 
       - name: Copy static files to nginx directory
-        run: mkdir ./nginx/static/ && cp -r ./backend/backend/django_static/* ./nginx/static/
+        run: mkdir ./nginx/static/ && cp -r ./backend/django_static/* ./nginx/static/
 
       - name: Install npm dependencies and build frontend
         run: |
