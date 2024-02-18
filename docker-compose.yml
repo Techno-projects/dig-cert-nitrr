@@ -2,20 +2,18 @@ services:
   backend:
     image: piyushthedock/dig-cert-nitrr-backend:latest
     restart: always
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/backend
     command: bash -c "python manage.py migrate &&
                       python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - POSTGRES_NAME=digcert
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
-      - SECRET_KEY=django-secret
-
+    env_file:
+        - .env
     depends_on:
       - db
 
@@ -27,8 +25,10 @@ services:
       - "3000:3000"
     volumes:
       - "./frontend:/frontend"
-    #   - "/frontend/node_modules"
-    command: npm start
+      - "/frontend/node_modules"
+    command: > 
+      bash -c "cp -rfu /cache/node_modules/. /frontend/node_modules/  
+      && npm start"
     depends_on:
       - backend
     environment:
@@ -38,17 +38,19 @@ services:
     image: postgres
     volumes:
       - ./db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=digcert
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
 
   redis:
     image: redis:latest
 
   celery_worker:
-    image: piyushthedock/dig-cert-nitrr-celery_worker
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     depends_on:
       - redis
       - backend
@@ -58,9 +60,3 @@ services:
       - C_FORCE_ROOT=true
       - CELERY_BROKER=redis://redis:6379/0
     command: python -m celery -A main.tasks worker --loglevel=DEBUG
-
-  nginx:
-    image: piyushthedock/dig-cert-nitrr-nginx
-    build: ./nginx
-    ports:
-      - "8080:80"
