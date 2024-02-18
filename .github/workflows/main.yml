@@ -1,0 +1,59 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Backend image
+        uses: docker/build-push-action@v5
+        with: 
+          context: ./backend
+          push: true
+          tags: technocracynitrr/dig-cert-nitrr-backend
+
+      - name: Install backend requirements
+        run: |
+          cd ./backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Collect static files
+        run: |
+          cd ./backend
+          python manage.py collectstatic --no-input
+
+      - name: Copy static files to nginx directory
+        run: mkdir ./nginx/static/ && cp -r ./backend/django_static/* ./nginx/static/
+
+      - name: Install npm dependencies and build frontend
+        run: |
+          cd ./frontend
+          npm install
+          npm run build
+        env: 
+          CI: ""
+        
+      - name: Copy frontend build to Nginx directory
+        run: cp -r ./frontend/build ./nginx/
+
+      - name: Build Nginx Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          push: true
+          tags: technocracynitrr/dig-cert-nitrr-nginx

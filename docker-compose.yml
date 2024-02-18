@@ -2,27 +2,27 @@ services:
   backend:
     image: piyushthedock/dig-cert-nitrr-backend:latest
     restart: always
-    build: ./backend
+    # build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/backend
     command: bash -c "python manage.py migrate &&
                       python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - POSTGRES_NAME=digcert
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
-      - SECRET_KEY=django-secret
-
+    env_file:
+        - .env
     depends_on:
       - db
 
   frontend:
     image: piyushthedock/dig-cert-nitrr-frontend:latest
     restart: always
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
@@ -38,17 +38,20 @@ services:
     image: postgres
     volumes:
       - ./db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=digcert
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
 
   redis:
     image: redis:latest
 
   celery_worker:
     image: piyushthedock/dig-cert-nitrr-celery_worker
-    build: ./backend
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     depends_on:
       - redis
       - backend
