@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['10.10.1.205', 'digcert.nitrr.ac.in', 'localhost']
 CSRF_TRUSTED_ORIGINS=['https://digcert.nitrr.ac.in']
