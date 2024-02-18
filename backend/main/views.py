@@ -358,7 +358,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
   return image
 
 
-def put_image_on_image(image_to_put_base64, coordinate, image):
+def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
   image_data = base64.b64decode(image_to_put_base64)
   image_array = np.frombuffer(image_data, np.uint8)
   faculty_sign_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
@@ -440,11 +440,11 @@ def get_certificate(request):
     if not signature_base64:
       continue
 
-    image = put_image_on_image(signature_base64, key_coordinate, image)
+    image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
 
   if cdc_signature_base64:
     if cdc_coordinate:
-      image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image)
+      image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
   image_base64 = pil_image_to_base64(image)
   return Response({"certificate": image_base64})
