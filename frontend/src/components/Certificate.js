@@ -189,6 +189,8 @@ const Certificate = () => {
             body.append('token', auth);
             body.append('cdc', eventData.cdc);
             body.append('dispatch', dispatch);
+            body.append('rel_width', 125/imageRef.current.naturalWidth);
+            body.append('rel_height', 25/imageRef.current.naturalHeight);
             Object.keys(coords).map(key => {
                 if (faculties.includes(key)) {
                     required_faculties.push(key)

@@ -328,7 +328,7 @@ def pil_image_to_base64(image):
   return encoded_image
 
 
-def put_text_on_image(text_to_put, coordinate, image):
+def put_text_on_image(text_to_put, coordinate, image, event_data):
   def find_max_font_size(draw, text, font, max_width, max_height):
     font_size = 1
     while True:
@@ -341,8 +341,8 @@ def put_text_on_image(text_to_put, coordinate, image):
       else:
         return font_size - 1
 
-  box_width = 559.5415632615322
-  box_height = 111.90831265230646
+  box_width = event_data.rel_width * image.size[0]
+  box_height = event_data.rel_height * image.size[1]
   draw = ImageDraw.Draw(image)
   font = ImageFont.truetype("DejaVuSans.ttf", size=20)
   max_font_size = find_max_font_size(draw, "YOUR TEXT HERE", font, box_width, box_height)
@@ -424,7 +424,7 @@ def get_certificate(request):
     if not key_coordinate or not text_to_put:
       continue
 
-    image = put_text_on_image(text_to_put, key_coordinate, image)
+    image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
 
   serial_coord = coordinates.get("Serial No", None)
   if serial_coord:
@@ -510,7 +510,10 @@ def register_event(request):
         coordinates=data['coords'],
         event_name=data['event'],
         isCDC=isCDC,
-        dispatch=data['dispatch'])
+        dispatch=data['dispatch'],
+        rel_height=float(data['rel_height']),
+        rel_width=float(data['rel_width']),
+    )
     current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
     faculty_events = []
     for i in faculties_required:

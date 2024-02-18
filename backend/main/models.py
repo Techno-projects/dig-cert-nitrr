@@ -32,6 +32,8 @@ class Event(models.Model):
   coordinates = models.CharField()
   isCDC = models.BooleanField(default=True)
   dispatch = models.CharField()
+  rel_width = models.FloatField()
+  rel_height = models.FloatField()
 
   def __str__(self):
     return f"{self.id}-{self.organisation}-{self.event_name}"
