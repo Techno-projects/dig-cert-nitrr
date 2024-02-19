@@ -379,7 +379,7 @@ def put_image_on_image(image_to_put_base64, coordinate, image):
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
   rgba_thresh = rgba_thresh.resize(
-      int((559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
+      (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
 
   paste_box = (
       int(coordinate['x']),
