@@ -15,6 +15,7 @@ from main.tasks import send_email_queue
 import io
 import re
 from collections import Counter
+from django.conf import settings
 
 load_dotenv()
 
@@ -337,16 +338,16 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
 
       if text_height < max_height:
         font_size += 1
-        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+        font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', font_size)
       else:
         return font_size - 1
 
-  box_width = event_data.rel_width * image.size[0]
-  box_height = event_data.rel_height * image.size[1]
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  font = ImageFont.truetype("DejaVuSans.ttf", size=20)
+  font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', size=20)
   max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
-  font = ImageFont.truetype("DejaVuSans.ttf", size=max_font_size)
+  font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', size=max_font_size)
   text_color = (0, 0, 0)
   x = coordinate['x'] + (125 / 2)
   y = coordinate['y'] + (25 / 2)
@@ -358,7 +359,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
   return image
 
 
-def put_image_on_image(image_to_put_base64, coordinate, image):
+def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
   image_data = base64.b64decode(image_to_put_base64)
   image_array = np.frombuffer(image_data, np.uint8)
   faculty_sign_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
@@ -378,8 +379,10 @@ def put_image_on_image(image_to_put_base64, coordinate, image):
   #box_height = event_data.rel_height * image.size[1]
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 800
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 400
   rgba_thresh = rgba_thresh.resize(
-      (int(559.5415632615322), int(111.90831265230646)), Image.LANCZOS)
+      (int(box_width), int(box_height)), Image.LANCZOS)
 
   paste_box = (
       int(coordinate['x']),
@@ -440,11 +443,11 @@ def get_certificate(request):
     if not signature_base64:
       continue
 
-    image = put_image_on_image(signature_base64, key_coordinate, image)
+    image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
 
   if cdc_signature_base64:
     if cdc_coordinate:
-      image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image)
+      image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
   image_base64 = pil_image_to_base64(image)
   return Response({"certificate": image_base64})
