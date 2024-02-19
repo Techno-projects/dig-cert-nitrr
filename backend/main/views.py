@@ -62,7 +62,7 @@ def user_login(request):
   data = request.data
   try:
     user = Organisation.objects.get(email=data['email'])
-    if user.password == data["password"]:
+    if str(hash(user.password)) == data["password"]:
       encoded_jwt = jwt.encode(
           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
       response = Response({"ok": True, "message": "Logged in successfully",
