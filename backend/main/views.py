@@ -501,7 +501,7 @@ def register_event(request):
 
   org_name = Organisation.objects.get(email=data['user']).name
   mail_subject = "Event assigned by dig-cert-nitrr app"
-  mail_body = f"<h3>Greetings professor,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college.<br/><br/>Thanking You."
+  mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
 
   res = send_email_queue.delay(mail_subject, mail_body, faculties_required)
   if data['cdc'] == 'true':
