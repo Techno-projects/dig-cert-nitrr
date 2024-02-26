@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
-import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
+// import { saveAs } from 'file-saver';
+// import jsPDF from 'jspdf';
 import urls from '../urls.json';
 
 const server = urls.SERVER_URL;
@@ -12,7 +12,7 @@ const GetCertificate = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const navigate = useNavigate();
   const serial = searchParams.get("serial");
-  const [pdfGenerated, setPdfGenerated] = useState(false);
+  // const [pdfGenerated, setPdfGenerated] = useState(false);
   const [base64Image, setBase64Image] = useState("");
 
   useEffect(() => {
@@ -26,10 +26,6 @@ const GetCertificate = () => {
     try {
       const res = await axios.get(`${server}/api/get_certificate?serial=${serial}`);
       console.log(res.data);
-      // const certificateUrl = `/${res.data.certificate}`;
-      // setCertificate(certificateUrl);
-      // setCertiBase64(res.data.certificate);
-      // convertToPDF(res.data.certificate);
       setBase64Image(`data:application/png;base64,${res.data.certificate}`)
     }
     catch (error) {

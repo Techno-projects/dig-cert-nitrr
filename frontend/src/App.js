@@ -11,6 +11,7 @@ import HomePage from './components/HomePage';
 import DashboardAdmin from './components/DashboardAdmin';
 import Certificate from './components/Certificate';
 import GetCertificate from './components/GetCertificate';
+import VerifyCertificate from './components/VerifyCertificate';
 import './App.css';
 // import PrivateRoute from './utils/PrivateRoute';
 import Table from './components/Table';
@@ -60,6 +61,7 @@ const App = () => {
             <Route path='/Certificate' element={<Certificate />} />
             <Route path='/table' element={<Table />} />
             <Route path='/getcertificate' element={<GetCertificate />} />
+            <Route path='/verify' element={<VerifyCertificate />} />
           </Routes>
         </div>
       </Router>
