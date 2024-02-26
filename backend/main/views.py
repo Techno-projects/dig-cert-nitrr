@@ -16,6 +16,8 @@ import io
 import re
 from collections import Counter
 from django.conf import settings
+from io import BytesIO
+from django.http import HttpResponse
 
 load_dotenv()
 
@@ -449,8 +451,13 @@ def get_certificate(request):
     if cdc_coordinate:
       image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
-  image_base64 = pil_image_to_base64(image)
-  return Response({"certificate": image_base64})
+  image_io = BytesIO()
+  image.save(image_io, format="PNG")
+  image_io.seek(0)
+
+  # image_base64 = pil_image_to_base64(image)
+  return HttpResponse(image_io, content_type="image/png")
+  # return Response({"certificate": image_base64})
 
 
 @api_view(["POST"])
