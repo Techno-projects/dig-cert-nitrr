@@ -10,23 +10,26 @@ const server = urls.SERVER_URL;
 const GetCertificate = () => {
   const [certificate, setCertificate] = useState("");
   const searchParams = new URLSearchParams(window.location.search);
+  const searchParamsString = searchParams.toString();
   const navigate = useNavigate();
   const serial = searchParams.get("serial");
   // const [pdfGenerated, setPdfGenerated] = useState(false);
-  const [base64Image, setBase64Image] = useState("");
+  const [imageSrc, setImageSrc] = useState("");
 
   useEffect(() => {
     if (!serial) {
       navigate("/event_management")
     }
     getCertificate();
-  }, [searchParams]);
+  }, [searchParamsString]);
 
   const getCertificate = async () => {
     try {
-      const res = await axios.get(`${server}/api/get_certificate?serial=${serial}`);
-      console.log(res.data);
-      setBase64Image(`data:application/png;base64,${res.data.certificate}`)
+      const res = await axios.get(`${server}/api/get_certificate?serial=${serial}`, { responseType: "arraybuffer" } );
+      const blob = new Blob([res.data], { type: "image/png" });
+      const imageUrl = URL.createObjectURL(blob);
+      setImageSrc(imageUrl);
+      // setBase64Image(`data:application/png;base64,${res.data.certificate}`)
     }
     catch (error) {
       // console.log(error);
@@ -43,7 +46,7 @@ const GetCertificate = () => {
         </h1>
         </center>
         <div style={{ height: '60vh', width: '60vw', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          {base64Image !== "" && <img src={base64Image} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />}
+          {imageSrc && <img src={imageSrc} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />}
         </div>
       </div>
     </div>
