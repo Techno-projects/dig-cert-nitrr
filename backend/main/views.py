@@ -65,7 +65,8 @@ def user_login(request):
   data = request.data
   try:
     user = Organisation.objects.get(email=data['email'])
-    if user.password == data["password"]:
+    # if user.password == data["password"]:
+    if check_password(data["password"], user.password):
       encoded_jwt = jwt.encode(
           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
       response = Response({"ok": True, "message": "Logged in successfully",
@@ -473,28 +474,28 @@ def user_register(request):
 
 
 # logging in user
-@api_view(["POST"])
-def user_login(request):
-  data = request.data
-  try:
-    user = Organisation.objects.get(email=data['email'])
-    if check_password(data["password"], user.password):
-    # if user.password == data["password"]:
-      encoded_jwt = jwt.encode(
-          {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-      response = Response({"ok": True, "message": "Logged in successfully",
-                          "token": encoded_jwt}, status=status.HTTP_200_OK)
-      response.set_cookie("login", encoded_jwt)
-      return response
-    else:
-      return Response({"ok": False, "message": "Wrong Password"},
-                      status=status.HTTP_401_UNAUTHORIZED)
-  except Organisation.DoesNotExist as e:
-    return Response({"ok": False, "message": "User doesn't exist"},
-                    status=status.HTTP_401_UNAUTHORIZED)
-  except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while user login"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# @api_view(["POST"])
+# def user_login(request):
+#   data = request.data
+#   try:
+#     user = Organisation.objects.get(email=data['email'])
+#     if check_password(data["password"], user.password):
+#     # if user.password == data["password"]:
+#       encoded_jwt = jwt.encode(
+#           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
+#       response = Response({"ok": True, "message": "Logged in successfully",
+#                           "token": encoded_jwt}, status=status.HTTP_200_OK)
+#       response.set_cookie("login", encoded_jwt)
+#       return response
+#     else:
+#       return Response({"ok": False, "message": "Wrong Password"},
+#                       status=status.HTTP_401_UNAUTHORIZED)
+#   except Organisation.DoesNotExist as e:
+#     return Response({"ok": False, "message": "User doesn't exist"},
+#                     status=status.HTTP_401_UNAUTHORIZED)
+#   except Exception as e:
+#     return Response({"ok": False, "error": str(e), "message": "Error while user login"},
+#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
