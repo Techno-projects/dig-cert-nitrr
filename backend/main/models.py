@@ -14,7 +14,7 @@ class Organisation(models.Model):
   def save(self, *args, **kwargs):
     if self.password:
       self.password = make_password(self.password)
-    super(Organisation, self).save(*args, **kwargs) 
+    super(Organisation, self).save(*args, **kwargs)
 
 
 def event_data_upload_path(instance, filename):
