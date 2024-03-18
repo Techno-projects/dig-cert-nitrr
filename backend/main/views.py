@@ -18,6 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
+from django.contrib.auth.hashers import check_password
 
 load_dotenv()
 
@@ -64,7 +65,8 @@ def user_login(request):
   data = request.data
   try:
     user = Organisation.objects.get(email=data['email'])
-    if user.password == data["password"]:
+    # if user.password == data["password"]:
+    if check_password(data["password"], user.password):
       encoded_jwt = jwt.encode(
           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
       response = Response({"ok": True, "message": "Logged in successfully",
@@ -127,7 +129,7 @@ def faculty_login(request):
   data = request.data
   try:
     check = Faculty_Advisor.objects.get(email=data["email"])
-    if check.password == data["password"]:
+    if check_password(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
                                 'iscdc': check.isCDC},
@@ -472,27 +474,28 @@ def user_register(request):
 
 
 # logging in user
-@api_view(["POST"])
-def user_login(request):
-  data = request.data
-  try:
-    user = Organisation.objects.get(email=data['email'])
-    if user.password == data["password"]:
-      encoded_jwt = jwt.encode(
-          {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-      response = Response({"ok": True, "message": "Logged in successfully",
-                          "token": encoded_jwt}, status=status.HTTP_200_OK)
-      response.set_cookie("login", encoded_jwt)
-      return response
-    else:
-      return Response({"ok": False, "message": "Wrong Password"},
-                      status=status.HTTP_401_UNAUTHORIZED)
-  except Organisation.DoesNotExist as e:
-    return Response({"ok": False, "message": "User doesn't exist"},
-                    status=status.HTTP_401_UNAUTHORIZED)
-  except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while user login"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# @api_view(["POST"])
+# def user_login(request):
+#   data = request.data
+#   try:
+#     user = Organisation.objects.get(email=data['email'])
+#     if check_password(data["password"], user.password):
+#     # if user.password == data["password"]:
+#       encoded_jwt = jwt.encode(
+#           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
+#       response = Response({"ok": True, "message": "Logged in successfully",
+#                           "token": encoded_jwt}, status=status.HTTP_200_OK)
+#       response.set_cookie("login", encoded_jwt)
+#       return response
+#     else:
+#       return Response({"ok": False, "message": "Wrong Password"},
+#                       status=status.HTTP_401_UNAUTHORIZED)
+#   except Organisation.DoesNotExist as e:
+#     return Response({"ok": False, "message": "User doesn't exist"},
+#                     status=status.HTTP_401_UNAUTHORIZED)
+#   except Exception as e:
+#     return Response({"ok": False, "error": str(e), "message": "Error while user login"},
+#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
@@ -543,19 +546,16 @@ def register_event(request):
 def faculty_register(request):
   data = request.data
   email = data["email"]
-  name = data["name"]
   password = data["password"]
-  organisation_code = data["organisation_code"]
 
   try:
     Faculty_Advisor.objects.create(
         email=email,
-        name=name,
-        password=password,
-        organisation_code=organisation_code)
+        password=password
+    )
     return Response({"ok": True, "message": "Faculty registered"})
   except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
+    return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"}, 400)
 
 
 @api_view(["POST"])

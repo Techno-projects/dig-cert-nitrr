@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import './css/Form.css';
+import React, { useState } from "react";
+import "./css/Form.css";
+import urls from "../urls.json";
+
+const server = urls.SERVER_URL;
 
 const FacultyRegistration = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    organisation_code: '',
-    name: ''
+    email: "",
+    password: "",
+    // organisation_code: '',
+    // name: ''
   });
 
   const handleInputChange = (e) => {
@@ -18,27 +21,61 @@ const FacultyRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('/api/faculty_register', {
-      method: 'POST',
+    const response = await fetch(`${server}/api/faculty_register`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(formData),
-    })
-    const data = await response.json()
+    });
+    const data = await response.json();
+    alert(data.message);
   };
   return (
     <div className="form-container">
       <h1 className="title">Faculty Registration</h1>
       <form className="form" onSubmit={handleSubmit}>
+        <input
+          placeholder="Email:"
+          className="input_text"
+          type="text"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          required
+        />
 
-        <input placeholder='Email:' className='input_text' type="text" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+        {/* <input
+          placeholder="Name:"
+          className="input_text"
+          type="text"
+          id="Name"
+          name="name"
+          onChange={handleInputChange}
+          required
+        />
 
-        <input placeholder='Name:' className='input_text' type="text" id="Name" name="name" onChange={handleInputChange} required />
+        <input
+          placeholder="Organisation Code:"
+          className="input_text"
+          type="text"
+          id="Name"
+          name="organisation_code"
+          onChange={handleInputChange}
+          required
+        /> */}
 
-        <input placeholder='Organisation Code:' className='input_text' type="text" id="Name" name="organisation_code" onChange={handleInputChange} required />
-
-        <input placeholder='Password:' className='input_text' type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required />
+        <input
+          placeholder="Password:"
+          className="input_text"
+          type="password"
+          id="password"
+          name="password"
+          value={formData.password}
+          onChange={handleInputChange}
+          required
+        />
 
         <button type="submit">Submit</button>
       </form>

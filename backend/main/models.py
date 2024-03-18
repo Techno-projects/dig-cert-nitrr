@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password
 
 
 class Organisation(models.Model):
@@ -10,6 +11,10 @@ class Organisation(models.Model):
 
   def __str__(self):
     return f"{self.id}-{self.name}"
+  def save(self, *args, **kwargs):
+    if self.password:
+      self.password = make_password(self.password)
+    super(Organisation, self).save(*args, **kwargs)
 
 
 def event_data_upload_path(instance, filename):
@@ -46,6 +51,11 @@ class Faculty_Advisor(models.Model):
   email = models.CharField(unique=True)
   password = models.CharField()
   isCDC = models.BooleanField(default=False)
+
+  def save(self, *args, **kwargs):
+    if self.password:
+      self.password = make_password(self.password)
+    super(Faculty_Advisor, self).save(*args, **kwargs) 
 
   def __str__(self):
     return f"{self.id}-{self.email}"
