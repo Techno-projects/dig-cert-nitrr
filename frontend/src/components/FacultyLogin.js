@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LoginContext } from "../App";
 import "./css/Form.css";
 import urls from '../urls.json';
-
+import { Blob } from "./Blob";
 const server = urls.SERVER_URL;
 // import './css/Faculty_login.css';
 
@@ -58,6 +58,8 @@ const FacultyLogin = () => {
 
   return (
     <div>
+      <Blob/>
+
       <div className="form-container">
         <div className="form-internal">
           <h1 className="title">Login</h1>
@@ -85,7 +87,7 @@ const FacultyLogin = () => {
               required
             />
 
-            <button type="submit">Submit</button>
+            <button type="submit" className="submit-btn">Submit</button>
           </form>
           {/* <Link to="/register">
           <button className="register-button">Register</button>

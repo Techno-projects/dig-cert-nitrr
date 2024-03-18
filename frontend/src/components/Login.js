@@ -4,7 +4,7 @@ import FacultyLogin from "./FacultyLogin";
 import "./css/Form.css";
 import { LoginContext } from "../App";
 import urls from '../urls.json';
-
+import { Blob } from "./Blob";
 const server = urls.SERVER_URL;
 
 
@@ -69,6 +69,7 @@ const Login = () => {
         <FacultyLogin />
       ) : (
         <div>
+          <Blob/>
           {/* <div>
             <a href='?type=faculty'>
               <input type='button' value="Faculty" />
@@ -99,8 +100,8 @@ const Login = () => {
                   onChange={handleInputChange}
                   required
                 />
-                <button type="submit">Submit</button>
-              </form>
+                <button  className="submit-btn" type="submit">Submit</button>
+              </form> 
             </div>
             {error && <p style={{ color: "red" }}>{error}</p>}
           </div>

@@ -1,27 +1,15 @@
 /* src/App.css */
+
 body {
   margin: 0;
   box-sizing: border-box;
-  /* display: flex; */
-  /* justify-content: center; */
-  /* align-items: center; */
-  /* height:100vh; */
-  background: #cae5fc;
   overflow-x: hidden;
   min-height: 100vh;
-  /* height: 100%; */
+  background: #0e0e1e; /* fallback for old browsers */
 }
 
-/* .container {
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-} */
-
 .title {
-  color: #0074d9;
+  color: aliceblue;
 }
 
 .form {
@@ -31,31 +19,32 @@ body {
   /* margin-top: 20px; */
 }
 
-/* .form label,
-.form input {
-  margin: 10px;
-} */
-
 button {
-  margin-top: 20px;
-  background-color: #0074d9;
-  color: white;
+  margin: 10px;
   border: none;
-  border-radius: 5px;
+  border-radius: 0px;
   padding: 10px 20px;
   cursor: pointer;
+  color: white;
+  font-family: "Electrolize", sans-serif;
+  font-size: 14px;
+  border: 1px solid white;
+  transition: 0.2s ease-in;
 }
 
 .register-button {
-  background-color: #0074d9;
+  background: transparent;
   margin-top: 20px;
 }
 
-.register-button:hover{
-  background-color: #c1e5f3;
+.register-button:hover {
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.8);
+  background: white;
+  color: black;
 }
 
 .register-options {
   display: flex;
   justify-content: space-around;
 }
+

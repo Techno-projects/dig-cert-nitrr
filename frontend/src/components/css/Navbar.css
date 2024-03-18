@@ -12,16 +12,33 @@
   justify-content: space-between;
   height: 10%;
   align-items: center;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); */
 }
 
 /* Logo styling */
 .logo {
-  font-size: 24px;
   font-weight: bold;
   margin: 2rem;
 }
+.nitlogo{
+  height: 60px !important;
+  width: 60px !important;
+  padding-right: 10px !important;
+}
+.home-btn{
+  background: transparent !important;
+  font-size: 20px !important;
+  color: rgb(255, 255, 255) !important;
+  transition: 0.1s ease-in !important;
+  padding: 5px 10px !important;
+}
 
+.home-btn:hover{
+  background: white !important;
+  color: black !important;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.8) !important;
+
+}
 /* Navigation links */
 .nav-links {
   list-style: none;

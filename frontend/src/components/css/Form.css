@@ -10,6 +10,14 @@
   margin-top:12.5%;
   position: relative;
   width: 25%;
+  font-family: "Electrolize", sans-serif;
+
+}
+
+input{
+  background: transparent !important;
+  border-bottom: 2px solid white !important;
+  color: white !important
 }
 
 .form-container{
@@ -23,12 +31,8 @@
 .input_text {
   width: 100%;
   padding: 10px;
-  border: none;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(5px);
   /* transition: background 0.3s; */
-  color: #333;
 }
 
 /* @media screen and (max-width:1100px) {
@@ -36,3 +40,15 @@
     margin: 12.5%;
   }
 } */
+
+.submit-btn{
+  background: transparent ;
+  margin-top: 20px ;
+}
+
+.submit-btn:hover{
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.8);
+  background: white;
+  color: black;
+}
+
