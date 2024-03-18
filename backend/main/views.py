@@ -18,6 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
+from django.contrib.auth.hashers import check_password
 
 load_dotenv()
 
@@ -127,7 +128,7 @@ def faculty_login(request):
   data = request.data
   try:
     check = Faculty_Advisor.objects.get(email=data["email"])
-    if check.password == data["password"]:
+    if check_password(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
                                 'iscdc': check.isCDC},
@@ -543,19 +544,16 @@ def register_event(request):
 def faculty_register(request):
   data = request.data
   email = data["email"]
-  name = data["name"]
   password = data["password"]
-  organisation_code = data["organisation_code"]
 
   try:
     Faculty_Advisor.objects.create(
         email=email,
-        name=name,
-        password=password,
-        organisation_code=organisation_code)
+        password=password
+    )
     return Response({"ok": True, "message": "Faculty registered"})
   except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"})
+    return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"}, 400)
 
 
 @api_view(["POST"])
