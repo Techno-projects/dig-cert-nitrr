@@ -1,6 +1,9 @@
 /* Footer styling */
 .footer {
-  color: #0074d9;
+  color: #ffffff;
+  opacity: 0.5;
+  font-family: "Electrolize", sans-serif;
+
   text-align: center;
   /* padding: 10px; */
   position: fixed;
