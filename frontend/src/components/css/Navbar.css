@@ -19,12 +19,13 @@
 .logo {
   font-weight: bold;
   margin: 2rem;
-  margin-top: 0px;
+  margin-top: 5px;
 }
 .nitlogo{
-  height: 50px !important;
-  width: 50px !important;
-  padding-right: 10px !important;
+  height: 70px !important;
+  width: 70px !important;
+  padding-right: 20px !important;
+  margin-top: 5px !important;
 }
 .home-btn{
   background: transparent !important;

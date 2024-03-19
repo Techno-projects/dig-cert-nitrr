@@ -3,7 +3,7 @@ import axios from 'axios';
 // import { saveAs } from 'file-saver';
 // import jsPDF from 'jspdf';
 import urls from '../urls.json';
-
+import './css/VerifyCertificate.css';
 const server = urls.SERVER_URL;
 
 const VerifyCertificate = () => {
@@ -38,7 +38,8 @@ const VerifyCertificate = () => {
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div>
         <center>
-          <h1>
+        
+          <h1 style={{color: 'white', fontFamily: "Electrolize, sans-serif" }}>
             Enter dispatch number to verify certificate
           </h1>
           <input
@@ -48,7 +49,7 @@ const VerifyCertificate = () => {
             onChange={handleSerialChange}
             style={{ marginBottom: '10px' }}
           />
-          <button onClick={handleVerifyCertificate} disabled={loading}>
+          <button onClick={handleVerifyCertificate} disabled={loading} className="handleVerifyButton">
             {loading ? 'Loading...' : 'Get Certificate'}
           </button>
         </center>

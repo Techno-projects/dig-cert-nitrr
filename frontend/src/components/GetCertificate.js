@@ -41,7 +41,7 @@ const GetCertificate = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div>
         <center>
-        <h1>
+        <h1 style={{color: 'white', fontFamily: "Electrolize, sans-serif" }}>
           Verified Certificate
         </h1>
         </center>
