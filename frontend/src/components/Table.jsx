@@ -4,7 +4,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-// import './css/Table.css';
+import './css/Table.css';
 import { decodeToken } from "react-jwt";
 import urls from '../urls.json';
 
@@ -324,7 +324,7 @@ const Table = () => {
   return (
     <div className="table-container" style={{ padding: '4rem' }}>
       <div className='tables' style={{ display: 'flex' }}>
-        <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
+        <div className="ag-theme-alpine text" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center', color:"white" }}>
           <h1>Pending Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
@@ -336,9 +336,9 @@ const Table = () => {
             rowData={pending_data}
             rowSelection={'multiple'}
           />
-          {!submitting ? <button onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
+          {!submitting ? <button className="submit-btn" onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
         </div>
-        <div className="ag-theme-alpine" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
+        <div className="ag-theme-alpine text" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact

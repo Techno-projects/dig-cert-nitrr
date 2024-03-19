@@ -10,7 +10,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  height: 10%;
+  height: fit-content;
   align-items: center;
   /* box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); */
 }
@@ -19,10 +19,11 @@
 .logo {
   font-weight: bold;
   margin: 2rem;
+  margin-top: 0px;
 }
 .nitlogo{
-  height: 60px !important;
-  width: 60px !important;
+  height: 50px !important;
+  width: 50px !important;
   padding-right: 10px !important;
 }
 .home-btn{

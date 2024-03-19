@@ -11,16 +11,18 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 15px;
-  margin-top: 25%;
+  /* margin-top: 25%; */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   border-radius: 15px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  height: 350px;
-  width: 350px;
-  padding: 2rem;
+  width: fit-content;
+  padding: 50px 30px;
+  height: fit-content;
+
 }
 
 .Certificate_file{
+
     text-align: center;
     padding-left: 20%;
 }
@@ -29,9 +31,15 @@
     text-align: center;
     font-size: 24px;
     font-weight: bolder;
-    color: #0074d9;;
+    color: #ffffff;
+  font-family: "Electrolize", sans-serif;
+  margin-bottom: 30px;
+
 }
 
 .Certificate_fields{
     margin-left: 2rem;
+    color: white;
+    font-family: "Electrolize", sans-serif;
+    
 }

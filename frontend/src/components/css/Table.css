@@ -6,3 +6,8 @@
     --ag-row-border-width: 5px;
     --ag-row-border-color: rgb(150, 150, 200);
 }
+
+.text{
+    color: white !important;
+    font:  "Electrolize", sans-serif;
+}
