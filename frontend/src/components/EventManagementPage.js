@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from "axios";
 import "./css/Form.css";
-import urls from '../urls.json';
+import urls from "../urls.json";
 
 const server = urls.SERVER_URL;
 
@@ -193,7 +193,7 @@ const EventManagementPage = () => {
               ))}
               {/* <label htmlFor="cdcHead">CDC Head:</label>
         <input type="text" id="cdcHead" name="cdcHead" value={eventData.cdcHead} onChange={handleChange} required /> */}
-              <button type="button" onClick={upload}>
+              <button className="submit-btn" type="button" onClick={upload}>
                 Upload Certificate
               </button>
             </div>

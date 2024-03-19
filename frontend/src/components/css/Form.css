@@ -11,6 +11,7 @@
   position: relative;
   width: 25%;
   font-family: "Electrolize", sans-serif;
+  backdrop-filter: blur(10px);
 
 }
 
@@ -20,12 +21,17 @@ input{
   color: white !important
 }
 
+input::placeholder{
+  color: white;
+}
+
 .form-container{
   display: flex;
   justify-content: center;
   align-items: center ;
   /* border: 2px solid red; */
   flex-direction: column;
+  color: white;
 }
 
 .input_text {
