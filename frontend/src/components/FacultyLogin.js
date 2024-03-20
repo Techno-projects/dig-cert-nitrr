@@ -1,5 +1,6 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import { LoginContext } from "../App";
 import "./css/Form.css";
 import urls from '../urls.json';
@@ -89,9 +90,11 @@ const FacultyLogin = () => {
 
             <button type="submit" className="submit-btn">Submit</button>
           </form>
-          {/* <Link to="/register">
-          <button className="register-button">Register</button>
-        </Link> */}
+          {
+            <Link to="/register/faculty">
+              <span style={{ color: 'white', textDecoration: 'underline' }}>New User? Register Here.</span>
+            </Link>
+          }
         </div>
       </div>
       {error && <p style={{ color: "red" }}>{error}</p>}

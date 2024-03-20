@@ -33,6 +33,7 @@ const FacultyRegistration = () => {
   };
   return (
     <div className="form-container">
+        <div className="form-internal">
       <h1 className="title">Faculty Registration</h1>
       <form className="form" onSubmit={handleSubmit}>
         <input
@@ -77,8 +78,9 @@ const FacultyRegistration = () => {
           required
         />
 
-        <button type="submit">Submit</button>
+        <button type="submit" className="submit-btn">Submit</button>
       </form>
+      </div>
     </div>
   );
 };
