@@ -1,3 +1,3 @@
 {
-  "SERVER_URL": "https://digcert.nitrr.ac.in/backend"
+  "SERVER_URL": "http://localhost:8000"
 }

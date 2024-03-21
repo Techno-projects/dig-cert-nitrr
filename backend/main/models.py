@@ -8,6 +8,7 @@ class Organisation(models.Model):
   name = models.CharField(unique=True)
   email = models.CharField(unique=True)
   password = models.CharField(max_length=128)
+  unique_name = models.CharField(unique=True)
 
   def __str__(self):
     return f"{self.id}-{self.name}"
@@ -35,6 +36,7 @@ class Event(models.Model):
   event_data = models.FileField(upload_to=event_data_upload_path)
   certificate = models.FileField(upload_to=certificate_upload_path)
   coordinates = models.CharField()
+  faculties_required = models.CharField()
   isCDC = models.BooleanField(default=True)
   dispatch = models.CharField()
   rel_width = models.FloatField()
@@ -51,6 +53,7 @@ class Faculty_Advisor(models.Model):
   email = models.CharField(unique=True)
   password = models.CharField()
   isCDC = models.BooleanField(default=False)
+  isDSW = models.BooleanField(default=False)
 
   def save(self, *args, **kwargs):
     if self.password:

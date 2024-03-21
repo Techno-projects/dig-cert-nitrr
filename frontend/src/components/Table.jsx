@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -7,6 +7,17 @@ import axios from 'axios';
 import './css/Table.css';
 import { decodeToken } from "react-jwt";
 import urls from '../urls.json';
+import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
+import { CsvExportModule } from "@ag-grid-community/csv-export";
+import { ExcelExportModule } from "@ag-grid-enterprise/excel-export";
+import { MenuModule } from "@ag-grid-enterprise/menu";
+import { ModuleRegistry } from "@ag-grid-community/core";
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  CsvExportModule,
+  ExcelExportModule,
+  MenuModule,
+]);
 
 const server = urls.SERVER_URL;
 
@@ -29,7 +40,7 @@ const Table = () => {
   // };
 
   if (!auth) {
-    alert('unauthorized user');
+    alert('Unauthorized user');
     window.location.href("/");
   }
 
@@ -132,7 +143,7 @@ const Table = () => {
       catch (error) {
         alert(error.response.data.message);
         // history.pushState("/login?type=faculty");
-        window.location.href = "/login?type=faculty";
+        // window.location.href = "/login?type=faculty";
       }
     }
     if (!fac_signed_in.iscdc) {
@@ -269,6 +280,7 @@ const Table = () => {
   };
 
   const gridApi1 = useRef(null);
+  const signedRef = useRef();
   const submitSelectedRows = async () => {
     setSubmitting(true);
     const selectedRows = gridApi1.current.getSelectedRows();
@@ -321,6 +333,11 @@ const Table = () => {
     setSubmitting(false);
   }
 
+  const onBtExport = useCallback(() => {
+    console.log(signedRef);
+    signedRef.current.api.exportDataAsExcel();
+  }, []);
+
   return (
     <div className="table-container" style={{ padding: '4rem' }}>
       <div className='tables' style={{ display: 'flex' }}>
@@ -342,9 +359,11 @@ const Table = () => {
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
+            ref={signedRef}
             columnDefs={columnDefs2}
             rowData={my_signed}
           />
+          <button className="submit-btn" onClick={onBtExport}>Export Report</button>
         </div>
       </div>
       <div className='Table_button' style={{ position: 'relative', marginTop: '10rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
