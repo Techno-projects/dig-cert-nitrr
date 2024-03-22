@@ -205,6 +205,8 @@ def send_certi_email(recipient_email, serial_no, event_name, org_name):
 
 def send_cdc_email(event_name, org_name):
   cdc_faculty = Faculty_Advisor.objects.filter(isCDC=True)
+  if len(cdc_faculty) != 1:
+    return
   cdc_email = cdc_faculty[0].email
 
   mail_subject = "Event assigned by Dig-Cert-NITRR app"
@@ -615,8 +617,8 @@ def sign_by_fa(data):
   current_fac_data = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
   del data['token']
 
-  org_email = Organisation.objects.get(name=data['Organisation']).unique_name
-  event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
+  org_unique_name = Organisation.objects.get(unique_name=data['Organisation']).unique_name
+  event_details = Event.objects.get(event_name=data['Event'], organisation=org_unique_name)
   isCDC = event_details.isCDC
   faculties_required = json.loads(event_details.faculties_required)
 
