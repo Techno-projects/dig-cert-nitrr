@@ -85,42 +85,43 @@ def user_login(request):
 
 
 # register an event
-@api_view(["POST"])
-def register_event(request):
-  data = request.data
-  if (not is_org_auth(data['token'])):
-    return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+# @api_view(["POST"])
+# def register_event(request):
+#   data = request.data
+#   if (not is_org_auth(data['token'])):
+#     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-  event_db = data['event_data']           # event's excel file
-  certi = data['certificate']             # event's certificate file
-  isCDC = False                           # is cdc signature required for this event
-  faculties_required = json.loads(data['faculties'])
-  if data['cdc'] == 'true':
-    isCDC = True
-  try:
-    Event.objects.create(
-        organisation=data['user'],
-        event_data=event_db,
-        certificate=certi,
-        coordinates=data['coords'],
-        event_name=data['event'],
-        isCDC=isCDC,
-        dispatch=data['dispatch'])
-    current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
+#   event_db = data['event_data']           # event's excel file
+#   certi = data['certificate']             # event's certificate file
+#   isCDC = False                           # is cdc signature required for this event
+#   faculties_required = json.dumps(data['faculties'])
+#   if data['cdc'] == 'true':
+#     isCDC = True
+#   try:
+#     Event.objects.create(
+#         organisation=data['user'],
+#         event_data=event_db,
+#         certificate=certi,
+#         coordinates=data['coords'],
+#         event_name=data['event'],
+#         isCDC=isCDC,
+#         faculties_required=faculties_required,
+#         dispatch=data['dispatch'])
+#     current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
 
-    faculty_events = []                 # store faculty-event maps
-    for i in faculties_required:
-      faculty_i = Faculty_Advisor.objects.get(email=i)
-      current_event = Event.objects.get(id=current_event_id)
-      faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
+#     faculty_events = []                 # store faculty-event maps
+#     for i in faculties_required:
+#       faculty_i = Faculty_Advisor.objects.get(email=i)
+#       current_event = Event.objects.get(id=current_event_id)
+#       faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
 
-    # now store all the faculty-event maps in the DB
-    Faculty_Event.objects.bulk_create(faculty_events)
+#     # now store all the faculty-event maps in the DB
+#     Faculty_Event.objects.bulk_create(faculty_events)
 
-    return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
-  except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#     return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
+#   except Exception as e:
+#     return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"},
+#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # logging in the faculty
@@ -195,10 +196,21 @@ def get_event_details(request):
     return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
+# mail to be send to the participant
 def send_certi_email(recipient_email, serial_no, event_name, org_name):
-  body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has beed signed by the college authority.<br/> You can view the ceritificate by visting at <u>https://digcert.nitrr.ac.in/getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
+  body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has been signed by the college authority.<br/> You can view the ceritificate by visting at <u>https://digcert.nitrr.ac.in/getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
 
-  send_email_queue.delay("Certificate signed by dig-cert-nitrr", body, [recipient_email])
+  send_email_queue.delay("Certificate signed by Dig-Cert-NITRR", body, [recipient_email])
+
+
+def send_cdc_email(event_name, org_name):
+  cdc_faculty = Faculty_Advisor.objects.filter(isCDC=True)
+  cdc_email = cdc_faculty[0].email
+
+  mail_subject = "Event assigned by Dig-Cert-NITRR app"
+  mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{event_name}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
+
+  res = send_email_queue.delay(mail_subject, mail_body, [cdc_email])
 
 
 # return the headers of the excel file
@@ -267,9 +279,9 @@ def get_faculties(request):
 
 def cdc_get_certi_by_serial(serial_no, certificate):
   serial_list = serial_no.split("/")
-  dispatch = serial_list[0]
-  event_id = serial_list[1]
-  row_id = int(serial_list[2])
+  dispatch = serial_list[2]
+  event_id = int(serial_list[4])
+  row_id = int(serial_list[5])
 
   event = Event.objects.get(id=event_id)
 
@@ -294,7 +306,7 @@ def cdc_get_certi_by_serial(serial_no, certificate):
     if c1 != c2:
       return
 
-  org_name = Organisation.objects.get(email=event.organisation).name
+  org_name = Organisation.objects.get(unique_name=event.organisation).name
   event_name = event.event_name
   event_data = event.event_data
   df = pd.read_excel(event_data)
@@ -310,6 +322,7 @@ def cdc_get_certi_by_serial(serial_no, certificate):
 def get_cdc_events(request):
   pending_certis = Certificate.objects.filter(status='0')
   signed_certis = Certificate.objects.filter(status='1')
+
   pending_rows = []
   signed_rows = []
   for certi in pending_certis:
@@ -404,9 +417,10 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
 @api_view(['GET'])
 def get_certificate(request):
   serial = request.GET.get('serial')
+  print(serial)
   serial = serial.replace("_", "/")
   certificate = Certificate.objects.filter(serial_no=serial)
-  event_id = serial.split('/')[1]
+  event_id = int(serial.split('/')[4])
   event_data = Event.objects.get(id=event_id)
 
   if not certificate:
@@ -480,31 +494,6 @@ def user_register(request):
         e), "message": "Error while signing up the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# logging in user
-# @api_view(["POST"])
-# def user_login(request):
-#   data = request.data
-#   try:
-#     user = Organisation.objects.get(email=data['email'])
-#     if check_password(data["password"], user.password):
-#     # if user.password == data["password"]:
-#       encoded_jwt = jwt.encode(
-#           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
-#       response = Response({"ok": True, "message": "Logged in successfully",
-#                           "token": encoded_jwt}, status=status.HTTP_200_OK)
-#       response.set_cookie("login", encoded_jwt)
-#       return response
-#     else:
-#       return Response({"ok": False, "message": "Wrong Password"},
-#                       status=status.HTTP_401_UNAUTHORIZED)
-#   except Organisation.DoesNotExist as e:
-#     return Response({"ok": False, "message": "User doesn't exist"},
-#                     status=status.HTTP_401_UNAUTHORIZED)
-#   except Exception as e:
-#     return Response({"ok": False, "error": str(e), "message": "Error while user login"},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 @api_view(["POST"])
 def register_event(request):
   data = request.data
@@ -515,33 +504,37 @@ def register_event(request):
   certi = data['certificate']             # event's certificate file
   isCDC = False                           # is cdc signature required for this event
   faculties_required = json.loads(data['faculties'])
+  org_unique_name = Organisation.objects.get(email=data['user']).unique_name
 
-  org_name = Organisation.objects.get(email=data['user']).name
-  mail_subject = "Event assigned by dig-cert-nitrr app"
-  mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
-
-  res = send_email_queue.delay(mail_subject, mail_body, faculties_required)
   if data['cdc'] == 'true':
     isCDC = True
   try:
     Event.objects.create(
-        organisation=data['user'],
+        organisation=org_unique_name,
         event_data=event_db,
         certificate=certi,
         coordinates=data['coords'],
         event_name=data['event'],
         isCDC=isCDC,
         dispatch=data['dispatch'],
+        faculties_required=json.dumps(faculties_required),
         rel_height=float(data['rel_height']),
         rel_width=float(data['rel_width']),
     )
-    current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
+    current_event_id = Event.objects.get(organisation=org_unique_name, event_name=data['event']).id
     faculty_events = []
     for i in faculties_required:
+      print(i)
       faculty_i = Faculty_Advisor.objects.get(email=i)
       current_event = Event.objects.get(id=current_event_id)
       faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
     Faculty_Event.objects.bulk_create(faculty_events)
+
+    org_name = Organisation.objects.get(email=data['user']).name
+    mail_subject = "Event assigned by Dig-Cert-NITRR app"
+    mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{data['event']}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
+
+    res = send_email_queue.delay(mail_subject, mail_body, faculties_required)
 
     return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
   except Exception as e:
@@ -588,16 +581,17 @@ def get_event_details(request):
     for any_event in fac_events:
       event_file = any_event.event.event_data
       dispatch = any_event.event.dispatch
+      org_unique_name = any_event.event.organisation
       students = pd.read_excel(event_file)
       students.reset_index(drop=False, inplace=True, names='Serial No')
       students['Serial No'] = students['Serial No'].apply(
-          lambda x: dispatch + "/" + str(any_event.event.id) + "/" + str(x))
+          lambda x: "No./NITRR/" + dispatch + "/" + org_unique_name + "/" + '{:04d}'.format(int(any_event.event.id)) + "/" + str(x))
       mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
       mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
       all_unsigned_students = students[mask].to_dict(orient='records')
       all_signed_students = students[mask1].to_dict(orient='records')
 
-      org_name = Organisation.objects.get(email=any_event.event.organisation).name
+      org_name = Organisation.objects.get(unique_name=any_event.event.organisation).name
       for x in all_unsigned_students:
         x['Organisation'] = org_name
         x['Event'] = any_event.event.event_name
@@ -621,10 +615,12 @@ def sign_by_fa(data):
   current_fac_data = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
   del data['token']
 
-  org_email = Organisation.objects.get(name=data['Organisation']).email
+  org_email = Organisation.objects.get(name=data['Organisation']).unique_name
   event_details = Event.objects.get(event_name=data['Event'], organisation=org_email)
   isCDC = event_details.isCDC
+  faculties_required = json.loads(event_details.faculties_required)
 
+  cdc_email_send = False
   certi_status = "0"
   if not isCDC:
     certi_status = "1"
@@ -639,6 +635,9 @@ def sign_by_fa(data):
   certi = Certificate.objects.filter(serial_no=serial_no)
 
   if len(certi) == 0:
+    if len(faculties_required) == 1:
+      cdc_email_send = True
+
     Certificate.objects.create(
         faculty_advisor=json.dumps([current_fac_email]),
         serial_no=serial_no,
@@ -654,24 +653,33 @@ def sign_by_fa(data):
 
     fac_signs_base64 = json.loads(certi[0].faculty_signatures)
     fac_signs_base64[current_fac_email] = faculty_sign_image_base64
+    signed_faculties = list(fac_signs_base64.keys())
     fac_signs_base64 = json.dumps(fac_signs_base64)
 
     Certificate.objects.filter(
         serial_no=serial_no).update(
         faculty_advisor=fac_ids,
         faculty_signatures=fac_signs_base64)
-  return Response({"ok": True, "message": "Signed"}, status=status.HTTP_201_CREATED)
+    
+    if len(signed_faculties) == len(faculties_required):
+      cdc_email_send = True
+  return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send, "organisation": data['Organisation'], "event": data['Event']}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
 def approveL0(request):
   data = request.data
+  cdc_emails = set()
   for i in range(0, len(data)):
     res = sign_by_fa(data[i])
-    print(res)
+    if res.data['cdc_email_send']:
+      cdc_emails.add((res.data['organisation'], res.data['event']))
+
     if not res.data['ok']:
       return res
 
+  for i in cdc_emails:
+    send_cdc_email(i[1], i[0])
   return Response({"ok": True, "message": "Signed successfully"})
 
 
