@@ -468,11 +468,18 @@ def get_certificate(request):
       image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
   image_io = BytesIO()
-  image.save(image_io, format="PNG")
-  image_io.seek(0)
-
-  # image_base64 = pil_image_to_base64(image)
-  return HttpResponse(image_io, content_type="image/png")
+  if request.GET.get('download', False):
+    image.save(image_io, format="PNG")
+    image_io.seek(0)
+    response = HttpResponse(image_io, content_type="image/png")
+    response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
+    return response
+  else:
+    if image.mode == 'RGBA':
+      image = image.convert('RGB')
+    image.save(image_io, format="JPEG", quality=50)
+    image_io.seek(0)
+    return HttpResponse(image_io, content_type="image/jpeg")
   # return Response({"certificate": image_base64})
 
 
