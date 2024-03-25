@@ -1,17 +1,22 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { useLocation } from 'react-router-dom';
-import axios from 'axios';
-import './css/Table.css';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import "./css/Table.css";
 import { decodeToken } from "react-jwt";
-import urls from '../urls.json';
+import urls from "../urls.json";
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
 import { CsvExportModule } from "@ag-grid-community/csv-export";
 import { ExcelExportModule } from "@ag-grid-enterprise/excel-export";
 import { MenuModule } from "@ag-grid-enterprise/menu";
 import { ModuleRegistry } from "@ag-grid-community/core";
+import toast from "react-hot-toast";
+import ReactCrop from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import ImageCrop from "./ImageCrop";
+
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   CsvExportModule,
@@ -22,9 +27,9 @@ ModuleRegistry.registerModules([
 const server = urls.SERVER_URL;
 
 const Table = () => {
-  const auth = localStorage.getItem('login');
+  const auth = localStorage.getItem("login");
   const fac_signed_in = decodeToken(auth);
-  const location = useLocation()
+  const location = useLocation();
   const [pending_data, set_pending_data] = useState([]);
   const [my_signed, set_my_signed] = useState([]);
   const [signature, setSignature] = useState(null);
@@ -34,122 +39,62 @@ const Table = () => {
   const selectedCellValue = null;
   const [submitting, setSubmitting] = useState(false);
 
-  // const filterParams = {
-  //   filter: 'agDateColumnFilter',
-  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual'],
-  // };
-
   if (!auth) {
-    alert('Unauthorized user');
+    toast.error("Unauthorized user");
     window.location.href("/");
   }
-
-  // const dateFilterParams = {
-  //   filter: 'agTextColumnFilter', // Use text filter for date column
-  //   filterOptions: ['contains', 'notContains', 'startsWith', 'endsWith', 'equals', 'notEqual', 'greaterThan'],
-  // };
-
-  // const handleSignatureSubmit = () => {
-  //   const signature = window.prompt('Please enter your signature:');
-  //   if (signature) {
-  //     // Handle the signature input here
-  //     alert('Signature submitted: ' + signature);
-  //   }
-  // };
-
-
-  // const onCellClicked = async (params) => {
-  //   if (!signature) {
-  //     alert("Please upload your signature")
-  //     return;
-  //   }
-  //   const row_data = {};
-  //   const headers = Object.keys(params.data);
-  //   headers.map(col => {
-  //     row_data[col] = params.data[col]
-  //   })
-  //   row_data.organisation = location.state.org_name;
-  //   row_data.event_name = location.state.event_name;
-  //   row_data.faculty_sign = signature;
-  //   row_data.fac_signed_in = fac_signed_in.email;
-  //   row_data.token = auth;
-  //   try {
-  //     const response = await axios.post('/api/approveL0', row_data, {
-  //       headers: {
-  //         'Content-type': 'application/json'
-  //       }
-  //     });
-  //     if (response.data.ok) {
-  //       let copy_pending = [...pending_data];
-  //       const copy_signed = [...my_signed];
-  //       const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
-  //       copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
-  //       copy_signed.push(deleted_row);
-  //       set_pending_data(copy_pending);
-  //       set_my_signed(copy_signed);
-  //       alert("Signed");
-  //       window.location.reload();
-  //     }
-  //   }
-  //   catch (error) {
-  //     console.log(error.response.data);
-  //     alert(error.response.data.message);
-  //     // window.location.reload();
-  //   }
-  // };
 
   useEffect(() => {
     const getEvents = async () => {
       try {
-        const response = await axios.post(`${server}/api/get_event_details`, { email: fac_email }, {
-          headers: {
-            "Content-type": "application/json"
+        const response = await axios.post(
+          `${server}/api/get_event_details`,
+          { email: fac_email },
+          {
+            headers: {
+              "Content-type": "application/json",
+            },
           }
-        });
+        );
         const data = response.data;
         console.log(data);
         if (data.ok) {
-          set_my_signed(data.signed)
-          set_pending_data(data.pending)
-        }
-        else {
-          alert("Error while fetching events");
+          set_my_signed(data.signed);
+          set_pending_data(data.pending);
+        } else {
+          toast.error("Error while fetching events");
           // window.location.href = "/login?type=faculty";
         }
-      }
-      catch (error) {
-        alert(error.response.data.message);
+      } catch (error) {
+        toast.error(error.response.data.message ?? "Something went wrong");
         // history.pushState("/login?type=faculty");
         window.location.href = "/login?type=faculty";
       }
-    }
+    };
     const getCDCEvents = async () => {
       try {
         const response = await axios.get(`${server}/api/get_cdc_events`, {
           headers: {
-            "Content-type": "application/json"
-          }
+            "Content-type": "application/json",
+          },
         });
         const data = response.data;
         if (data.ok) {
-          set_my_signed(data.signed)
-          set_pending_data(data.pending)
-        }
-        else {
-          alert("Error while fetching events");
+          set_my_signed(data.signed);
+          set_pending_data(data.pending);
+        } else {
+          toast.error("Error while fetching events");
           // window.location.href = "/login?type=faculty";
         }
-      }
-      catch (error) {
-        alert(error.response.data.message);
+      } catch (error) {
+        toast.error(error.response.data.message ?? "Something went wrong");
         // history.pushState("/login?type=faculty");
         // window.location.href = "/login?type=faculty";
       }
-    }
+    };
     if (!fac_signed_in.iscdc) {
       getEvents();
-    }
-    else {
+    } else {
       getCDCEvents();
     }
   }, [fac_email]);
@@ -157,13 +102,15 @@ const Table = () => {
   if (pending_data.length > 0) {
     console.log(pending_data);
     // const firstObject = pending_data[3];
-    let allProperties = Array.from(new Set(pending_data.flatMap(obj => Object.keys(obj))));
+    let allProperties = Array.from(
+      new Set(pending_data.flatMap((obj) => Object.keys(obj)))
+    );
     console.log(allProperties);
     let columnDef = {
       headerName: "Organisation",
       field: "Organisation",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
       headerCheckboxSelection: true,
       headerCheckboxSelectionFilteredOnly: true,
       checkboxSelection: true,
@@ -172,8 +119,8 @@ const Table = () => {
     columnDef = {
       headerName: "Event",
       field: "Event",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
       // headerCheckboxSelection: true,
       // headerCheckboxSelectionFilteredOnly: true,
       // checkboxSelection: true,
@@ -182,8 +129,8 @@ const Table = () => {
     columnDef = {
       headerName: "Serial No",
       field: "Serial No",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
       // headerCheckboxSelection: true,
       // headerCheckboxSelectionFilteredOnly: true,
       // checkboxSelection: true,
@@ -194,8 +141,8 @@ const Table = () => {
         const columnDef = {
           headerName: key,
           field: key,
-          sortable: key === 'sortableColumn',
-          filter: key === 'column' ? 'agDateColumnFilter' : 'agSetColumnFilter',
+          sortable: key === "sortableColumn",
+          filter: key === "column" ? "agDateColumnFilter" : "agSetColumnFilter",
           // headerCheckboxSelection: true,
           // headerCheckboxSelectionFilteredOnly: true,
           // checkboxSelection: true,
@@ -207,26 +154,28 @@ const Table = () => {
 
   if (my_signed.length > 0) {
     // const firstObject = my_signed[0];
-    let allProperties = Array.from(new Set(my_signed.flatMap(obj => Object.keys(obj))));
+    let allProperties = Array.from(
+      new Set(my_signed.flatMap((obj) => Object.keys(obj)))
+    );
     let columnDef = {
       headerName: "Organisation",
       field: "Organisation",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
     };
     columnDefs2.push(columnDef);
     columnDef = {
       headerName: "Event",
       field: "Event",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
     };
     columnDefs2.push(columnDef);
     columnDef = {
       headerName: "Serial No",
       field: "Serial No",
-      sortable: 'sortableColumn',
-      filter: 'agSetColumnFilter',
+      sortable: "sortableColumn",
+      filter: "agSetColumnFilter",
     };
     columnDefs2.push(columnDef);
 
@@ -235,8 +184,8 @@ const Table = () => {
         const columnDef = {
           headerName: key,
           field: key,
-          sortable: key === 'sortableColumn',
-          filter: key === 'column' ? 'agDateColumnFilter' : 'agSetColumnFilter',
+          sortable: key === "sortableColumn",
+          filter: key === "column" ? "agDateColumnFilter" : "agSetColumnFilter",
         };
         columnDefs2.push(columnDef);
       }
@@ -247,45 +196,19 @@ const Table = () => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onload = () => resolve(reader.result.split(",")[1]);
       reader.onerror = (error) => reject(error);
     });
   };
 
-  const handleSign = async (e) => {
-    const base64String = await convertFileToBase64(e.target.files[0]);
-    setSignature(base64String);
-  }
-
-  // const [signature, setSignature] = useState('');
-
-  // const convertFileToBase64 = (file) => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.readAsDataURL(file);
-  //     reader.onload = () => resolve(reader.result);
-  //     reader.onerror = error => reject(error);
-  //   });
-  // };
-
-
-  const handleSubmission = () => {
-    const storedSignature = localStorage.getItem('signature');
-    if (storedSignature) {
-      setSignature(storedSignature);
-    } else {
-      alert('File has been submitted successfully');
-      localStorage.setItem('signature', signature);
-    }
-  };
-
   const gridApi1 = useRef(null);
   const signedRef = useRef();
+
   const submitSelectedRows = async () => {
     setSubmitting(true);
     const selectedRows = gridApi1.current.getSelectedRows();
     if (!signature) {
-      alert("Please upload your signature");
+      toast.error("Please upload your signature");
       setSubmitting(false);
       return;
     }
@@ -301,37 +224,27 @@ const Table = () => {
       if (!fac_signed_in.iscdc) {
         response = await axios.post(`${server}/api/approveL0`, selectedRows, {
           headers: {
-            'Content-type': 'application/json'
-          }
+            "Content-type": "application/json",
+          },
         });
-      }
-      else {
+      } else {
         response = await axios.post(`${server}/api/approveL1`, selectedRows, {
           headers: {
-            'Content-type': 'application/json'
-          }
+            "Content-type": "application/json",
+          },
         });
       }
       if (response.data.ok) {
-        // let copy_pending = [...pending_data];
-        // const copy_signed = [...my_signed];
-        // const deleted_row = copy_pending.filter(row => row["Serial No"] === params.data["Serial No"])
-        // copy_pending = copy_pending.filter(row => row["Serial No"] !== params.data["Serial No"]);
-        // copy_signed.push(deleted_row);
-        // set_pending_data(copy_pending);
-        // set_my_signed(copy_signed);
-        alert("Signed");
+        toast.success("Signed successfully");
         window.location.reload();
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error.response.data);
-      alert(error.response.data.message);
+      toast.error(error.response.data.message ?? "Something went wrong");
       setSubmitting(false);
-      // window.location.reload();
     }
     setSubmitting(false);
-  }
+  };
 
   const onBtExport = useCallback(() => {
     console.log(signedRef);
@@ -339,9 +252,18 @@ const Table = () => {
   }, []);
 
   return (
-    <div className="table-container" style={{ padding: '4rem' }}>
-      <div className='tables' style={{ display: 'flex' }}>
-        <div className="ag-theme-alpine text" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center', color:"white" }}>
+    <div className="table-container" style={{ padding: "4rem" }}>
+      <div className="tables" style={{ display: "flex" }}>
+        <div
+          className="ag-theme-alpine text"
+          style={{
+            height: 400,
+            width: "40vw",
+            padding: "1rem",
+            textAlign: "center",
+            color: "white",
+          }}
+        >
           <h1>Pending Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
@@ -351,11 +273,25 @@ const Table = () => {
             // onCellClicked={onCellClicked}
             columnDefs={columnDefs1}
             rowData={pending_data}
-            rowSelection={'multiple'}
+            rowSelection={"multiple"}
           />
-          {!submitting ? <button className="submit-btn" onClick={submitSelectedRows}>Submit</button> : <>Please wait...</>}
+          {!submitting ? (
+            <button className="submit-btn" onClick={submitSelectedRows}>
+              Submit
+            </button>
+          ) : (
+            <>Please wait...</>
+          )}
         </div>
-        <div className="ag-theme-alpine text" style={{ height: 400, width: '40vw', padding: '1rem', textAlign: 'center' }}>
+        <div
+          className="ag-theme-alpine text"
+          style={{
+            height: 400,
+            width: "40vw",
+            padding: "1rem",
+            textAlign: "center",
+          }}
+        >
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
@@ -363,12 +299,25 @@ const Table = () => {
             columnDefs={columnDefs2}
             rowData={my_signed}
           />
-          <button className="submit-btn" onClick={onBtExport}>Export Report</button>
+          <button className="submit-btn" onClick={onBtExport}>
+            Export Report
+          </button>
         </div>
       </div>
-      <div className='Table_button' style={{ position: 'relative', marginTop: '10rem', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
-        <input type='file' accept="image/*" onChange={handleSign} />
-        {/* <button onClick={handleSubmission}>Submit Signature</button> */}
+
+      <div
+        className="Table_button"
+        style={{
+          position: "relative",
+          marginTop: "7rem",
+          paddingLeft: "2rem",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "flex-start",
+        }}
+      >
+        <ImageCrop setSignature={setSignature} />
       </div>
     </div>
   );
