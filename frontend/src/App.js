@@ -18,6 +18,8 @@ import Table from "./components/Table";
 import Navbar from "./components/Navbar";
 import { useState } from "react";
 import Footer from "./components/Footer";
+import { Toaster } from "react-hot-toast";
+import ImageCrop from "./components/ImageCrop";
 
 export const LoginContext = createContext();
 
@@ -48,6 +50,7 @@ const App = () => {
       <Router>
         <div className="App">
           <Navbar />
+          <Toaster position="top-center" reverseOrder={true} />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/Login" element={<Login />} />
@@ -61,6 +64,7 @@ const App = () => {
             <Route path="/table" element={<Table />} />
             <Route path="/getcertificate" element={<GetCertificate />} />
             <Route path="/verify" element={<VerifyCertificate />} />
+            <Route path="/crop" element={<ImageCrop />} />
           </Routes>
         </div>
       </Router>

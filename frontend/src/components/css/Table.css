@@ -1,11 +1,9 @@
-.ag-theme-alpine {
-    /* disable all borders */
+/* .ag-theme-alpine {
     --ag-borders: none;
-    /* then add back a border between rows */
     --ag-row-border-style: dashed;
     --ag-row-border-width: 5px;
     --ag-row-border-color: rgb(150, 150, 200);
-}
+} */
 
 .text{
     color: white !important;
