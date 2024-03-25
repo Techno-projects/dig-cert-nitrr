@@ -13,7 +13,13 @@ const MIN_DIMENSION = 50;
 
 export default function ImageCrop({ setSignature }) {
   const [imgSrc, setImgSrc] = useState("");
-  const [crop, setCrop] = useState();
+  const [crop, setCrop] = useState({
+    unit: "%", // Can be 'px' or '%'
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+  });
   const [completedCrop, setCompletedCrop] = useState(null);
   const [error, setError] = useState("");
 
@@ -152,7 +158,32 @@ export default function ImageCrop({ setSignature }) {
           </p>
         )}
       </div>
-      {imgSrc && (
+      <div style={{ display: "flex", gap: "50px" }}>
+        {imgSrc && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <ReactCrop
+              crop={crop}
+              onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
+              keepSelection
+              minWidth={MIN_DIMENSION}
+              onComplete={(c) => setCompletedCrop(c)}
+            >
+              <img
+                ref={imgRef}
+                src={imgSrc}
+                alt="Upload"
+                style={{ maxHeight: "20vh" }}
+                onLoad={onImageLoad}
+              />
+            </ReactCrop>
+          </div>
+        )}
         <div
           style={{
             display: "flex",
@@ -160,38 +191,15 @@ export default function ImageCrop({ setSignature }) {
             alignItems: "center",
           }}
         >
-          <ReactCrop
-            crop={crop}
-            onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
-            keepSelection
-            minWidth={MIN_DIMENSION}
-            onComplete={(c) => setCompletedCrop(c)}
-          >
-            <img
-              ref={imgRef}
-              src={imgSrc}
-              alt="Upload"
-              style={{ maxHeight: "20vh" }}
-              onLoad={onImageLoad}
-            />
-          </ReactCrop>
+          <span style={{ color: "white" }}>Preview:&nbsp;</span>
+          <canvas
+            ref={previewCanvasRef}
+            style={{
+              width: Math.round(completedCrop?.width ?? 0),
+              height: Math.round(completedCrop?.height ?? 0),
+            }}
+          />
         </div>
-      )}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <span style={{ color: "white" }}>Preview:&nbsp;</span>
-        <canvas
-          ref={previewCanvasRef}
-          style={{
-            width: Math.round(completedCrop?.width ?? 0),
-            height: Math.round(completedCrop?.height ?? 0),
-          }}
-        />
       </div>
     </div>
   );

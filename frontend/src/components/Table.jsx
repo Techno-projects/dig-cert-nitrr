@@ -99,6 +99,13 @@ const Table = () => {
     }
   }, [fac_email]);
 
+  const onCellClicked = (e) => {
+    if (e.colDef.field === "Serial No" && navigator.clipboard) {
+      navigator.clipboard.writeText(e.value);
+      toast("Text copied");
+    }
+  };
+
   if (pending_data.length > 0) {
     console.log(pending_data);
     // const firstObject = pending_data[3];
@@ -255,7 +262,7 @@ const Table = () => {
     <div className="table-container" style={{ padding: "4rem" }}>
       <div className="tables" style={{ display: "flex" }}>
         <div
-          className="ag-theme-alpine text"
+          className="ag-theme-alpine-dark text"
           style={{
             height: 400,
             width: "40vw",
@@ -270,7 +277,7 @@ const Table = () => {
             onGridReady={(params) => {
               gridApi1.current = params.api;
             }}
-            // onCellClicked={onCellClicked}
+            onCellClicked={onCellClicked}
             columnDefs={columnDefs1}
             rowData={pending_data}
             rowSelection={"multiple"}
@@ -284,7 +291,7 @@ const Table = () => {
           )}
         </div>
         <div
-          className="ag-theme-alpine text"
+          className="ag-theme-alpine-dark text"
           style={{
             height: 400,
             width: "40vw",
@@ -295,6 +302,7 @@ const Table = () => {
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
+            onCellClicked={onCellClicked}
             ref={signedRef}
             columnDefs={columnDefs2}
             rowData={my_signed}
