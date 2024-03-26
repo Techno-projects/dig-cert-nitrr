@@ -3,10 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import FacultyLogin from "./FacultyLogin";
 import "./css/Form.css";
 import { LoginContext } from "../App";
-import urls from '../urls.json';
+import urls from "../urls.json";
 import { Blob } from "./Blob";
 const server = urls.SERVER_URL;
-
 
 const Login = () => {
   // let { name } = useContext(AuthContext);
@@ -38,7 +37,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch(`${server}/api/user_login `, {
+      let response = await fetch(`${server}/api/user_login `, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,16 +45,15 @@ const Login = () => {
         credentials: "include",
         body: JSON.stringify(formData),
       });
-
-      console.log(response);
+      response = await response.json();
       if (response.ok) {
         setUserLoggedIn(true);
-        const data = await response.json();
-        localStorage.setItem("login", data.token);
+        localStorage.setItem("login", response.token);
         window.location.href = "/event_management";
       } else {
         setError(
-          "Authentication failed. Please check your username and password."
+          response.message ??
+            "Authentication failed. Please check your username and password."
         );
       }
     } catch {
@@ -69,7 +67,7 @@ const Login = () => {
         <FacultyLogin />
       ) : (
         <div>
-          <Blob/>
+          <Blob />
           {/* <div>
             <a href='?type=faculty'>
               <input type='button' value="Faculty" />
@@ -100,8 +98,10 @@ const Login = () => {
                   onChange={handleInputChange}
                   required
                 />
-                <button  className="submit-btn" type="submit">Submit</button>
-              </form> 
+                <button className="submit-btn" type="submit">
+                  Submit
+                </button>
+              </form>
             </div>
             {error && <p style={{ color: "red" }}>{error}</p>}
           </div>

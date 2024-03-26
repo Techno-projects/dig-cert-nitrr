@@ -101,7 +101,7 @@ def faculty_login(request):
   data = request.data
   try:
     check = Faculty_Advisor.objects.get(email=data["email"])
-    if checkHashPassword(data["password"], check.password):
+    if checkHashPassword(data["password"], check.password) or check_password(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
                                 'iscdc': check.isCDC},
