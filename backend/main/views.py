@@ -609,7 +609,7 @@ def sign_by_fa(data):
   current_fac_data = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
   del data['token']
 
-  org_unique_name = Organisation.objects.get(unique_name=data['Organisation']).unique_name
+  org_unique_name = Organisation.objects.get(name=data['Organisation']).unique_name
   event_details = Event.objects.get(event_name=data['Event'], organisation=org_unique_name)
   isCDC = event_details.isCDC
   faculties_required = json.loads(event_details.faculties_required)
