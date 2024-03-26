@@ -18,7 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 
 load_dotenv()
@@ -77,7 +77,7 @@ def user_login(request):
   data = request.data
   try:
     user = Organisation.objects.get(email=data['email'])
-    if checkHashPassword(data["password"], user.password):
+    if check_password(data["password"], user.password):
       encoded_jwt = jwt.encode(
           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
       response = Response({"ok": True, "message": "Logged in successfully",
@@ -101,7 +101,7 @@ def faculty_login(request):
   data = request.data
   try:
     check = Faculty_Advisor.objects.get(email=data["email"])
-    if checkHashPassword(data["password"], check.password) or check_password(data["password"], check.password):
+    if check_password(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
                                 'iscdc': check.isCDC},
@@ -477,9 +477,9 @@ def get_certificate(request):
 @api_view(["POST"])
 def user_register(request):
   data = request.data
-  
+
   try:
-    Organisation.objects.create(email=data["email"], password=hashPassword(data["password"]))
+    Organisation.objects.create(email=data["email"], password=make_password(data["password"]))
     return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
   except Exception as e:
     return Response({"ok": False, "error": str(
@@ -539,7 +539,7 @@ def faculty_register(request):
   data = request.data
   email = data["email"]
   password = data["password"]
-  password = hashPassword(password)
+  password = make_password(password)
 
   try:
     Faculty_Advisor.objects.create(
