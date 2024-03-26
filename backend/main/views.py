@@ -19,6 +19,7 @@ from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password
+import hashlib
 
 load_dotenv()
 
@@ -53,6 +54,17 @@ def is_org_auth(token):
     return False
 
 
+def hashPassword(password):
+  result = hashlib.md5(password.encode())
+  return result.hexdigest()
+
+
+def checkHashPassword(password, hashedPassword):
+  hashed = hashlib.md5(password.encode())
+  hashed = hashed.hexdigest()
+  return hashed == hashedPassword
+
+
 # just a / route
 @api_view(['GET'])
 def home(request):
@@ -65,8 +77,7 @@ def user_login(request):
   data = request.data
   try:
     user = Organisation.objects.get(email=data['email'])
-    # if user.password == data["password"]:
-    if check_password(data["password"], user.password):
+    if checkHashPassword(data["password"], user.password):
       encoded_jwt = jwt.encode(
           {"email": data["email"], "faculty": 0}, os.environ.get('SECRET_KEY'), algorithm="HS256")
       response = Response({"ok": True, "message": "Logged in successfully",
@@ -84,53 +95,13 @@ def user_login(request):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# register an event
-# @api_view(["POST"])
-# def register_event(request):
-#   data = request.data
-#   if (not is_org_auth(data['token'])):
-#     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-
-#   event_db = data['event_data']           # event's excel file
-#   certi = data['certificate']             # event's certificate file
-#   isCDC = False                           # is cdc signature required for this event
-#   faculties_required = json.dumps(data['faculties'])
-#   if data['cdc'] == 'true':
-#     isCDC = True
-#   try:
-#     Event.objects.create(
-#         organisation=data['user'],
-#         event_data=event_db,
-#         certificate=certi,
-#         coordinates=data['coords'],
-#         event_name=data['event'],
-#         isCDC=isCDC,
-#         faculties_required=faculties_required,
-#         dispatch=data['dispatch'])
-#     current_event_id = Event.objects.get(organisation=data['user'], event_name=data['event']).id
-
-#     faculty_events = []                 # store faculty-event maps
-#     for i in faculties_required:
-#       faculty_i = Faculty_Advisor.objects.get(email=i)
-#       current_event = Event.objects.get(id=current_event_id)
-#       faculty_events.append(Faculty_Event(faculty=faculty_i, event=current_event))
-
-#     # now store all the faculty-event maps in the DB
-#     Faculty_Event.objects.bulk_create(faculty_events)
-
-#     return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
-#   except Exception as e:
-#     return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 # logging in the faculty
 @api_view(["POST"])
 def faculty_login(request):
   data = request.data
   try:
     check = Faculty_Advisor.objects.get(email=data["email"])
-    if check_password(data["password"], check.password):
+    if checkHashPassword(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
                                 'iscdc': check.isCDC},
@@ -138,11 +109,14 @@ def faculty_login(request):
                                algorithm="HS256")
       return Response({"ok": True, 'token': encoded_jwt})
     else:
-      return Response({"ok": False, "message": "Wrong Password"})
+      return Response({"ok": False, "message": "Wrong Password"},
+                      status=status.HTTP_401_UNAUTHORIZED)
   except Faculty_Advisor.DoesNotExist as e:
-    return Response({"ok": False, "message": "Faculty doesn't exist"})
+    return Response({"ok": False, "message": "Faculty doesn't exist"},
+                    status=status.HTTP_401_UNAUTHORIZED)
   except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while faculty login"})
+    return Response({"ok": False, "error": str(e), "message": "Error while faculty login"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # get all the event details for the current signed-in faculty
@@ -357,16 +331,31 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
 
       if text_height < max_height:
         font_size += 1
-        font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', font_size)
+        font = ImageFont.truetype(
+            settings.BASE_DIR /
+            'main' /
+            'fonts' /
+            'DancingScript-Medium.ttf',
+            font_size)
       else:
         return font_size - 1
 
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
   box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', size=20)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=20)
   max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
-  font = ImageFont.truetype(settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf', size=max_font_size)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=max_font_size)
   text_color = (0, 0, 0)
   x = coordinate['x'] + (125 / 2)
   y = coordinate['y'] + (25 / 2)
@@ -394,8 +383,8 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
     else:
       transparent_img.append(item)
   rgba_thresh.putdata(transparent_img)
-  #box_width = event_data.rel_width * image.size[0]
-  #box_height = event_data.rel_height * image.size[1]
+  # box_width = event_data.rel_width * image.size[0]
+  # box_height = event_data.rel_height * image.size[1]
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 800
@@ -488,8 +477,9 @@ def get_certificate(request):
 @api_view(["POST"])
 def user_register(request):
   data = request.data
+  
   try:
-    Organisation.objects.create(email=data["email"], password=data["password"])
+    Organisation.objects.create(email=data["email"], password=hashPassword(data["password"]))
     return Response({"ok": True, "message": "Account created"}, status=status.HTTP_200_OK)
   except Exception as e:
     return Response({"ok": False, "error": str(
@@ -549,6 +539,7 @@ def faculty_register(request):
   data = request.data
   email = data["email"]
   password = data["password"]
+  password = hashPassword(password)
 
   try:
     Faculty_Advisor.objects.create(
@@ -557,7 +548,8 @@ def faculty_register(request):
     )
     return Response({"ok": True, "message": "Faculty registered"})
   except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while faculty registration"}, 400)
+    return Response({"ok": False, "error": str(
+        e), "message": "Error while faculty registration"}, 400)
 
 
 @api_view(["POST"])
@@ -662,10 +654,11 @@ def sign_by_fa(data):
         serial_no=serial_no).update(
         faculty_advisor=fac_ids,
         faculty_signatures=fac_signs_base64)
-    
+
     if len(signed_faculties) == len(faculties_required):
       cdc_email_send = True
-  return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send, "organisation": data['Organisation'], "event": data['Event']}, status=status.HTTP_201_CREATED)
+  return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send,
+                  "organisation": data['Organisation'], "event": data['Event']}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])

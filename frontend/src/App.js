@@ -30,10 +30,13 @@ const App = () => {
   const userLogout = () => {
     localStorage.removeItem("login");
     setUserLoggedIn(false);
+    window.location.href = "/Login";
   };
 
   const facultyLogout = () => {
+    localStorage.removeItem("login");
     setFacultyLoggedIn(false);
+    window.location.href = "/Login?type=faculty";
   };
 
   const info = {
