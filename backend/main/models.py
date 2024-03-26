@@ -1,5 +1,19 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
+import hashlib
+
+
+def hashPassword(password):
+  result = hashlib.md5(password.encode())
+  return result.hexdigest()
+
+
+def event_data_upload_path(instance, filename):
+  return f'events_db/{instance.organisation}/{instance.event_name}/data/{filename}'
+
+
+def certificate_upload_path(instance, filename):
+  return f'events_db/{instance.organisation}/{instance.event_name}/certificate/{filename}'
 
 
 class Organisation(models.Model):
@@ -12,18 +26,11 @@ class Organisation(models.Model):
 
   def __str__(self):
     return f"{self.id}-{self.name}"
-  def save(self, *args, **kwargs):
-    if self.password:
-      self.password = make_password(self.password)
-    super(Organisation, self).save(*args, **kwargs)
 
-
-def event_data_upload_path(instance, filename):
-  return f'events_db/{instance.organisation}/{instance.event_name}/data/{filename}'
-
-
-def certificate_upload_path(instance, filename):
-  return f'events_db/{instance.organisation}/{instance.event_name}/certificate/{filename}'
+  # def save(self, *args, **kwargs):
+  #   if self.password:
+  #     self.password = hashPassword(self.password)
+  #   super(Organisation, self).save(*args, **kwargs)
 
 
 class Event(models.Model):
@@ -55,10 +62,10 @@ class Faculty_Advisor(models.Model):
   isCDC = models.BooleanField(default=False)
   isDSW = models.BooleanField(default=False)
 
-  def save(self, *args, **kwargs):
-    if self.password:
-      self.password = make_password(self.password)
-    super(Faculty_Advisor, self).save(*args, **kwargs) 
+  # def save(self, *args, **kwargs):
+  #   if self.password:
+  #     self.password = make_password(self.password)
+  #   super(Faculty_Advisor, self).save(*args, **kwargs)
 
   def __str__(self):
     return f"{self.id}-{self.email}"
