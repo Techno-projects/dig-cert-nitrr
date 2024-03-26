@@ -5,6 +5,7 @@ import "./css/Form.css";
 import { LoginContext } from "../App";
 import urls from "../urls.json";
 import { Blob } from "./Blob";
+import toast from "react-hot-toast";
 const server = urls.SERVER_URL;
 
 const Login = () => {
@@ -51,7 +52,7 @@ const Login = () => {
         localStorage.setItem("login", response.token);
         window.location.href = "/event_management";
       } else {
-        setError(
+        toast.error(
           response.message ??
             "Authentication failed. Please check your username and password."
         );

@@ -5,6 +5,7 @@ import { LoginContext } from "../App";
 import "./css/Form.css";
 import urls from "../urls.json";
 import { Blob } from "./Blob";
+import toast from "react-hot-toast";
 const server = urls.SERVER_URL;
 // import './css/Faculty_login.css';
 
@@ -42,7 +43,7 @@ const FacultyLogin = () => {
           state: { email: formData.email },
         });
       } else {
-        setError(
+        toast.error(
           response.message ??
             "Authentication failed. Please check your username and password."
         );
