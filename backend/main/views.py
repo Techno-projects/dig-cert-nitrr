@@ -633,7 +633,7 @@ def sign_by_fa(data, faculty_sign_image_base64):
   certi = Certificate.objects.filter(serial_no=serial_no)
 
   if len(certi) == 0:
-    if len(faculties_required) == 1:
+    if len(faculties_required) == 1 and isCDC:
       cdc_email_send = True
 
     Certificate.objects.create(
@@ -659,7 +659,7 @@ def sign_by_fa(data, faculty_sign_image_base64):
         faculty_advisor=fac_ids,
         faculty_signatures=fac_signs_base64)
 
-    if len(signed_faculties) == len(faculties_required):
+    if len(signed_faculties) == len(faculties_required) and isCDC:
       cdc_email_send = True
   return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send,
                   "organisation": data['Organisation'], "event": data['Event']}, status=status.HTTP_201_CREATED)
@@ -724,7 +724,7 @@ def approveCDC(data, cdc_sign):
 def approveL1(request):
   data = request.data
   cdc_sign = data[len(data) - 1]
-  for i in range(0, len(data)):
+  for i in range(0, len(data) - 1):
     res = approveCDC(data[i], cdc_sign)
     if not res.data['ok']:
       return res
