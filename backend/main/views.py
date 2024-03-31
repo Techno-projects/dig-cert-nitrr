@@ -678,13 +678,12 @@ def approveL0(request):
     if not res.data['ok']:
       return res
 
-  print(cdc_emails)
   for i in cdc_emails:
     send_cdc_email(i[1], i[0])
   return Response({"ok": True, "message": "Signed successfully"})
 
 
-def approveCDC(data):
+def approveCDC(data, cdc_sign):
   if (not is_faculty_auth(data['token'])):
     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
   current_fac_email = jwt.decode(data['token'], secret_key, algorithms=['HS256'])
@@ -700,7 +699,7 @@ def approveCDC(data):
                       status=status.HTTP_400_BAD_REQUEST)
 
     certificate = certificate[0]
-    cdc_sign = data['faculty_sign']
+    # cdc_sign = data['faculty_sign']
 
     if not cdc_sign:
       return Response({'ok': False, 'message': "Invalid signature"},
@@ -718,14 +717,15 @@ def approveCDC(data):
     return Response({'ok': True, 'message': 'Signed'})
   except Exception as e:
     return Response({'ok': False, 'error': str(
-        e), 'message': "Error while signing the certificate"})
+        e), 'message': "Error while signing the certificate"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
 def approveL1(request):
   data = request.data
+  cdc_sign = data[len(data) - 1]
   for i in range(0, len(data)):
-    res = approveCDC(data[i])
+    res = approveCDC(data[i], cdc_sign)
     if not res.data['ok']:
       return res
 
