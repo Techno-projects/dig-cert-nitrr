@@ -31,13 +31,15 @@ export default function ImageCrop({ setSignature }) {
       return;
     }
 
-    const base64Data = canvas.toDataURL("image/png");
+    // var dataURL = canvas.toDataURL("image/png");
+    const base64Data = canvas.toDataURL("image/jpeg");
     const base64String = base64Data.split(",")[1];
     setSignature(base64String);
   }
 
   const onSelectFile = (e) => {
     const file = e.target.files?.[0];
+    console.log(file);
     if (!file) return;
 
     const reader = new FileReader();
@@ -135,6 +137,7 @@ export default function ImageCrop({ setSignature }) {
       previewCanvasRef.current,
       convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
     );
+    console.log(previewCanvasRef.current);
     generateBase64(previewCanvasRef.current, completedCrop);
   }, [completedCrop]);
 
