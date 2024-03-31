@@ -603,7 +603,7 @@ def get_event_details(request):
     return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
 
 
-def sign_by_fa(data):
+def sign_by_fa(data, faculty_sign_image_base64):
   if (not is_faculty_auth(data['token'])):
     return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
   current_fac_data = jwt.decode(data['token'], os.environ.get("SECRET_KEY"), algorithms=['HS256'])
@@ -621,10 +621,10 @@ def sign_by_fa(data):
 
   current_fac_email = current_fac_data['email']
   serial_no = data['Serial No']
-  faculty_sign_image_base64 = data['faculty_sign']
+  # faculty_sign_image_base64 = data['faculty_sign']
 
   del data['Serial No']
-  del data['faculty_sign']
+  # del data['faculty_sign']
 
   certi = Certificate.objects.filter(serial_no=serial_no)
 
@@ -665,14 +665,16 @@ def sign_by_fa(data):
 def approveL0(request):
   data = request.data
   cdc_emails = set()
-  for i in range(0, len(data)):
-    res = sign_by_fa(data[i])
+  faculty_sign_image_base64 = data[len(data) - 1]
+  for i in range(0, len(data) - 1):
+    res = sign_by_fa(data[i], faculty_sign_image_base64)
     if res.data['cdc_email_send']:
       cdc_emails.add((res.data['organisation'], res.data['event']))
 
     if not res.data['ok']:
       return res
 
+  print(cdc_emails)
   for i in cdc_emails:
     send_cdc_email(i[1], i[0])
   return Response({"ok": True, "message": "Signed successfully"})
