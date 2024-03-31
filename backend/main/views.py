@@ -205,8 +205,8 @@ def get_faculties(request):
 def cdc_get_certi_by_serial(serial_no, certificate):
   serial_list = serial_no.split("/")
   dispatch = serial_list[2]
-  event_id = int(serial_list[4])
-  row_id = int(serial_list[5])
+  event_id = int(serial_list[5])
+  row_id = int(serial_list[6])
 
   event = Event.objects.get(id=event_id)
 
@@ -361,7 +361,7 @@ def get_certificate(request):
     print(serial)
     serial = serial.replace("_", "/")
     certificate = Certificate.objects.filter(serial_no=serial)
-    event_id = int(serial.split('/')[4])
+    event_id = int(serial.split('/')[5])
     event_data = Event.objects.get(id=event_id)
 
     if not certificate:
