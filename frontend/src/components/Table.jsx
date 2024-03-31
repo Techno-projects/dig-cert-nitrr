@@ -227,10 +227,11 @@ const Table = () => {
       for (let i = 0; i < selectedRows.length; i++) {
         selectedRows[i].organisation = location.state.org_name;
         selectedRows[i].event_name = location.state.event_name;
-        selectedRows[i].faculty_sign = signature;
+        // selectedRows[i].faculty_sign = signature;
         // selectedRows[i].fac_signed_in = fac_signed_in.email;
         selectedRows[i].token = auth;
       }
+      selectedRows.push(signature);
       try {
         let response;
         if (!fac_signed_in.iscdc) {
