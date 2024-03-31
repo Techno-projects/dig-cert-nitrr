@@ -119,57 +119,6 @@ def faculty_login(request):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# get all the event details for the current signed-in faculty
-@api_view(["POST"])
-def get_event_details(request):
-  data = request.data
-  fac_email = data['email']
-
-  try:
-    fac_events = Faculty_Event.objects.filter(faculty=fac_email)
-
-    def is_serial_present(serial):
-      return Certificate.objects.filter(serial_no=serial).exists()
-
-    def is_my_signed(serial):
-      obj = Certificate.objects.filter(serial_no=serial)
-      if (obj.exists()):
-        who_signed = json.loads(obj[0].faculty_advisor)
-        return data['email'] in who_signed
-      return False
-
-    pending_rows = []
-    signed_rows = []
-    for any_event in fac_events:
-      event_file = any_event.event.event_data
-      dispatch = any_event.event.dispatch
-      students = pd.read_excel(event_file)
-      students.reset_index(drop=False, inplace=True, names='Serial No')
-      students['Serial No'] = students['Serial No'].apply(
-          lambda x: dispatch + "/" + str(any_event.event.id) + "/" + str(x))
-      mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
-      mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
-      all_unsigend_students = students[mask].to_dict(orient='records')
-      all_signed_students = students[mask1].to_dict(orient='records')
-
-      org_name = Organisation.objects.get(email=any_event.event.organisation).name
-      for x in all_unsigend_students:
-        x['Organisation'] = org_name
-        x['Event'] = any_event.event.event_name
-        pending_rows.append(x)
-
-      for x in all_signed_students:
-        x['Organisation'] = org_name
-        x['Event'] = any_event.event.event_name
-        signed_rows.append(x)
-
-    return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
-  except Faculty_Advisor.DoesNotExist as e:
-    return Response({"ok": False, "message": "Faculty doesn't exist"})
-  except Exception as e:
-    return Response({"ok": False, "error": str(e), "message": "Error while fetching event details"})
-
-
 # mail to be send to the participant
 def send_certi_email(recipient_email, serial_no, event_name, org_name):
   body = f"<h3>Greetings participant</h3><br/>This is an auto generated email generated to inform that your certificate for the event <b>{event_name}</b> organized by the <b>{org_name}</b> at NIT Raipur has been signed by the college authority.<br/> You can view the ceritificate by visting at <u>https://digcert.nitrr.ac.in/getcertificate?serial={serial_no}</u><br/><br/>Thanking you."
@@ -256,8 +205,8 @@ def get_faculties(request):
 def cdc_get_certi_by_serial(serial_no, certificate):
   serial_list = serial_no.split("/")
   dispatch = serial_list[2]
-  event_id = int(serial_list[4])
-  row_id = int(serial_list[5])
+  event_id = int(serial_list[5])
+  row_id = int(serial_list[6])
 
   event = Event.objects.get(id=event_id)
 
@@ -412,7 +361,7 @@ def get_certificate(request):
     print(serial)
     serial = serial.replace("_", "/")
     certificate = Certificate.objects.filter(serial_no=serial)
-    event_id = int(serial.split('/')[4])
+    event_id = int(serial.split('/')[5])
     event_data = Event.objects.get(id=event_id)
 
     if not certificate:
@@ -556,6 +505,7 @@ def faculty_register(request):
         e), "message": "Error while faculty registration"}, 400)
 
 
+# get all the event details for the current signed-in faculty
 @api_view(["POST"])
 def get_event_details(request):
   data = request.data
@@ -583,7 +533,7 @@ def get_event_details(request):
       students = pd.read_excel(event_file)
       students.reset_index(drop=False, inplace=True, names='Serial No')
       students['Serial No'] = students['Serial No'].apply(
-          lambda x: "No./NITRR/" + dispatch + "/" + org_unique_name + "/" + '{:04d}'.format(int(any_event.event.id)) + "/" + str(x))
+          lambda x: "No./NITRR/" + dispatch + "/" + org_unique_name + "/OC/" + '{:04d}'.format(int(any_event.event.id)) + "/" + str(x))
       mask = students['Serial No'].apply(lambda x: not is_my_signed(x))
       mask1 = students['Serial No'].apply(lambda x: is_my_signed(x))
       all_unsigned_students = students[mask].to_dict(orient='records')
