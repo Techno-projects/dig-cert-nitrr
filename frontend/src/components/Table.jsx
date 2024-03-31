@@ -211,6 +211,13 @@ const Table = () => {
   const gridApi1 = useRef(null);
   const signedRef = useRef();
 
+  const getSizeBase64 = (base64) => {
+    var binaryString = atob(base64);
+    var sizeInBytes = binaryString.length;
+    var sizeInKB = sizeInBytes / 1024;
+    return sizeInKB;
+  };
+
   const makePromiseAndSubmit = () => {
     return new Promise(async (resolve, reject) => {
       setSubmitting(true);
@@ -247,14 +254,14 @@ const Table = () => {
           resolve("Signed successfully");
         }
       } catch (error) {
-        console.error(error.response.data);
+        console.error(error?.response?.data);
         localStorage.setItem(
           "toast-error",
-          error.response.data.message ?? "Something went wrong"
+          error?.response?.data?.message ?? "Something went wrong"
         );
         // toast.error(error.response.data.message ?? "Something went wrong");
         setSubmitting(false);
-        reject(error.response.data.message ?? "Something went wrong");
+        reject(error?.response?.data?.message ?? "Something went wrong");
       }
       setSubmitting(false);
       resolve();
@@ -262,6 +269,10 @@ const Table = () => {
   };
 
   const submitSelectedRows = async () => {
+    if (getSizeBase64(signature) > 800) {
+      toast.error("Signature image size is too large");
+      return;
+    }
     toast.promise(makePromiseAndSubmit(), {
       loading: "Please wait...",
       success: "Signed successfully. Please reload",
