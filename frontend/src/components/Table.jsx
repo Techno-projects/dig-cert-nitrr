@@ -37,6 +37,9 @@ const Table = () => {
   const columnDefs1 = [];
   const columnDefs2 = [];
   const selectedCellValue = null;
+  const [toastError, setToastError] = useState(
+    "Couldn't sign some/all of the certificates"
+  );
   const [submitting, setSubmitting] = useState(false);
 
   if (!auth) {
@@ -107,12 +110,9 @@ const Table = () => {
   };
 
   if (pending_data.length > 0) {
-    console.log(pending_data);
-    // const firstObject = pending_data[3];
     let allProperties = Array.from(
       new Set(pending_data.flatMap((obj) => Object.keys(obj)))
     );
-    console.log(allProperties);
     let columnDef = {
       headerName: "Organisation",
       field: "Organisation",
@@ -211,46 +211,66 @@ const Table = () => {
   const gridApi1 = useRef(null);
   const signedRef = useRef();
 
+  const makePromiseAndSubmit = () => {
+    return new Promise(async (resolve, reject) => {
+      setSubmitting(true);
+      const selectedRows = gridApi1.current.getSelectedRows();
+      if (!signature) {
+        localStorage.setItem("toast-error", "Please upload your signature");
+        // toast.error("Please upload your signature");
+        setSubmitting(false);
+        reject();
+      }
+      for (let i = 0; i < selectedRows.length; i++) {
+        selectedRows[i].organisation = location.state.org_name;
+        selectedRows[i].event_name = location.state.event_name;
+        selectedRows[i].faculty_sign = signature;
+        // selectedRows[i].fac_signed_in = fac_signed_in.email;
+        selectedRows[i].token = auth;
+      }
+      try {
+        let response;
+        if (!fac_signed_in.iscdc) {
+          response = await axios.post(`${server}/api/approveL0`, selectedRows, {
+            headers: {
+              "Content-type": "application/json",
+            },
+          });
+        } else {
+          response = await axios.post(`${server}/api/approveL1`, selectedRows, {
+            headers: {
+              "Content-type": "application/json",
+            },
+          });
+        }
+        if (response.data.ok) {
+          resolve("Signed successfully");
+        }
+      } catch (error) {
+        console.error(error.response.data);
+        localStorage.setItem(
+          "toast-error",
+          error.response.data.message ?? "Something went wrong"
+        );
+        // toast.error(error.response.data.message ?? "Something went wrong");
+        setSubmitting(false);
+        reject(error.response.data.message ?? "Something went wrong");
+      }
+      setSubmitting(false);
+      resolve();
+    });
+  };
+
   const submitSelectedRows = async () => {
-    setSubmitting(true);
-    const selectedRows = gridApi1.current.getSelectedRows();
-    if (!signature) {
-      toast.error("Please upload your signature");
-      setSubmitting(false);
-      return;
-    }
-    for (let i = 0; i < selectedRows.length; i++) {
-      selectedRows[i].organisation = location.state.org_name;
-      selectedRows[i].event_name = location.state.event_name;
-      selectedRows[i].faculty_sign = signature;
-      // selectedRows[i].fac_signed_in = fac_signed_in.email;
-      selectedRows[i].token = auth;
-    }
-    try {
-      let response;
-      if (!fac_signed_in.iscdc) {
-        response = await axios.post(`${server}/api/approveL0`, selectedRows, {
-          headers: {
-            "Content-type": "application/json",
-          },
-        });
-      } else {
-        response = await axios.post(`${server}/api/approveL1`, selectedRows, {
-          headers: {
-            "Content-type": "application/json",
-          },
-        });
-      }
-      if (response.data.ok) {
-        toast.success("Signed successfully");
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error(error.response.data);
-      toast.error(error.response.data.message ?? "Something went wrong");
-      setSubmitting(false);
-    }
-    setSubmitting(false);
+    toast.promise(makePromiseAndSubmit(), {
+      loading: "Please wait...",
+      success: "Signed successfully. Please reload",
+      error: () => {
+        const message = localStorage.getItem("toast-error");
+        localStorage.removeItem("toast-error");
+        return message ?? "Couldn't sign some/all of the certificates";
+      },
+    });
   };
 
   const onBtExport = useCallback(() => {
