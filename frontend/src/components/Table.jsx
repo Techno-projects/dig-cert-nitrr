@@ -274,7 +274,10 @@ const Table = () => {
     }
     toast.promise(makePromiseAndSubmit(), {
       loading: "Please wait...",
-      success: "Signed successfully. Please reload",
+      success: () => {
+        window.location.reload();
+        return "Signed Successfully";
+      },
       error: () => {
         const message = localStorage.getItem("toast-error");
         localStorage.removeItem("toast-error");
