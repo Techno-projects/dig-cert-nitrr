@@ -13,7 +13,6 @@ import { ExcelExportModule } from "@ag-grid-enterprise/excel-export";
 import { MenuModule } from "@ag-grid-enterprise/menu";
 import { ModuleRegistry } from "@ag-grid-community/core";
 import toast from "react-hot-toast";
-import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import ImageCrop from "./ImageCrop";
 
@@ -37,9 +36,6 @@ const Table = () => {
   const columnDefs1 = [];
   const columnDefs2 = [];
   const selectedCellValue = null;
-  const [toastError, setToastError] = useState(
-    "Couldn't sign some/all of the certificates"
-  );
   const [submitting, setSubmitting] = useState(false);
 
   if (!auth) {
@@ -199,14 +195,14 @@ const Table = () => {
     }
   }
 
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = (error) => reject(error);
-    });
-  };
+  // const convertFileToBase64 = (file) => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(file);
+  //     reader.onload = () => resolve(reader.result.split(",")[1]);
+  //     reader.onerror = (error) => reject(error);
+  //   });
+  // };
 
   const gridApi1 = useRef(null);
   const signedRef = useRef();
@@ -269,7 +265,9 @@ const Table = () => {
   };
 
   const submitSelectedRows = async () => {
-    if (getSizeBase64(signature) > 800) {
+    const signatureSize = getSizeBase64(signature);
+    console.log(signatureSize);
+    if (signatureSize > 800) {
       toast.error("Signature image size is too large");
       return;
     }
