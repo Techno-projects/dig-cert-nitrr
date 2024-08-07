@@ -22,7 +22,15 @@ Tool for completely digitizing the certificate generation, signing and verificat
 
     `docker-compose build`
 
-* Then, run the following command to start the environment.
+* Then, run the following command to start the backend.
+
+    `docker-compose up backend -d`
+
+* Then, run the following command to start the frontend.
+
+    `docker-compose up frontend -d`
+
+* Then, run the following command to start the complete application.
 
     `docker-compose up -d`
 
