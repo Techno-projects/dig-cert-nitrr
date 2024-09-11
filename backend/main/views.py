@@ -560,7 +560,8 @@ def get_event_details(request):
         x['Organisation'] = org_name
         x['Event'] = any_event.event.event_name
         signed_rows.append(x)
-
+    pending_rows = remove_nan_keys(pending_rows)
+    signed_rows = remove_nan_keys(signed_rows)
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
   except Faculty_Advisor.DoesNotExist as e:
     return Response({"ok": False, "message": "Faculty doesn't exist"})
