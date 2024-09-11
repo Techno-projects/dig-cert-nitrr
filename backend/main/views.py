@@ -20,6 +20,7 @@ from io import BytesIO
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
+import math
 
 load_dotenv()
 
@@ -523,6 +524,16 @@ def get_event_details(request):
         who_signed = json.loads(obj[0].faculty_advisor)
         return data['email'] in who_signed
       return False
+
+    def remove_nan_keys(data_list):
+      # Iterate over each dictionary in the list
+      for item in data_list:
+        # Create a list of keys to delete
+        keys_to_remove = [key for key, value in item.items() if isinstance(value, float) and math.isnan(value)]
+        # Remove keys with NaN values
+        for key in keys_to_remove:
+          del item[key]
+      return data_list
 
     pending_rows = []
     signed_rows = []
