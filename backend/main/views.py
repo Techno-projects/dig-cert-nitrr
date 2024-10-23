@@ -18,6 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 import math
@@ -410,12 +411,21 @@ def get_certificate(request):
         image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
     image_io = BytesIO()
-    if request.GET.get('download', False):
-      image.save(image_io, format="PNG")
-      image_io.seek(0)
-      response = HttpResponse(image_io, content_type="image/png")
-      response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
-      return response
+    is_preview = request.GET.get('preview', False)
+    is_download = request.GET.get('download', False)
+
+    if is_preview or is_download:
+      if (is_preview):
+        # Convert image to base64 for preview
+        image_base64 = pil_image_to_base64(image)
+        return JsonResponse({'image': image_base64})
+
+      else:
+        image.save(image_io, format="PNG")
+        image_io.seek(0)
+        response = HttpResponse(image_io, content_type="image/png")
+        response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
+        return response
     else:
       if image.mode == 'RGBA':
         image = image.convert('RGB')
@@ -427,6 +437,21 @@ def get_certificate(request):
     return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   # return Response({"certificate": image_base64})
 
+# @api_view(["DELETE"])
+# def delete_user(request):
+#     email = request.data.get("email")
+
+#     if not email:
+#         return Response({"ok": False, "message": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#     try:
+#         user = Organisation.objects.get(email=email)
+#         user.delete()
+#         return Response({"ok": True, "message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+#     except Organisation.DoesNotExist:
+#         return Response({"ok": False, "message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+#     except Exception as e:
+#         return Response({"ok": False, "error": str(e), "message": "Error while deleting the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST"])
 def user_register(request):
