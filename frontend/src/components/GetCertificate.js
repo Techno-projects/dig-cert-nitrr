@@ -45,7 +45,7 @@ const GetCertificate = () => {
   const handlePreview = async () => {
     try {
       const res = await axios.get(
-        `${server}/api/get_certificate?serial=${serial}&preview=true`
+        `${server}/api/preview_certificate?serial=${serial}`
       );
       setPreviewImage(`data:image/png;base64,${res.data.image}`);
     } catch (error) {

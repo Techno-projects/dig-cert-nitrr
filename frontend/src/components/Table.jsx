@@ -9,18 +9,15 @@ import { decodeToken } from "react-jwt";
 import urls from "../urls.json";
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
 import { CsvExportModule } from "@ag-grid-community/csv-export";
-import { ExcelExportModule } from "@ag-grid-enterprise/excel-export";
-import { MenuModule } from "@ag-grid-enterprise/menu";
 import { ModuleRegistry } from "@ag-grid-community/core";
 import toast from "react-hot-toast";
 import "react-image-crop/dist/ReactCrop.css";
 import ImageCrop from "./ImageCrop";
+import * as XLSX from 'xlsx';
 
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   CsvExportModule,
-  ExcelExportModule,
-  MenuModule,
 ]);
 
 const server = urls.SERVER_URL;
@@ -286,10 +283,68 @@ const Table = () => {
     });
   };
 
-  const onBtExport = useCallback(() => {
-    console.log(signedRef);
-    signedRef.current.api.exportDataAsExcel();
+  const onBtExportSigned = useCallback(() => {
+    if (signedRef.current) {
+      const csvData = signedRef.current.getDataAsCsv();
+      const workbook = XLSX.read(csvData, { type: 'string' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      XLSX.writeFile(workbook, "SignedCertificatesReport.xlsx");
+
+    } else {
+      console.error("Grid API not available!");
+    }
+    console.log("mast");
   }, []);
+
+  const onBtExportPending = useCallback(() => {
+    if (gridApi1.current) {
+      const csvData = gridApi1.current.getDataAsCsv();
+      const workbook = XLSX.read(csvData, { type: 'string' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      XLSX.writeFile(workbook, "PendingCertificatesReport.xlsx");
+
+    } else {
+      console.error("Grid API not available!");
+    }
+    console.log("mast");
+  }, []);
+
+  const handlePreviewCertificate = async () => {
+    if (!signedRef.current) {
+      toast.error("Failed to access table API.");
+      return;
+    }
+    const selectedRows = signedRef.current.getSelectedRows();
+    
+    if (selectedRows.length === 0 || !selectedRows[0]["Serial No"]) {
+      toast.error("Please select an event with a valid serial number.");
+      return;
+    }
+  
+    const serial = selectedRows[0]["Serial No"];
+    try {
+      const response = await axios.get(
+        `${server}/api/preview_certificate?serial=${serial}&preview=true`, {responseType: 'blob'}
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>Certificate Preview</title></head>
+            <body>
+              <img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    } catch (error) {
+      toast.error("Failed to load certificate preview.");
+    }
+  };
+  
 
   return (
     <div className="table-container" style={{ padding: "4rem" }}>
@@ -315,13 +370,19 @@ const Table = () => {
             rowData={pending_data}
             rowSelection={"multiple"}
           />
-          {!submitting ? (
-            <button className="submit-btn" onClick={submitSelectedRows}>
-              Submit
+          <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1rem" }}>
+            {!submitting ? (
+              <button className="submit-btn" onClick={submitSelectedRows}>
+                Submit
+              </button>
+            ) : (
+              <>Please wait...</>
+            )}
+            <button className="submit-btn" onClick={onBtExportPending}>
+              Preview Pending Certificates
             </button>
-          ) : (
-            <>Please wait...</>
-          )}
+          </div>
+
         </div>
         <div
           className="ag-theme-alpine-dark text"
@@ -335,14 +396,25 @@ const Table = () => {
           <h1>Your Signed Certificates</h1>
           {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
           <AgGridReact
+            onGridReady={(params) => {
+              signedRef.current = params.api;
+              console.log("Grid API:", signedRef.current);
+            }}
             onCellClicked={onCellClicked}
             ref={signedRef}
             columnDefs={columnDefs2}
             rowData={my_signed}
+            rowSelection={"single"}
           />
-          <button className="submit-btn" onClick={onBtExport}>
-            Export Report
-          </button>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1rem" }}>
+            <button className="submit-btn" onClick={handlePreviewCertificate}>
+              Preview Certificate
+            </button>
+            <button className="submit-btn" onClick={onBtExportSigned}>
+              Export Report
+            </button>
+          </div>
         </div>
       </div>
 
