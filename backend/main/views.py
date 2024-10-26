@@ -18,6 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 import math
@@ -356,7 +357,7 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
 
 
 @api_view(['GET'])
-def get_certificate(request):
+def preview_certificate(request):
   try:
     serial = request.GET.get('serial')
     print(serial)
@@ -410,7 +411,82 @@ def get_certificate(request):
         image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
 
     image_io = BytesIO()
-    if request.GET.get('download', False):
+    is_preview = request.GET.get('preview', False)
+
+    if is_preview:
+      image.save(image_io, format="PNG")
+      image_io.seek(0)
+      response = HttpResponse(image_io, content_type="image/png")
+      response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
+      return response
+    else:
+      if image.mode == 'RGBA':
+        image = image.convert('RGB')
+      image.save(image_io, format="JPEG", quality=50)
+      image_io.seek(0)
+      return HttpResponse(image_io, content_type="image/jpeg")
+  except Exception as e:
+    print(e)
+    return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def get_certificate(request):
+  try:
+    serial = request.GET.get('serial')
+    print(serial)
+    serial = serial.replace("_", "/")
+    certificate = Certificate.objects.filter(serial_no=serial)
+    event_id = int(serial.split('/')[5])
+    event_data = Event.objects.get(id=event_id)
+
+    if not certificate:
+      return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if certificate[0].status != "0":
+      return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    faculty_signatures = json.loads(certificate[0].faculty_signatures)
+    coordinates = json.loads(event_data.coordinates)
+    candidate_data = json.loads(certificate[0].event_data)
+    image = event_data.certificate
+    image = Image.open(image)
+
+    cdc_signature_base64 = certificate[0].cdc_signature
+    cdc_coordinate = coordinates.get('cdc', None)
+
+    for i in coordinates:
+      key = i
+      key_coordinate = coordinates.get(key, None)
+      text_to_put = candidate_data.get(key, None)
+
+      if not key_coordinate or not text_to_put:
+        continue
+
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
+
+    serial_coord = coordinates.get("Serial No", None)
+    if serial_coord:
+      image = put_text_on_image(serial, serial_coord, image, event_data)
+
+    for i in coordinates:
+      faculty_key = i
+
+      key_coordinate = coordinates.get(faculty_key, None)
+      signature_base64 = faculty_signatures.get(faculty_key, None)
+
+      if not signature_base64:
+        continue
+
+      image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
+
+    if cdc_signature_base64:
+      if cdc_coordinate:
+        image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
+
+    image_io = BytesIO()
+    is_download = request.GET.get('download', False)
+
+    if is_download:
       image.save(image_io, format="PNG")
       image_io.seek(0)
       response = HttpResponse(image_io, content_type="image/png")
@@ -427,6 +503,21 @@ def get_certificate(request):
     return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   # return Response({"certificate": image_base64})
 
+# @api_view(["DELETE"])
+# def delete_user(request):
+#     email = request.data.get("email")
+
+#     if not email:
+#         return Response({"ok": False, "message": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#     try:
+#         user = Organisation.objects.get(email=email)
+#         user.delete()
+#         return Response({"ok": True, "message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+#     except Organisation.DoesNotExist:
+#         return Response({"ok": False, "message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+#     except Exception as e:
+#         return Response({"ok": False, "error": str(e), "message": "Error while deleting the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST"])
 def user_register(request):

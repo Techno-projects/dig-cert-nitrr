@@ -17,6 +17,7 @@ const GetCertificate = () => {
   const serial = searchParams.get("serial");
   // const [pdfGenerated, setPdfGenerated] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     if (!serial) {
@@ -38,6 +39,17 @@ const GetCertificate = () => {
     } catch (error) {
       // console.log(error);
       alert("Certificate not found");
+    }
+  };
+
+  const handlePreview = async () => {
+    try {
+      const res = await axios.get(
+        `${server}/api/preview_certificate?serial=${serial}`
+      );
+      setPreviewImage(`data:image/png;base64,${res.data.image}`);
+    } catch (error) {
+      alert("Failed to load preview");
     }
   };
 
@@ -94,7 +106,7 @@ const GetCertificate = () => {
             marginTop: "50px",
           }}
         >
-          {imageSrc && (
+          {imageSrc && !previewImage  && (
             <>
               <img
                 src={imageSrc}
@@ -112,6 +124,30 @@ const GetCertificate = () => {
                 {downloading ? "Downloading..." : "Download"}
               </button>
             </>
+          )}
+
+          {!previewImage && (
+            <button
+              onClick={handlePreview}
+              className="GetCertificateButton"
+              style={{ marginTop: "20px" }}
+            >
+              Preview Certificate
+            </button>
+          )}
+
+          {previewImage && (
+            <div>
+              <img
+                src={previewImage}
+                alt="Certificate Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
           )}
         </div>
       </div>
