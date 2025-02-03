@@ -250,7 +250,7 @@ def cdc_get_certi_by_serial(serial_no, certificate):
     row_dict['Event'] = event_name
     row_dict['Organisation'] = org_name
     row_dict['Serial No'] = serial_no
-    print(row_dict)
+    # print(row_dict)
     return row_dict
 
   except Exception as e:
@@ -268,7 +268,7 @@ def get_cdc_events(request):
     
     for certi in pending_certis:
       row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
-      # print(row_i)
+      print(row_i)
       if row_i:
         pending_rows.append(row_i)
     print("Pending: ", pending_rows)
