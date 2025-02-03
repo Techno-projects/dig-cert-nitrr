@@ -247,23 +247,30 @@ def cdc_get_certi_by_serial(serial_no, certificate):
 
 @api_view(["GET"])
 def get_cdc_events(request):
-  pending_certis = Certificate.objects.filter(status='0')
-  signed_certis = Certificate.objects.filter(status='1')
-
-  pending_rows = []
-  signed_rows = []
-  for certi in pending_certis:
-    row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
-    if not row_i:
-      continue
-    pending_rows.append(row_i)
-
-  for certi in signed_certis:
-    row_i = cdc_get_certi_by_serial(certi.serial_no, None)
-    if not row_i:
-      continue
-    signed_rows.append(row_i)
-  return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+  try:
+    pending_certis = Certificate.objects.filter(status='0')
+    signed_certis = Certificate.objects.filter(status='1')
+    pending_rows = []
+    signed_rows = []
+    
+    for certi in pending_certis:
+      row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
+      if row_i:
+        pending_rows.append(row_i)
+            
+    for certi in signed_certis:
+      row_i = cdc_get_certi_by_serial(certi.serial_no, None)
+      if row_i:
+        signed_rows.append(row_i)
+            
+    return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+      
+  except Exception as e:
+    print (Exception);
+    return Response(
+      {"ok": False, "error": str(e), "message": "Error fetching CDC events"},
+      status=500
+    )
 
 
 def pil_image_to_base64(image):
