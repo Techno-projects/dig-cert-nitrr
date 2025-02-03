@@ -271,19 +271,19 @@ def get_cdc_events(request):
       print(row_i)
       if row_i:
         pending_rows.append(row_i)
-    print("Pending: ", pending_rows)
+    print("Pending: Collected")
             
     for certi in signed_certis:
       row_i = cdc_get_certi_by_serial(certi.serial_no, None)
       # print(row_i)
       if row_i:
         signed_rows.append(row_i)
-    print("Signed: ", signed_rows)
+    print("Signed: Collected")
             
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
       
   except Exception as e:
-    print (Exception);
+    print("Inside error")
     return Response(
       {"ok": False, "error": str(e), "message": "Error fetching CDC events"},
       status=500
