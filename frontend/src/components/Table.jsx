@@ -75,6 +75,8 @@ const Table = () => {
           },
         });
         const data = response.data;
+        console.log("Data: ");
+        console.log(response);
         if (data.ok) {
           set_my_signed(data.signed);
           set_pending_data(data.pending);
@@ -83,6 +85,7 @@ const Table = () => {
           // window.location.href = "/login?type=faculty";
         }
       } catch (error) {
+        console.log(error);
         toast.error(error.response.data.message ?? "Something went wrong");
         // history.pushState("/login?type=faculty");
         // window.location.href = "/login?type=faculty";
