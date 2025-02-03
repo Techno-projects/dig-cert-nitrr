@@ -266,6 +266,7 @@ def get_cdc_events(request):
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
       
   except Exception as e:
+    print (Exception);
     return Response(
       {"ok": False, "error": str(e), "message": "Error fetching CDC events"},
       status=500
