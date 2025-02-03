@@ -205,44 +205,56 @@ def get_faculties(request):
 
 
 def cdc_get_certi_by_serial(serial_no, certificate):
-  serial_list = serial_no.split("/")
-  dispatch = serial_list[2]
-  event_id = int(serial_list[5])
-  row_id = int(serial_list[6])
+  try:
+    serial_list = serial_no.split("/")
+    dispatch = serial_list[2]
+    event_id = int(serial_list[5])
+    row_id = int(serial_list[6])
 
-  event = Event.objects.get(id=event_id)
+    event = Event.objects.get(id=event_id)
 
-  if certificate:
-    coordinates = json.loads(event.coordinates)
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    faculties_required = []
+    if certificate:
+      coordinates = json.loads(event.coordinates)
+      email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+      faculties_required = []
 
-    for item in list(coordinates.keys()):
-      if re.match(email_pattern, item):
-        faculties_required.append(item)
+      for item in list(coordinates.keys()):
+        if re.match(email_pattern, item):
+          faculties_required.append(item)
 
-    faculties_signed = json.loads(certificate.faculty_advisor)
+      faculties_signed = json.loads(certificate.faculty_advisor)
 
-    c1 = Counter(faculties_required)
-    c2 = Counter(faculties_signed)
+      c1 = Counter(faculties_required)
+      c2 = Counter(faculties_signed)
 
-    print(serial_no)
-    print(faculties_required)
-    print(faculties_signed)
+      print(serial_no)
+      print(faculties_required)
+      print(faculties_signed)
 
-    if c1 != c2:
-      return
+      if c1 != c2:
+        return None
 
-  org_name = Organisation.objects.get(unique_name=event.organisation).name
-  event_name = event.event_name
-  event_data = event.event_data
-  df = pd.read_excel(event_data)
+    # Check if the organisation exists
+    try:
+      org = Organisation.objects.get(unique_name=event.organisation)
+      org_name = org.name
+    except Organisation.DoesNotExist:
+      print(f"Organisation with unique_name '{event.organisation}' does not exist.")
+      return None
 
-  row_dict = df.iloc[row_id].to_dict()
-  row_dict['Event'] = event_name
-  row_dict['Organisation'] = org_name
-  row_dict['Serial No'] = serial_no
-  return row_dict
+    event_name = event.event_name
+    event_data = event.event_data
+    df = pd.read_excel(event_data)
+
+    row_dict = df.iloc[row_id].to_dict()
+    row_dict['Event'] = event_name
+    row_dict['Organisation'] = org_name
+    row_dict['Serial No'] = serial_no
+    return row_dict
+
+  except Exception as e:
+    print(f"Error in cdc_get_certi_by_serial: {e}")
+    return None
 
 
 @api_view(["GET"])
