@@ -279,7 +279,7 @@ def get_cdc_events(request):
       if row_i:
         signed_rows.append(row_i)
     print("Signed: Collected")
-            
+    return Response({"ok": True})
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
       
   except Exception as e:
