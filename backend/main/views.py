@@ -476,7 +476,7 @@ def get_certificate(request):
     if not certificate:
       return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if certificate[0].status != "0":
+    if certificate[0].status == "0":
       return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
 
     faculty_signatures = json.loads(certificate[0].faculty_signatures)
