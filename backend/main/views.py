@@ -268,7 +268,7 @@ def get_cdc_events(request):
     
     for certi in pending_certis:
       row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
-      print(row_i)
+      # print(row_i)
       if row_i:
         pending_rows.append(row_i)
     print("Pending: Collected")
@@ -279,7 +279,8 @@ def get_cdc_events(request):
       if row_i:
         signed_rows.append(row_i)
     print("Signed: Collected")
-    return Response({"ok": True})
+    pending_rows = [row for row in pending_rows if row is not None]
+    signed_rows = [row for row in signed_rows if row is not None]
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
       
   except Exception as e:
