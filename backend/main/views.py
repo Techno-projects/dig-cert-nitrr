@@ -250,7 +250,6 @@ def cdc_get_certi_by_serial(serial_no, certificate):
     row_dict['Event'] = event_name
     row_dict['Organisation'] = org_name
     row_dict['Serial No'] = serial_no
-    # print(row_dict)
     return row_dict
 
   except Exception as e:
@@ -268,27 +267,33 @@ def get_cdc_events(request):
     
     for certi in pending_certis:
       row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
-      # print(row_i)
       if row_i:
         pending_rows.append(row_i)
-    print("Pending: Collect0")
             
     for certi in signed_certis:
       row_i = cdc_get_certi_by_serial(certi.serial_no, None)
-      # print(row_i)
       if row_i:
         signed_rows.append(row_i)
-    print("Signed: Collect0")
-    print(pending_rows[0])
-    print(signed_rows[0])
-    print("__________________________________________")
-    return Response({"ok": True, "pending": [pending_rows[0]], "signed": [signed_rows[0]]})
     pending_rows = [row for row in pending_rows if row is not None]
     signed_rows = [row for row in signed_rows if row is not None]
+
+    def validate_row(row):
+      if not isinstance(row, dict):
+        raise ValueError(f"Row is not a dictionary: {row}")
+      for key, value in row.items():
+        if not isinstance(key, str):
+          raise ValueError(f"Invalid key type in row: {key}")
+        if isinstance(value, float) and math.isnan(value):
+          row[key] = None  # Replace NaN with None
+      return row
+
+    pending_rows = [validate_row(row) for row in pending_rows]
+    signed_rows = [validate_row(row) for row in signed_rows]
+
     return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
       
   except Exception as e:
-    print("Inside error")
+    print(f"Error in get_cdc_events: {e}")
     return Response(
       {"ok": False, "error": str(e), "message": "Error fetching CDC events"},
       status=500
