@@ -126,7 +126,7 @@ const GetCertificate = () => {
             </>
           )}
 
-          {!previewImage && (
+          {/* {!previewImage && (
             <button
               onClick={handlePreview}
               className="GetCertificateButton"
@@ -134,9 +134,9 @@ const GetCertificate = () => {
             >
               Preview Certificate
             </button>
-          )}
+          )} */}
 
-          {previewImage && (
+          {/* {previewImage && (
             <div>
               <img
                 src={previewImage}
@@ -148,7 +148,7 @@ const GetCertificate = () => {
                 }}
               />
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
