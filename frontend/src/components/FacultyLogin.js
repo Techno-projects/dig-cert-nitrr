@@ -63,7 +63,7 @@ const FacultyLogin = () => {
 
           <form className="form" onSubmit={handleSubmit}>
             <input
-              placeholder="User ID:"
+              placeholder="User ID"
               className="input_text"
               type="text"
               id="email"
@@ -74,7 +74,7 @@ const FacultyLogin = () => {
             />
 
             <input
-              placeholder="Password:"
+              placeholder="Password"
               className="input_text"
               type="password"
               id="password"
