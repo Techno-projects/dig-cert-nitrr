@@ -262,18 +262,59 @@ def get_cdc_events(request):
   try:
     pending_certis = Certificate.objects.filter(status='0')
     signed_certis = Certificate.objects.filter(status='1')
-    pending_rows = []
-    signed_rows = []
+
+    event_df_cache = {}
+
+    def get_event_df(event):
+            if event.id not in event_df_cache:
+                event_df_cache[event.id] = pd.read_excel(event.event_data)
+            return event_df_cache[event.id]
+
+    def process_certificate(certi, check_faculty=True):
+      serial_no = certi.serial_no
+      serial_list = serial_no.split("/")
+      # For example: No./NITRR/dispatch/.../event_id/row_id
+      event_id = int(serial_list[5])
+      row_id = int(serial_list[6])
+      
+      # Retrieve the event record.
+      event = Event.objects.get(id=event_id)
+      
+      # If checking signatures (for pending certificates), perform the faculty match.
+      if check_faculty:
+        coordinates = json.loads(event.coordinates)
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        faculties_required = [
+            item for item in list(coordinates.keys())
+            if re.match(email_pattern, item)
+        ]
+        faculties_signed = json.loads(certi.faculty_advisor)
+        if Counter(faculties_required) != Counter(faculties_signed):
+            return None
+      
+      # Get organisation details.
+      try:
+        org = Organisation.objects.get(unique_name=event.organisation)
+        org_name = org.name
+      except Organisation.DoesNotExist:
+        print(f"Organisation with unique_name '{event.organisation}' does not exist.")
+        return None
+      
+      # Use the cached DataFrame.
+      df = get_event_df(event)
+      try:
+        row_dict = df.iloc[row_id].to_dict()
+      except Exception as e:
+        print(f"Error fetching row {row_id} for event {event_id}: {e}")
+        return None
+      row_dict['Event'] = event.event_name
+      row_dict['Organisation'] = org_name
+      row_dict['Serial No'] = serial_no
+      return row_dict
+
+    pending_rows = [process_certificate(certi, check_faculty=True) for certi in pending_certis]
+    signed_rows = [process_certificate(certi, check_faculty=False) for certi in signed_certis]
     
-    for certi in pending_certis:
-      row_i = cdc_get_certi_by_serial(certi.serial_no, certi)
-      if row_i:
-        pending_rows.append(row_i)
-            
-    for certi in signed_certis:
-      row_i = cdc_get_certi_by_serial(certi.serial_no, None)
-      if row_i:
-        signed_rows.append(row_i)
     pending_rows = [row for row in pending_rows if row is not None]
     signed_rows = [row for row in signed_rows if row is not None]
 
