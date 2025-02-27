@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import "react-image-crop/dist/ReactCrop.css";
 import ImageCrop from "./ImageCrop";
 import * as XLSX from 'xlsx';
+import LoadingBar from "./LoadingBar";
 
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
@@ -29,6 +30,7 @@ const Table = () => {
   const [pending_data, set_pending_data] = useState([]);
   const [my_signed, set_my_signed] = useState([]);
   const [signature, setSignature] = useState(null);
+  const [loading, setLoading] = useState(true);
   const fac_email = location.state.email;
   const columnDefs1 = [];
   const columnDefs2 = [];
@@ -59,12 +61,13 @@ const Table = () => {
           set_pending_data(data.pending);
         } else {
           toast.error("Error while fetching events");
-          // window.location.href = "/login?type=faculty";
         }
       } catch (error) {
         toast.error(error.response.data.message ?? "Something went wrong");
         // history.pushState("/login?type=faculty");
         window.location.href = "/login?type=faculty";
+      } finally {
+        setLoading(false);
       }
     };
     const getCDCEvents = async () => {
@@ -89,6 +92,8 @@ const Table = () => {
         toast.error(error.response.data.message ?? "Something went wrong");
         // history.pushState("/login?type=faculty");
         // window.location.href = "/login?type=faculty";
+      } finally {
+        setLoading(false);  
       }
     };
     if (!fac_signed_in.iscdc) {
@@ -351,6 +356,9 @@ const Table = () => {
 
   return (
     <div className="table-container" style={{ padding: "4rem" }}>
+      {/* Display the loading bar at the very top if loading */}
+      {loading && <LoadingBar />}
+      
       <div className="tables" style={{ display: "flex" }}>
         <div
           className="ag-theme-alpine-dark text"
