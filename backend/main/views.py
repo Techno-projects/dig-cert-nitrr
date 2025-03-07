@@ -18,6 +18,7 @@ from collections import Counter
 from django.conf import settings
 from io import BytesIO
 from django.http import HttpResponse
+from django.http import FileResponse
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
@@ -504,6 +505,64 @@ def preview_certificate(request):
     print(e)
     return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+def preview_event_certificate(request):
+    try:
+        # Get data from request
+        event_data_file = request.FILES.get('event_data')
+        certificate_file = request.FILES.get('certificate')
+        coords_json = request.POST.get('coords')
+        token = request.POST.get('token')
+        rel_width = float(request.POST.get('rel_width'))
+        rel_height = float(request.POST.get('rel_height'))
+        
+        # Parse coordinates
+        coords = json.loads(coords_json)
+        
+        # Read the first row of the Excel file
+        df = pd.read_excel(event_data_file)
+        if df.empty:
+            return Response({'message': 'Excel file is empty'}, status=400)
+        
+        first_row = df.iloc[0].to_dict()  # Get the first row as a dictionary
+        
+        # Open the certificate image
+        certificate_img = Image.open(certificate_file)
+        
+        # Create a temporary event_data object with needed properties
+        class TempEventData:
+            def __init__(self, rel_width, rel_height):
+                self.rel_width = rel_width
+                self.rel_height = rel_height
+        
+        temp_event_data = TempEventData(rel_width, rel_height)
+        
+        # Place each field on the certificate
+        for field, coordinate in coords.items():
+            if field in first_row:
+                # Place the text from the Excel's first row
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data)
+            elif field == "Serial No":
+                # Place a sample serial number
+                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data)
+            elif field == "cdc":
+                # Place a sample CDC signature text
+                certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
+            else:
+                # For faculty signatures or other fields not in Excel
+                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data)
+        
+        # Convert the image to base64 to send back
+        # Using an in-memory file to return the image
+        img_io = io.BytesIO()
+        certificate_img.save(img_io, format='PNG')
+        img_io.seek(0)
+        
+        return FileResponse(img_io, content_type='image/png')
+    
+    except Exception as e:
+        return Response({'message': str(e)}, status=500)
+
 @api_view(['GET'])
 def get_certificate(request):
   try:
@@ -650,6 +709,10 @@ def register_event(request):
 
     return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
   except Exception as e:
+    error_message = str(e)
+    if "duplicate key value violates unique constraint" in error_message and "main_events_organisation_event_name" in error_message:
+        return Response({"ok": False, "message": "Event with the same name already exists"}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

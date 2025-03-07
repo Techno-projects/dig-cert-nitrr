@@ -175,6 +175,42 @@ const Certificate = () => {
     // rectRef.current.appendChild(title);
   }
 
+  // Add a new preview function in your Certificate component
+  const previewCertificate = async () => {
+    const body = new FormData();
+    if (
+      Object.keys(coords).length === 0 ||
+      certificate === null ||
+      eventData.file === null
+    ) {
+      alert("Please place all required fields on the certificate first");
+      return;
+    }
+
+    body.append("event_data", eventData.file);
+    body.append("certificate", certificate);
+    body.append("coords", JSON.stringify(coords));
+    body.append("token", auth);
+    body.append("rel_width", 125 / imageRef.current.naturalWidth);
+    body.append("rel_height", 25 / imageRef.current.naturalHeight);
+
+    try {
+      const response = await axios.post(`${server}/api/preview_event_certificate`, body, {
+        headers: {
+          "content-type": "multipart/form-data",
+        },
+        responseType: 'blob', // Important: we want to receive a blob
+      });
+      
+      const previewUrl = URL.createObjectURL(response.data);
+      
+      setCerti(previewUrl);
+      alert("This is a preview. Click Submit when you're satisfied with the placement.");
+    } catch (error) {
+      alert("Error generating preview: " + (error.response?.data?.message || error.message));
+    }
+  };
+
   const submit = async () => {
     const body = new FormData();
     const keys = Object.keys(coords);
@@ -300,6 +336,9 @@ const Certificate = () => {
             />
             <label for="Serial No">Serial No.</label>
             <br />
+            <button onClick={previewCertificate} className="submit-btn" style={{ marginBottom: "10px" }}>
+              Preview
+            </button>
             <button onClick={submit} className="submit-btn">
               Submit
             </button>
