@@ -650,6 +650,10 @@ def register_event(request):
 
     return Response({"message": "Uploaded successfully"}, status=status.HTTP_200_OK)
   except Exception as e:
+    error_message = str(e)
+    if "duplicate key value violates unique constraint" in error_message and "main_events_organisation_event_name" in error_message:
+        return Response({"ok": False, "message": "Event with the same name already exists"}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({"ok": False, "error": str(e), "message": "Couldn't upload the event"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
