@@ -4,25 +4,6 @@
   pointer-events: none;
 }
 
-.certificateRect {
-  position: absolute;
-  border: 1px dashed black;
-  background-color: rgba(255, 255, 255, 0.5);
-  z-index: 10;
-  cursor: move;
-}
-
-.resizer {
-  width: 10px;
-  height: 10px;
-  background-color: blue;
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  cursor: se-resize;
-  z-index: 20;
-}
-
 .Certificate_box {
   display: flex;
   flex-direction: column;

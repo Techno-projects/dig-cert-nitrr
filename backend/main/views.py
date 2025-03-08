@@ -367,38 +367,31 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
       else:
         return font_size - 1
 
-  # Calculate box dimensions based on rel_width and rel_height
-    box_width = (event_data.rel_width * image.size[0])
-    box_height = (event_data.rel_height * image.size[1])
-    
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(
-        settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf',
-        size=20
-    )
-    
-    # Find the optimal font size that fits within the box
-    max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
-    font = ImageFont.truetype(
-        settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf',
-        size=max_font_size
-    )
-    
-    text_color = (0, 0, 0)
-    
-    # Calculate the center of the placement box
-    x = coordinate['x'] + (box_width / 2)
-    y = coordinate['y'] + (box_height / 2)
-    
-    # Calculate text positioning to center it in the box
-    text_width = font.getmask(str(text_to_put)).getbbox()[2]
-    text_height = font.getmask(str(text_to_put)).getbbox()[3]
-    
-    text_x = x - (text_width / 2)
-    text_y = y - (text_height / 2)
-    
-    draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
-    return image
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+  draw = ImageDraw.Draw(image)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=20)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=max_font_size)
+  text_color = (0, 0, 0)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
+
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
+
+  return image
 
 
 def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
@@ -519,12 +512,12 @@ def preview_event_certificate(request):
         event_data_file = request.FILES.get('event_data')
         certificate_file = request.FILES.get('certificate')
         coords_json = request.POST.get('coords')
-        box_sizes_json = request.POST.get('box_sizes')
         token = request.POST.get('token')
+        rel_width = float(request.POST.get('rel_width'))
+        rel_height = float(request.POST.get('rel_height'))
         
         # Parse coordinates
         coords = json.loads(coords_json)
-        box_sizes = json.loads(box_sizes_json)
         
         # Read the first row of the Excel file
         df = pd.read_excel(event_data_file)
@@ -536,23 +529,16 @@ def preview_event_certificate(request):
         # Open the certificate image
         certificate_img = Image.open(certificate_file)
         
+        # Create a temporary event_data object with needed properties
+        class TempEventData:
+            def __init__(self, rel_width, rel_height):
+                self.rel_width = rel_width
+                self.rel_height = rel_height
+        
+        temp_event_data = TempEventData(rel_width, rel_height)
+        
+        # Place each field on the certificate
         for field, coordinate in coords.items():
-            # Get custom box size for this field
-            box_width = box_sizes[field]['width'] if field in box_sizes else 125
-            box_height = box_sizes[field]['height'] if field in box_sizes else 25
-            
-            # Calculate relative sizes
-            rel_width = box_width / certificate_img.width
-            rel_height = box_height / certificate_img.height
-            
-            # Create a temporary event_data object with needed properties
-            class TempEventData:
-                def __init__(self, rel_width, rel_height):
-                    self.rel_width = rel_width
-                    self.rel_height = rel_height
-            
-            temp_event_data = TempEventData(rel_width, rel_height)
-            
             if field in first_row:
                 # Place the text from the Excel's first row
                 certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data)
