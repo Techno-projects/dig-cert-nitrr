@@ -22,13 +22,6 @@ const Certificate = () => {
   const [ask, setAsk] = useState(false);
   const [selectedField, setSelected] = useState(null);
   const [coords, setCoord] = useState({});
-  const [boxSizes, setBoxSizes] = useState({});
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizingField, setResizingField] = useState(null);
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [initialWidth, setInitialWidth] = useState(0);
-  const [initialHeight, setInitialHeight] = useState(0);
 
   if (!auth) {
     alert("unauthorized user");
@@ -50,12 +43,10 @@ const Certificate = () => {
         setFields(response.data.message);
         const tmpFields = response.data.message;
         const tmp = { ...fieldBox };
-        const tmpSizes = { ...boxSizes };
 
         tmpFields.map((tmp_field) => {
           const box = document.createElement("div");
           const title = document.createElement("div");
-          const resizer = document.createElement("div");
           box.className = "certificateRect";
           box.style.width = "125px";
           box.style.height = "25px";
@@ -64,17 +55,12 @@ const Certificate = () => {
           title.style.border = "none";
           title.innerHTML = tmp_field;
           title.id = tmp_field;
-          resizer.className = "resizer";
-          resizer.dataset.field = tmp_field;
-          box.appendChild(resizer);
-          tmp[tmp_field] = { box: box, title: title, resizer: resizer };
-          tmpSizes[tmp_field] = { width: 125, height: 25 };
+          // fieldBox[tmp_field] = { box: box, title: title }
+          tmp[tmp_field] = { box: box, title: title };
         });
-
         faculties.map((faculty) => {
           const box = document.createElement("div");
           const title = document.createElement("div");
-          const resizer = document.createElement("div");
           box.className = "certificateRect";
           box.style.width = "125px";
           box.style.height = "25px";
@@ -83,16 +69,11 @@ const Certificate = () => {
           title.style.border = "none";
           title.innerHTML = faculty;
           title.id = faculty;
-          resizer.className = "resizer";
-          resizer.dataset.field = faculty;
-          box.appendChild(resizer);
-          tmp[faculty] = { box: box, title: title, resizer: resizer };
-          tmpSizes[faculty] = { width: 125, height: 25 };
+          tmp[faculty] = { box: box, title: title };
+          // fieldBox[faculty] = { box: box, title: title }
         });
-
         const box = document.createElement("div");
         const title = document.createElement("div");
-        const resizer = document.createElement("div");
         box.className = "certificateRect";
         box.style.width = "125px";
         box.style.height = "25px";
@@ -101,15 +82,10 @@ const Certificate = () => {
         title.style.border = "none";
         title.innerHTML = "cdc";
         title.id = "cdc";
-        resizer.className = "resizer";
-        resizer.dataset.field = "cdc";
-        box.appendChild(resizer);
-        tmp["cdc"] = { box: box, title: title, resizer: resizer };
-        tmpSizes["cdc"] = { width: 125, height: 25 };
+        tmp["cdc"] = { box: box, title: title };
 
         const box_serial = document.createElement("div");
         const title_serial = document.createElement("div");
-        const resizer_serial = document.createElement("div");
         box_serial.className = "certificateRect";
         box_serial.style.width = "125px";
         box_serial.style.height = "25px";
@@ -118,14 +94,9 @@ const Certificate = () => {
         title_serial.style.border = "none";
         title_serial.innerHTML = "serial";
         title_serial.id = "serial";
-        resizer_serial.className = "resizer";
-        resizer_serial.dataset.field = "Serial No";
-        box_serial.appendChild(resizer_serial);
-        tmp["Serial No"] = { box: box_serial, title: title_serial, resizer: resizer_serial };
-        tmpSizes["Serial No"] = { width: 125, height: 25 };
+        tmp["Serial No"] = { box: box_serial, title: title_serial };
 
         setFieldBox(tmp);
-        setBoxSizes(tmpSizes);
       } catch (error) {
         console.log(error);
         alert(error.response.data.message);
@@ -133,58 +104,7 @@ const Certificate = () => {
       }
     }
     getRows();
-    
-    // Setup event listeners for resizing
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
   }, []);
-
-  // Handle mouse move for resizing
-  const handleMouseMove = (e) => {
-    if (!isResizing) return;
-    
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    
-    const newWidth = Math.max(50, initialWidth + dx); // Minimum width of 50px
-    const newHeight = Math.max(20, initialHeight + dy); // Minimum height of 20px
-    
-    // Update the box size in state
-    setBoxSizes(prev => ({
-      ...prev,
-      [resizingField]: { width: newWidth, height: newHeight }
-    }));
-    
-    // Update the box appearance
-    if (fieldBox[resizingField]) {
-      fieldBox[resizingField].box.style.width = `${newWidth}px`;
-      fieldBox[resizingField].box.style.height = `${newHeight}px`;
-    }
-  };
-
-  // Handle mouse up to end resizing
-  const handleMouseUp = () => {
-    if (isResizing) {
-      setIsResizing(false);
-      setResizingField(null);
-    }
-  };
-
-  // Handle resize start
-  const handleResizeStart = (e, field) => {
-    e.stopPropagation();
-    setIsResizing(true);
-    setResizingField(field);
-    setStartX(e.clientX);
-    setStartY(e.clientY);
-    setInitialWidth(boxSizes[field].width);
-    setInitialHeight(boxSizes[field].height);
-  };
 
   function handleChange(e) {
     setCerti(URL.createObjectURL(e.target.files[0]));
@@ -196,6 +116,7 @@ const Certificate = () => {
   };
 
   function handleClick(e) {
+    console.log(fieldBox);
     if (!selectedField) {
       alert("Please select at least one field");
       return;
@@ -204,6 +125,7 @@ const Certificate = () => {
     const rect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    // console.log(x, y);
 
     const imageWidth = imageRef.current.naturalWidth;
     const imageHeight = imageRef.current.naturalHeight;
@@ -215,27 +137,45 @@ const Certificate = () => {
     // Calculate the coordinates in pixels relative to the image
     const xInPixels = (x / rect.width) * imageWidth;
     const yInPixels = (y / rect.height) * imageHeight;
+    // console.log(xInPixels, yInPixels);
 
     coords[selectedField] = { x: xInPixels, y: yInPixels };
-    setCoord({...coords});
+
+    // Create a new rectangle element
+    // const rectangle = document.createElement("div");
+    // const title = document.createElement("div");
+    // title.innerHTML = selectedField;
+    // title.style.border = "none"
+    // rectangle.className = "certificateRect";
+    // title.className = "certificateRect";
+
+    // Position the rectangle at the click coordinates
+    // rectangle.style.left = e.clientX + "px";
+    // rectangle.style.top = e.clientY + "px";
+    // title.style.left = e.clientX + "px";
+    // title.style.top = e.clientY - 21 + "px";
+
+    // Set the dimensions of the rectangle (for example, 125x25 pixels)
+    // rectangle.style.width = "125px";
+    // rectangle.style.height = "25px";
 
     const box = fieldBox[selectedField].box;
     const title = fieldBox[selectedField].title;
-    const resizer = fieldBox[selectedField].resizer;
-    
     title.innerHTML = selectedField;
     box.style.left = e.clientX + window.scrollX + "px";
     box.style.top = e.clientY + window.scrollY + "px";
     title.style.left = e.clientX + window.scrollX + "px";
     title.style.top = e.clientY + window.scrollY - 21 + "px";
-    
-    // Add resize handler
-    resizer.onmousedown = (e) => handleResizeStart(e, selectedField);
 
     rectRef.current.appendChild(box);
     rectRef.current.appendChild(title);
+
+    // Append the rectangle to the container for rectangles
+    // rectRef.current.appendChild(rectangle);
+    // rectRef.current.appendChild(title);
   }
 
+  // Add a new preview function in your Certificate component
   const previewCertificate = async () => {
     const body = new FormData();
     if (
@@ -250,24 +190,21 @@ const Certificate = () => {
     body.append("event_data", eventData.file);
     body.append("certificate", certificate);
     body.append("coords", JSON.stringify(coords));
-    body.append("box_sizes", JSON.stringify(boxSizes));
     body.append("token", auth);
+    body.append("rel_width", 125 / imageRef.current.naturalWidth);
+    body.append("rel_height", 25 / imageRef.current.naturalHeight);
 
     try {
-      const response = await axios.post(`${server}/api/preview_certificate`, body, {
+      const response = await axios.post(`${server}/api/preview_event_certificate`, body, {
         headers: {
           "content-type": "multipart/form-data",
         },
         responseType: 'blob', // Important: we want to receive a blob
       });
       
-      // Create a URL for the blob
       const previewUrl = URL.createObjectURL(response.data);
       
-      // Update the certificate image with the preview
       setCerti(previewUrl);
-      
-      // Show a temporary notification that this is a preview
       alert("This is a preview. Click Submit when you're satisfied with the placement.");
     } catch (error) {
       alert("Error generating preview: " + (error.response?.data?.message || error.message));
@@ -288,12 +225,13 @@ const Certificate = () => {
       body.append("event_data", eventData.file);
       body.append("certificate", certificate);
       body.append("coords", JSON.stringify(coords));
-      body.append("box_sizes", JSON.stringify(boxSizes));
       body.append("event", eventData.event);
       body.append("user", eventData.user);
       body.append("token", auth);
       body.append("cdc", eventData.cdc);
       body.append("dispatch", dispatch);
+      body.append("rel_width", 125 / imageRef.current.naturalWidth);
+      body.append("rel_height", 25 / imageRef.current.naturalHeight);
       Object.keys(coords).map((key) => {
         if (faculties.includes(key)) {
           required_faculties.push(key);
@@ -349,6 +287,7 @@ const Certificate = () => {
           onClick={handleClick}
         />
         <div ref={rectRef}></div>
+        {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
         {certi && (
           <div className="Certificate_fields">
             Which field?
@@ -361,7 +300,7 @@ const Certificate = () => {
                   value={field}
                   onChange={(e) => setSelected(e.target.value)}
                 />
-                <label htmlFor={field}>{field}</label>
+                <label for={field}>{field}</label>
                 <br />
               </>
             ))}
@@ -373,7 +312,7 @@ const Certificate = () => {
                   value={faculty}
                   onChange={(e) => setSelected(e.target.value)}
                 />
-                <label htmlFor={faculty}>{faculty} </label>
+                <label for={faculty}>{faculty} </label>
                 <br />
               </>
             ))}
@@ -385,7 +324,7 @@ const Certificate = () => {
                   value="cdc"
                   onChange={(e) => setSelected(e.target.value)}
                 />
-                <label htmlFor="cdc_sign">CDC Signature</label>
+                <label for="cdc_sign">CDC Signature</label>
                 <br />
               </>
             )}
@@ -395,11 +334,8 @@ const Certificate = () => {
               value="Serial No"
               onChange={(e) => setSelected(e.target.value)}
             />
-            <label htmlFor="Serial No">Serial No.</label>
+            <label for="Serial No">Serial No.</label>
             <br />
-            <div style={{ marginTop: "10px", marginBottom: "5px" }}>
-              <small>To resize a field, drag the bottom-right corner after placing it.</small>
-            </div>
             <button onClick={previewCertificate} className="submit-btn" style={{ marginBottom: "10px" }}>
               Preview
             </button>
