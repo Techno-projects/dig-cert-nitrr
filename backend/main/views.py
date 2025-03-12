@@ -349,6 +349,50 @@ def pil_image_to_base64(image):
   return encoded_image
 
 
+def put_text_on_image(text_to_put, coordinate, image, event_data):
+  def find_max_font_size(draw, text, font, max_width, max_height):
+    font_size = 1
+    while True:
+      text_width = font.getmask(text).getbbox()[2]
+      text_height = font.getmask(text).getbbox()[3]
+
+      if text_height < max_height:
+        font_size += 1
+        font = ImageFont.truetype(
+            settings.BASE_DIR /
+            'main' /
+            'fonts' /
+            'DancingScript-Medium.ttf',
+            font_size)
+      else:
+        return font_size - 1
+
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+  draw = ImageDraw.Draw(image)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=20)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=max_font_size)
+  text_color = (0, 0, 0)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
+
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
+
+  return image
+
 
 def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
   image_data = base64.b64decode(image_to_put_base64)
@@ -388,6 +432,136 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
   return image
 
 
+@api_view(['GET'])
+def preview_certificate(request):
+  try:
+    serial = request.GET.get('serial')
+    print(serial)
+    serial = serial.replace("_", "/")
+    certificate = Certificate.objects.filter(serial_no=serial)
+    event_id = int(serial.split('/')[5])
+    event_data = Event.objects.get(id=event_id)
+
+    if not certificate:
+      return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if certificate[0].status != "1":
+      return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    faculty_signatures = json.loads(certificate[0].faculty_signatures)
+    coordinates = json.loads(event_data.coordinates)
+    candidate_data = json.loads(certificate[0].event_data)
+    image = event_data.certificate
+    image = Image.open(image)
+
+    cdc_signature_base64 = certificate[0].cdc_signature
+    cdc_coordinate = coordinates.get('cdc', None)
+
+    for i in coordinates:
+      key = i
+      key_coordinate = coordinates.get(key, None)
+      text_to_put = candidate_data.get(key, None)
+
+      if not key_coordinate or not text_to_put:
+        continue
+
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
+
+    serial_coord = coordinates.get("Serial No", None)
+    if serial_coord:
+      image = put_text_on_image(serial, serial_coord, image, event_data)
+
+    for i in coordinates:
+      faculty_key = i
+
+      key_coordinate = coordinates.get(faculty_key, None)
+      signature_base64 = faculty_signatures.get(faculty_key, None)
+
+      if not signature_base64:
+        continue
+
+      image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
+
+    if cdc_signature_base64:
+      if cdc_coordinate:
+        image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
+
+    image_io = BytesIO()
+    is_preview = request.GET.get('preview', False)
+
+    if is_preview:
+      image.save(image_io, format="PNG")
+      image_io.seek(0)
+      response = HttpResponse(image_io, content_type="image/png")
+      response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
+      return response
+    else:
+      if image.mode == 'RGBA':
+        image = image.convert('RGB')
+      image.save(image_io, format="JPEG", quality=50)
+      image_io.seek(0)
+      return HttpResponse(image_io, content_type="image/jpeg")
+  except Exception as e:
+    print(e)
+    return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+def preview_event_certificate(request):
+    try:
+        # Get data from request
+        event_data_file = request.FILES.get('event_data')
+        certificate_file = request.FILES.get('certificate')
+        coords_json = request.POST.get('coords')
+        token = request.POST.get('token')
+        rel_width = float(request.POST.get('rel_width'))
+        rel_height = float(request.POST.get('rel_height'))
+        
+        # Parse coordinates
+        coords = json.loads(coords_json)
+        
+        # Read the first row of the Excel file
+        df = pd.read_excel(event_data_file)
+        if df.empty:
+            return Response({'message': 'Excel file is empty'}, status=400)
+        
+        first_row = df.iloc[0].to_dict()  # Get the first row as a dictionary
+        
+        # Open the certificate image
+        certificate_img = Image.open(certificate_file)
+        
+        # Create a temporary event_data object with needed properties
+        class TempEventData:
+            def __init__(self, rel_width, rel_height):
+                self.rel_width = rel_width
+                self.rel_height = rel_height
+        
+        temp_event_data = TempEventData(rel_width, rel_height)
+        
+        # Place each field on the certificate
+        for field, coordinate in coords.items():
+            if field in first_row:
+                # Place the text from the Excel's first row
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data)
+            elif field == "Serial No":
+                # Place a sample serial number
+                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data)
+            elif field == "cdc":
+                # Place a sample CDC signature text
+                certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
+            else:
+                # For faculty signatures or other fields not in Excel
+                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data)
+        
+        # Convert the image to base64 to send back
+        # Using an in-memory file to return the image
+        img_io = io.BytesIO()
+        certificate_img.save(img_io, format='PNG')
+        img_io.seek(0)
+        
+        return FileResponse(img_io, content_type='image/png')
+    
+    except Exception as e:
+        return Response({'message': str(e)}, status=500)
 
 @api_view(['GET'])
 def get_certificate(request):
@@ -808,260 +982,3 @@ def get_faculties(request):
       faculties.add(j.faculty_id)
 
   return Response({"ok": True, "message": list(faculties)}, status=status.HTTP_200_OK)
-def put_text_on_image(text_to_put, coordinate, image, event_data):
-  def find_max_font_size(draw, text, font, max_width, max_height):
-    font_size = 1
-    while True:
-      text_width = font.getmask(text).getbbox()[2]
-      text_height = font.getmask(text).getbbox()[3]
-
-      if text_height < max_height:
-        font_size += 1
-        font = ImageFont.truetype(
-            settings.BASE_DIR /
-            'main' /
-            'fonts' /
-            'DancingScript-Medium.ttf',
-            font_size)
-      else:
-        return font_size - 1
-
-  # Use width, height, and fontSize from the frontend coordinates if provided
-  box_width = coordinate.get('width', (event_data.rel_width * image.size[0]) * image.size[0] / 1000)
-  box_height = coordinate.get('height', (event_data.rel_height * image.size[1]) * image.size[1] / 775)
-  draw = ImageDraw.Draw(image)
-  font = ImageFont.truetype(
-      settings.BASE_DIR /
-      'main' /
-      'fonts' /
-      'DancingScript-Medium.ttf',
-      size=20)
-      
-  # Use fontSize from frontend if provided, otherwise calculate it
-  if 'fontSize' in coordinate:
-    max_font_size = coordinate['fontSize']
-  else:
-    max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
-    
-  font = ImageFont.truetype(
-      settings.BASE_DIR /
-      'main' /
-      'fonts' /
-      'DancingScript-Medium.ttf',
-      size=max_font_size)
-  text_color = (0, 0, 0)
-  x = coordinate['x']
-  y = coordinate['y']
-
-  # Center the text within the box
-  text_width = font.getmask(str(text_to_put)).getbbox()[2]
-  text_height = font.getmask(str(text_to_put)).getbbox()[3]
-  text_x = x + (box_width - text_width) / 2
-  text_y = y + (box_height - text_height) / 2
-  
-  draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
-
-  return image
-def preview_event_certificate(request):
-    try:
-        # Get data from request
-        event_data_file = request.FILES.get('event_data')
-        certificate_file = request.FILES.get('certificate')
-        coords_json = request.POST.get('coords')
-        token = request.POST.get('token')
-        rel_width = float(request.POST.get('rel_width'))
-        rel_height = float(request.POST.get('rel_height'))
-        
-        # Parse coordinates
-        coords = json.loads(coords_json)
-        
-        # Read the first row of the Excel file
-        df = pd.read_excel(event_data_file)
-        if df.empty:
-            return Response({'message': 'Excel file is empty'}, status=400)
-        
-        first_row = df.iloc[0].to_dict()  # Get the first row as a dictionary
-        
-        # Open the certificate image
-        certificate_img = Image.open(certificate_file)
-        
-        # Create a temporary event_data object with needed properties
-        class TempEventData:
-            def __init__(self, rel_width, rel_height):
-                self.rel_width = rel_width
-                self.rel_height = rel_height
-        
-        temp_event_data = TempEventData(rel_width, rel_height)
-        
-        # Place each field on the certificate
-        for field, coordinate in coords.items():
-            # Ensure coordinate contains width, height, and fontSize if provided in the frontend
-            if field in first_row:
-                # Place the text from the Excel's first row
-                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data)
-            elif field == "Serial No":
-                # Place a sample serial number
-                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data)
-            elif field == "cdc":
-                # Place a sample CDC signature text
-                certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
-            else:
-                # For faculty signatures or other fields not in Excel
-                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data)
-        
-        # Convert the image to base64 to send back
-        # Using an in-memory file to return the image
-        img_io = io.BytesIO()
-        certificate_img.save(img_io, format='PNG')
-        img_io.seek(0)
-        
-        return FileResponse(img_io, content_type='image/png')
-    
-    except Exception as e:
-        return Response({'message': str(e)}, status=500)
-@api_view(['GET'])
-def preview_certificate(request):
-  try:
-    serial = request.GET.get('serial')
-    print(serial)
-    serial = serial.replace("_", "/")
-    certificate = Certificate.objects.filter(serial_no=serial)
-    event_id = int(serial.split('/')[5])
-    event_data = Event.objects.get(id=event_id)
-
-    if not certificate:
-      return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
-
-    if certificate[0].status != "1":
-      return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
-
-    faculty_signatures = json.loads(certificate[0].faculty_signatures)
-    coordinates = json.loads(event_data.coordinates)
-    candidate_data = json.loads(certificate[0].event_data)
-    image = event_data.certificate
-    image = Image.open(image)
-
-    cdc_signature_base64 = certificate[0].cdc_signature
-    cdc_coordinate = coordinates.get('cdc', None)
-
-    for i in coordinates:
-      key = i
-      key_coordinate = coordinates.get(key, None)
-      text_to_put = candidate_data.get(key, None)
-
-      if not key_coordinate or not text_to_put:
-        continue
-
-      # Pass the complete coordinate object with width, height, and fontSize to put_text_on_image
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
-
-    serial_coord = coordinates.get("Serial No", None)
-    if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data)
-
-    for i in coordinates:
-      faculty_key = i
-
-      key_coordinate = coordinates.get(faculty_key, None)
-      signature_base64 = faculty_signatures.get(faculty_key, None)
-
-      if not signature_base64:
-        continue
-
-      image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
-
-    if cdc_signature_base64:
-      if cdc_coordinate:
-        image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
-
-    image_io = BytesIO()
-    is_preview = request.GET.get('preview', False)
-
-    if is_preview:
-      image.save(image_io, format="PNG")
-      image_io.seek(0)
-      response = HttpResponse(image_io, content_type="image/png")
-      response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
-      return response
-    else:
-      if image.mode == 'RGBA':
-        image = image.convert('RGB')
-      image.save(image_io, format="JPEG", quality=50)
-      image_io.seek(0)
-      return HttpResponse(image_io, content_type="image/jpeg")
-  except Exception as e:
-    print(e)
-    return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-@api_view(['GET'])
-def preview_certificate(request):
-  try:
-    serial = request.GET.get('serial')
-    print(serial)
-    serial = serial.replace("_", "/")
-    certificate = Certificate.objects.filter(serial_no=serial)
-    event_id = int(serial.split('/')[5])
-    event_data = Event.objects.get(id=event_id)
-
-    if not certificate:
-      return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
-
-    if certificate[0].status != "1":
-      return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
-
-    faculty_signatures = json.loads(certificate[0].faculty_signatures)
-    coordinates = json.loads(event_data.coordinates)
-    candidate_data = json.loads(certificate[0].event_data)
-    image = event_data.certificate
-    image = Image.open(image)
-
-    cdc_signature_base64 = certificate[0].cdc_signature
-    cdc_coordinate = coordinates.get('cdc', None)
-
-    for i in coordinates:
-      key = i
-      key_coordinate = coordinates.get(key, None)
-      text_to_put = candidate_data.get(key, None)
-
-      if not key_coordinate or not text_to_put:
-        continue
-
-      # Pass the complete coordinate object with width, height, and fontSize to put_text_on_image
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
-
-    serial_coord = coordinates.get("Serial No", None)
-    if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data)
-
-    for i in coordinates:
-      faculty_key = i
-
-      key_coordinate = coordinates.get(faculty_key, None)
-      signature_base64 = faculty_signatures.get(faculty_key, None)
-
-      if not signature_base64:
-        continue
-
-      image = put_image_on_image(signature_base64, key_coordinate, image, event_data)
-
-    if cdc_signature_base64:
-      if cdc_coordinate:
-        image = put_image_on_image(cdc_signature_base64, cdc_coordinate, image, event_data)
-
-    image_io = BytesIO()
-    is_preview = request.GET.get('preview', False)
-
-    if is_preview:
-      image.save(image_io, format="PNG")
-      image_io.seek(0)
-      response = HttpResponse(image_io, content_type="image/png")
-      response['Content-Disposition'] = f'attachment; filename="{serial}.png"'
-      return response
-    else:
-      if image.mode == 'RGBA':
-        image = image.convert('RGB')
-      image.save(image_io, format="JPEG", quality=50)
-      image_io.seek(0)
-      return HttpResponse(image_io, content_type="image/jpeg")
-  except Exception as e:
-    print(e)
-    return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

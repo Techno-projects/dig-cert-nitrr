@@ -22,9 +22,6 @@ const Certificate = () => {
   const [ask, setAsk] = useState(false);
   const [selectedField, setSelected] = useState(null);
   const [coords, setCoord] = useState({});
-  const [fontSize, setFontSize] = useState(16);
-  const [boxWidth, setBoxWidth] = useState(125);
-  const [boxHeight, setBoxHeight] = useState(25);
 
   if (!auth) {
     alert("unauthorized user");
@@ -58,6 +55,7 @@ const Certificate = () => {
           title.style.border = "none";
           title.innerHTML = tmp_field;
           title.id = tmp_field;
+          // fieldBox[tmp_field] = { box: box, title: title }
           tmp[tmp_field] = { box: box, title: title };
         });
         faculties.map((faculty) => {
@@ -72,6 +70,7 @@ const Certificate = () => {
           title.innerHTML = faculty;
           title.id = faculty;
           tmp[faculty] = { box: box, title: title };
+          // fieldBox[faculty] = { box: box, title: title }
         });
         const box = document.createElement("div");
         const title = document.createElement("div");
@@ -107,64 +106,17 @@ const Certificate = () => {
     getRows();
   }, []);
 
-  useEffect(() => {
-    const image = imageRef.current;
-    if (image) {
-      image.addEventListener('dragstart', (e) => e.preventDefault());
-    }
-  }, [certi]);
-
   function handleChange(e) {
     setCerti(URL.createObjectURL(e.target.files[0]));
     setCertificate(e.target.files[0]);
   }
 
-  const handleBoxWidthChange = (e) => {
-    const newWidth = parseInt(e.target.value);
-    setBoxWidth(newWidth);
-    
-    if (selectedField && fieldBox[selectedField]) {
-      const box = fieldBox[selectedField].box;
-      box.style.width = `${newWidth}px`;
-      
-      if (coords[selectedField]) {
-        coords[selectedField].width = newWidth;
-        setCoord({...coords});
-      }
-    }
-  };
-
-  const handleBoxHeightChange = (e) => {
-    const newHeight = parseInt(e.target.value);
-    setBoxHeight(newHeight);
-    
-    if (selectedField && fieldBox[selectedField]) {
-      const box = fieldBox[selectedField].box;
-      box.style.height = `${newHeight}px`;
-      
-      if (coords[selectedField]) {
-        coords[selectedField].height = newHeight;
-        setCoord({...coords});
-      }
-    }
-  };
-
-  const handleFontSizeChange = (e) => {
-    const newSize = parseInt(e.target.value);
-    setFontSize(newSize);
-    
-    if (selectedField && fieldBox[selectedField]) {
-      const box = fieldBox[selectedField].box;
-      box.style.fontSize = `${newSize}px`;
-      
-      if (coords[selectedField]) {
-        coords[selectedField].fontSize = newSize;
-        setCoord({...coords});
-      }
-    }
+  const removeBox = () => {
+    rectRef.current.removeChild(rectRef.current.lastChild);
   };
 
   function handleClick(e) {
+    console.log(fieldBox);
     if (!selectedField) {
       alert("Please select at least one field");
       return;
@@ -173,58 +125,57 @@ const Certificate = () => {
     const rect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    // console.log(x, y);
 
     const imageWidth = imageRef.current.naturalWidth;
     const imageHeight = imageRef.current.naturalHeight;
 
+    // Get the displayed size of the image in the viewport
+    const displayedWidth = imageRef.current.offsetWidth;
+    const displayedHeight = imageRef.current.offsetHeight;
+
+    // Calculate the coordinates in pixels relative to the image
     const xInPixels = (x / rect.width) * imageWidth;
     const yInPixels = (y / rect.height) * imageHeight;
+    // console.log(xInPixels, yInPixels);
 
-    coords[selectedField] = { 
-      x: xInPixels, 
-      y: yInPixels,
-      width: boxWidth,
-      height: boxHeight,
-      fontSize: fontSize 
-    };
-    setCoord({...coords});
+    coords[selectedField] = { x: xInPixels, y: yInPixels };
+
+    // Create a new rectangle element
+    // const rectangle = document.createElement("div");
+    // const title = document.createElement("div");
+    // title.innerHTML = selectedField;
+    // title.style.border = "none"
+    // rectangle.className = "certificateRect";
+    // title.className = "certificateRect";
+
+    // Position the rectangle at the click coordinates
+    // rectangle.style.left = e.clientX + "px";
+    // rectangle.style.top = e.clientY + "px";
+    // title.style.left = e.clientX + "px";
+    // title.style.top = e.clientY - 21 + "px";
+
+    // Set the dimensions of the rectangle (for example, 125x25 pixels)
+    // rectangle.style.width = "125px";
+    // rectangle.style.height = "25px";
 
     const box = fieldBox[selectedField].box;
     const title = fieldBox[selectedField].title;
-    
-    while (box.firstChild) {
-      box.removeChild(box.firstChild);
-    }
-    
-    const textContent = document.createElement('div');
-    textContent.className = 'text-content';
-    textContent.textContent = selectedField;
-    box.appendChild(textContent);
-
+    title.innerHTML = selectedField;
     box.style.left = e.clientX + window.scrollX + "px";
     box.style.top = e.clientY + window.scrollY + "px";
-    box.style.width = boxWidth + "px";
-    box.style.height = boxHeight + "px";
-    box.style.fontSize = `${fontSize}px`;
-    box.style.position = 'absolute';
-    box.style.border = '2px dashed #666';
-    box.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    box.style.display = 'flex';
-    box.style.alignItems = 'center';
-    box.style.justifyContent = 'center';
-    box.style.userSelect = 'none';
-
     title.style.left = e.clientX + window.scrollX + "px";
     title.style.top = e.clientY + window.scrollY - 21 + "px";
 
-    if (!rectRef.current.contains(box)) {
-      rectRef.current.appendChild(box);
-    }
-    if (!rectRef.current.contains(title)) {
-      rectRef.current.appendChild(title);
-    }
+    rectRef.current.appendChild(box);
+    rectRef.current.appendChild(title);
+
+    // Append the rectangle to the container for rectangles
+    // rectRef.current.appendChild(rectangle);
+    // rectRef.current.appendChild(title);
   }
 
+  // Add a new preview function in your Certificate component
   const previewCertificate = async () => {
     const body = new FormData();
     if (
@@ -336,61 +287,55 @@ const Certificate = () => {
           onClick={handleClick}
         />
         <div ref={rectRef}></div>
+        {/* <button style={{height: "50px"}} onClick={removeBox}>Remove Last</button> */}
         {certi && (
           <div className="Certificate_fields">
-            <select onChange={(e) => setSelected(e.target.value)} value={selectedField || ""}>
-              <option value="">Select Field</option>
-              {fields.map((field) => (
-                <option key={field} value={field}>
-                  {field}
-                </option>
-              ))}
-              {faculties.map((faculty) => (
-                <option key={faculty} value={faculty}>
-                  {faculty}
-                </option>
-              ))}
-              {eventData.cdc && (
-                <option value="cdc">CDC Signature</option>
-              )}
-              <option value="Serial No">Serial No</option>
-            </select>
-
-            <div className="dimension-controls">
-              <div className="control-group">
-                <label>Width: {boxWidth}px</label>
+            Which field?
+            <br />
+            {fields.map((field) => (
+              <>
                 <input
-                  type="range"
-                  min="50"
-                  max="500"
-                  value={boxWidth}
-                  onChange={handleBoxWidthChange}
+                  type="radio"
+                  name="selection"
+                  value={field}
+                  onChange={(e) => setSelected(e.target.value)}
                 />
-              </div>
-              
-              <div className="control-group">
-                <label>Height: {boxHeight}px</label>
+                <label for={field}>{field}</label>
+                <br />
+              </>
+            ))}
+            {faculties.map((faculty) => (
+              <>
                 <input
-                  type="range"
-                  min="25"
-                  max="200"
-                  value={boxHeight}
-                  onChange={handleBoxHeightChange}
+                  type="radio"
+                  name="selection"
+                  value={faculty}
+                  onChange={(e) => setSelected(e.target.value)}
                 />
-              </div>
-
-              <div className="control-group">
-                <label>Font Size: {fontSize}px</label>
+                <label for={faculty}>{faculty} </label>
+                <br />
+              </>
+            ))}
+            {eventData.cdc && (
+              <>
                 <input
-                  type="range"
-                  min="8"
-                  max="72"
-                  value={fontSize}
-                  onChange={handleFontSizeChange}
+                  type="radio"
+                  name="selection"
+                  value="cdc"
+                  onChange={(e) => setSelected(e.target.value)}
                 />
-              </div>
-            </div>
-            
+                <label for="cdc_sign">CDC Signature</label>
+                <br />
+              </>
+            )}
+            <input
+              type="radio"
+              name="selection"
+              value="Serial No"
+              onChange={(e) => setSelected(e.target.value)}
+            />
+            <label for="Serial No">Serial No.</label>
+            <br />
             <button onClick={previewCertificate} className="submit-btn" style={{ marginBottom: "10px" }}>
               Preview
             </button>
