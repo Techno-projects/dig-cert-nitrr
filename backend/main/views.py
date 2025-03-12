@@ -356,7 +356,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
       text_width = font.getmask(text).getbbox()[2]
       text_height = font.getmask(text).getbbox()[3]
 
-      if text_width < max_width and text_height < max_height:
+      if text_height < max_height:
         font_size += 1
         font = ImageFont.truetype(
             settings.BASE_DIR /
