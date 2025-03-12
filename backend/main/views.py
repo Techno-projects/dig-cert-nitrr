@@ -367,8 +367,10 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
       else:
         return font_size - 1
 
-  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
-  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+  # Calculate the actual box dimensions
+  box_width = event_data.rel_width * image.size[0]
+  box_height = event_data.rel_height * image.size[1]
+  
   draw = ImageDraw.Draw(image)
   font = ImageFont.truetype(
       settings.BASE_DIR /
@@ -383,12 +385,16 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
       'fonts' /
       'DancingScript-Medium.ttf',
       size=max_font_size)
-  text_color = (0, 0, 0)
-  x = coordinate['x'] + (125 / 2)
-  y = coordinate['y'] + (25 / 2)
-
-  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
-  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  
+  # Get the actual text dimensions with the final font size
+  text_bbox = font.getmask(str(text_to_put)).getbbox()
+  text_width = text_bbox[2]
+  text_height = text_bbox[3]
+  
+  # Calculate the position to center the text within the box
+  text_x = coordinate['x'] + (box_width - text_width) / 2
+  text_y = coordinate['y'] + (box_height - text_height) / 2
+  
   draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
 
   return image
@@ -414,8 +420,8 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
   # box_height = event_data.rel_height * image.size[1]
   image = image.convert("RGBA")
   rgba_thresh = rgba_thresh.convert("RGBA")
-  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 800
-  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 400
+  box_width = event_data.rel_width * image.size[0]
+  box_height = event_data.rel_height * image.size[1]
   rgba_thresh = rgba_thresh.resize(
       (int(box_width), int(box_height)), Image.LANCZOS)
 
