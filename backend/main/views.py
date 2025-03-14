@@ -350,42 +350,45 @@ def pil_image_to_base64(image):
 
 
 def put_text_on_image(text_to_put, coordinate, image, event_data):
-  def find_max_font_size(draw, text, max_width, max_height, font_path):
+  def find_max_font_size(draw, text, font, max_width, max_height):
     font_size = 1
     while True:
-      font = ImageFont.truetype(font_path, font_size)
-      text_bbox = font.getmask(text).getbbox()
-      
-      if text_bbox is None:
-        return 1
-          
-      text_width = text_bbox[2]
-      text_height = text_bbox[3]
-      
-      if text_width <= max_width and text_height <= max_height:
+      text_width = font.getmask(text).getbbox()[2]
+      text_height = font.getmask(text).getbbox()[3]
+
+      if text_height < max_height:
         font_size += 1
+        font = ImageFont.truetype(
+            settings.BASE_DIR /
+            'main' /
+            'fonts' /
+            'DancingScript-Medium.ttf',
+            font_size)
       else:
         return font_size - 1
 
-  font_path = settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
-  
-  box_width = event_data.rel_width * image.size[0]
-  box_height = event_data.rel_height * image.size[1]
-  
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  max_font_size = find_max_font_size(draw, str(text_to_put), box_width, box_height, font_path)
-  font = ImageFont.truetype(font_path, size=max_font_size)
-  
-  text_bbox = font.getmask(str(text_to_put)).getbbox()
-  if text_bbox is None:  # Handle empty text
-    return image
-      
-  text_width = text_bbox[2]
-  text_height = text_bbox[3]
-  
-  text_x = coordinate['x'] + (box_width - text_width) / 2
-  text_y = coordinate['y'] + (box_height - text_height) / 2
-  
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=20)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
+  font = ImageFont.truetype(
+      settings.BASE_DIR /
+      'main' /
+      'fonts' /
+      'DancingScript-Medium.ttf',
+      size=max_font_size)
+  text_color = (0, 0, 0)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
+
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
   draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
 
   return image
