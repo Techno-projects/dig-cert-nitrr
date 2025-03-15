@@ -22,6 +22,8 @@ const Certificate = () => {
   const [ask, setAsk] = useState(false);
   const [selectedField, setSelected] = useState(null);
   const [coords, setCoord] = useState({});
+  const [selectedFont, setSelectedFont] = useState('DancingScript-Medium.ttf');
+  const [textColor, setTextColor] = useState('#000000');
 
   if (!auth) {
     alert("unauthorized user");
@@ -193,6 +195,8 @@ const Certificate = () => {
     body.append("token", auth);
     body.append("rel_width", 125 / imageRef.current.naturalWidth);
     body.append("rel_height", 25 / imageRef.current.naturalHeight);
+    body.append("font", selectedFont);
+    body.append("text_color", textColor);
 
     try {
       const response = await axios.post(`${server}/api/preview_event_certificate`, body, {
@@ -232,6 +236,8 @@ const Certificate = () => {
       body.append("dispatch", dispatch);
       body.append("rel_width", 125 / imageRef.current.naturalWidth);
       body.append("rel_height", 25 / imageRef.current.naturalHeight);
+      body.append("font", selectedFont);
+      body.append("text_color", textColor);
       Object.keys(coords).map((key) => {
         if (faculties.includes(key)) {
           required_faculties.push(key);
@@ -342,6 +348,32 @@ const Certificate = () => {
             <button onClick={submit} className="submit-btn">
               Submit
             </button>
+            <br/>
+            <br/>
+
+            <label>Select Font: </label>
+            <select 
+              value={selectedFont} 
+              onChange={(e) => setSelectedFont(e.target.value)}
+            >
+              <option value="DancingScript-Medium.ttf">Dancing Script</option>
+              <option value="arial.ttf">Arial</option>
+              <option value="CertificateCondensed-Regular.ttf">CertificateCondensed</option>
+              <option value="Italianno-Regular.ttf">Italianno</option>
+              <option value="Montserrat-Medium.ttf">Montserrat</option>
+              <option value="PinyonScript-Regular.ttf">PinyonScript</option>
+              <option value="NotoSans-Regular.ttf">Mangal (Hindi)</option>
+              <option value="Kalam-Regular.ttf">Kalam (Hindi)</option>
+            </select>
+            <br/>
+
+            <label>Text Color: </label>
+            <input 
+              type="color" 
+              value={textColor}
+              onChange={(e) => setTextColor(e.target.value)}
+              />
+            <br/>
           </div>
         )}
       </div>

@@ -43,6 +43,24 @@ def is_faculty_auth(token):
     print(e)
     return False
 
+def get_certificate_font(coordinates):
+    font_name = coordinates.pop('__font__', None)
+    font_dir = settings.BASE_DIR / 'main' / 'fonts'
+    fallback_fonts = [
+        'DancingScript-Medium.ttf',
+    ]
+    for font in [font_name] + fallback_fonts:
+        if font and (font_dir / font).exists():
+            return str(font_dir / font), coordinates
+    
+    return str(font_dir / 'DancingScript-Medium.ttf'), coordinates
+
+
+def get_text_color(coordinates):
+    color = coordinates.pop('__text_color__', '#000000')
+    if re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color, re.IGNORECASE):
+        return color, coordinates
+    return '#000000', coordinates
 
 # to verify organisation user's token
 def is_org_auth(token):
@@ -349,8 +367,8 @@ def pil_image_to_base64(image):
   return encoded_image
 
 
-def put_text_on_image(text_to_put, coordinate, image, event_data):
-  def find_max_font_size(draw, text, font, max_width, max_height):
+def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000'):
+  def find_max_font_size(draw, text, font, max_width, max_height, font_path):
     font_size = 1
     while True:
       text_width = font.getmask(text).getbbox()[2]
@@ -358,38 +376,33 @@ def put_text_on_image(text_to_put, coordinate, image, event_data):
 
       if text_height < max_height:
         font_size += 1
-        font = ImageFont.truetype(
-            settings.BASE_DIR /
-            'main' /
-            'fonts' /
-            'DancingScript-Medium.ttf',
-            font_size)
+        font = ImageFont.truetype(font_path,font_size)
       else:
         return font_size - 1
+
+  try:
+      if not font_path:
+          font_path = settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
+      font = ImageFont.truetype(str(font_path), size=20)
+  except Exception as e:
+      font_path = settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
+      font = ImageFont.truetype(str(font_path), size=20)
 
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
   box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  font = ImageFont.truetype(
-      settings.BASE_DIR /
-      'main' /
-      'fonts' /
-      'DancingScript-Medium.ttf',
-      size=20)
-  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height)
-  font = ImageFont.truetype(
-      settings.BASE_DIR /
-      'main' /
-      'fonts' /
-      'DancingScript-Medium.ttf',
-      size=max_font_size)
-  text_color = (0, 0, 0)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height, font_path)
+  font = ImageFont.truetype(font_path,size=max_font_size)
   x = coordinate['x'] + (125 / 2)
   y = coordinate['y'] + (25 / 2)
 
   text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
   text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
-  draw.text((text_x, text_y), str(text_to_put), fill="black", font=font)
+  
+  try:
+      draw.text((text_x, text_y), str(text_to_put), fill=text_color, font=font)
+  except:
+      draw.text((text_x, text_y), str(text_to_put), fill="#000000", font=font)
 
   return image
 
@@ -453,6 +466,8 @@ def preview_certificate(request):
     candidate_data = json.loads(certificate[0].event_data)
     image = event_data.certificate
     image = Image.open(image)
+    selected_font, cleaned_coordinates = get_certificate_font(coordinates.copy())
+    text_color, final_coordinates = get_text_color(cleaned_coordinates.copy())
 
     cdc_signature_base64 = certificate[0].cdc_signature
     cdc_coordinate = coordinates.get('cdc', None)
@@ -465,7 +480,7 @@ def preview_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
@@ -515,6 +530,8 @@ def preview_event_certificate(request):
         token = request.POST.get('token')
         rel_width = float(request.POST.get('rel_width'))
         rel_height = float(request.POST.get('rel_height'))
+        selected_font = request.POST.get('font', 'DancingScript-Medium.ttf')
+        text_color = request.POST.get('text_color', '#000000')
         
         # Parse coordinates
         coords = json.loads(coords_json)
@@ -534,6 +551,10 @@ def preview_event_certificate(request):
             def __init__(self, rel_width, rel_height):
                 self.rel_width = rel_width
                 self.rel_height = rel_height
+                self.coordinates = {
+                    '__font__': selected_font,
+                    '__text_color__': text_color
+                }
         
         temp_event_data = TempEventData(rel_width, rel_height)
         
@@ -541,7 +562,7 @@ def preview_event_certificate(request):
         for field, coordinate in coords.items():
             if field in first_row:
                 # Place the text from the Excel's first row
-                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data)
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "Serial No":
                 # Place a sample serial number
                 certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data)
@@ -585,6 +606,9 @@ def get_certificate(request):
     image = event_data.certificate
     image = Image.open(image)
 
+    selected_font, cleaned_coordinates = get_certificate_font(coordinates.copy())
+    text_color, final_coordinates = get_text_color(cleaned_coordinates.copy())
+
     cdc_signature_base64 = certificate[0].cdc_signature
     cdc_coordinate = coordinates.get('cdc', None)
 
@@ -596,7 +620,7 @@ def get_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
@@ -677,6 +701,11 @@ def register_event(request):
   faculties_required = json.loads(data['faculties'])
   org_unique_name = Organisation.objects.get(email=data['user']).unique_name
 
+  coordinates = json.loads(data['coords'])
+  coordinates['__font__'] = data.get('font', 'DancingScript-Medium.ttf')
+  coordinates['__text_color__'] = data.get('text_color', '#000000')
+  event_coordinates = json.dumps(coordinates)
+
   if data['cdc'] == 'true':
     isCDC = True
   try:
@@ -684,7 +713,7 @@ def register_event(request):
         organisation=org_unique_name,
         event_data=event_db,
         certificate=certi,
-        coordinates=data['coords'],
+        coordinates=event_coordinates,
         event_name=data['event'],
         isCDC=isCDC,
         dispatch=data['dispatch'],
