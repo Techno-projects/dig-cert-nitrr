@@ -383,21 +383,23 @@ def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None
 
   try:
     default_font = Path(settings.BASE_DIR) / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
-    font_path = "/backend/main/fonts/" + font_path
-    print("font_path: ",font_path)
-    if not font_path or not Path(font_path).exists():
+
+    if not font_path:
         print(f"⚠️ Using default font at: {default_font}")
         font_path = default_font
+    else:
+        font_path = Path(font_path)
+        if not font_path.is_absolute():
+            font_path = Path("/backend/main/fonts") / font_path
         
+        if not font_path.exists():
+            print(f"⚠️ Font not found at {font_path}, using default font: {default_font}")
+            font_path = default_font
+
     print(f"🔍 Attempting to load font from: {font_path}")
-    font = ImageFont.truetype(str(font_path), size=20)
     
   except Exception as e:
-    print(f"🔥 Critical font error: {str(e)}")
-    print(f"❌ Failed to load even default font at: {default_font}")
-    # Add emergency fallback
     font = ImageFont.load_default()
-    print("⚠️ Using system default font as last resort")
 
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
   box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
