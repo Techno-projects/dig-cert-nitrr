@@ -502,7 +502,7 @@ def preview_certificate(request):
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_serial_on_image(serial, serial_coord, image, event_data)
 
     for i in coordinates:
       faculty_key = i
@@ -575,7 +575,7 @@ def preview_event_certificate(request):
             if field in first_row:
                 certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "Serial No":
-                certificate_img = put_text_on_image("No./NITRR/CDC/TC/OC/0000/00", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                certificate_img = put_serial_on_image("No./NITRR/CDC/TC/OC/0000/00", coordinate, certificate_img, temp_event_data)
             elif field == "cdc":
                 certificate_img = put_text_on_image("CDC SIGNATURE", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             else:
@@ -630,7 +630,7 @@ def get_certificate(request):
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_serial_on_image(serial, serial_coord, image, event_data)
 
     for i in coordinates:
       faculty_key = i
