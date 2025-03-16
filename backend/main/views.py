@@ -23,7 +23,6 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 import math
-from pathlib import Path
 
 load_dotenv()
 
@@ -368,87 +367,46 @@ def pil_image_to_base64(image):
   return encoded_image
 
 
-def put_text_on_image(text_to_put, coordinate, image, event_data, font_name=None, text_color='#000000'):
-    if image is None:
-        raise ValueError("Image cannot be None")
-    
-    if not hasattr(image, 'size'):
-        try:
-            if isinstance(image, str):
-                image = Image.open(image)
-            elif hasattr(image, 'read'):
-                image = Image.open(image)
-            else:
-                raise ValueError("Invalid image input")
-        except Exception as e:
-            print(f"🔥 Image loading error: {str(e)}")
-            raise ValueError("Failed to load image")
+def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000'):
+  def find_max_font_size(draw, text, font, max_width, max_height, font_path):
+    font_size = 1
+    while True:
+      text_width = font.getmask(text).getbbox()[2]
+      text_height = font.getmask(text).getbbox()[3]
 
-    def find_max_font_size(draw, text, font, max_width, max_height, font_path):
-        font_size = 1
-        while True:
-            text_width = font.getmask(text).getbbox()[2]
-            text_height = font.getmask(text).getbbox()[3]
+      if text_height < max_height:
+        font_size += 1
+        font = ImageFont.truetype(font_path,font_size)
+      else:
+        return font_size - 1
 
-            if text_height < max_height:
-                font_size += 1
-                font = ImageFont.truetype(font_path, font_size)
-            else:
-                return font_size - 1
+  try:
+      if not font_path:
+          font_path = settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
+      else:
+          font_path = settings.BASE_DIR / 'main' / 'fonts' / font_path
+      font = ImageFont.truetype(str(font_path), size=20)
+  except Exception as e:
+      font_path = settings.BASE_DIR / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
+      font = ImageFont.truetype(str(font_path), size=20)
 
-    FONT_DIR = Path("/backend/main/fonts")
-    
-    try:
-        if not font_name:
-            font_name = 'DancingScript-Medium.ttf'
-            
-        font_path = FONT_DIR / font_name
-        print(f"🔍 Attempting font: {font_path}")
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+  draw = ImageDraw.Draw(image)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height, font_path)
+  font = ImageFont.truetype(font_path,size=max_font_size)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
 
-        if not font_path.exists():
-            print(f"⚠️ Font not found, using default")
-            font_path = FONT_DIR / 'DancingScript-Medium.ttf'
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  
+  try:
+      draw.text((text_x, text_y), str(text_to_put), fill=text_color, font=font)
+  except:
+      draw.text((text_x, text_y), str(text_to_put), fill="#000000", font=font)
 
-        base_font = ImageFont.truetype(str(font_path), size=20)
-        
-    except Exception as e:
-        print(f"🔥 Font error: {str(e)}")
-        print("⚠️ Falling back to system font")
-        base_font = ImageFont.load_default()
-        font_path = "(system-default)"
-
-    # Validate box dimensions
-    box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
-    box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
-    
-    if box_width <= 0 or box_height <= 0:
-        print(f"⚠️ Invalid box dimensions: width={box_width}, height={box_height}")
-        box_width = 125  # Fallback to reasonable defaults
-        box_height = 20
-
-    draw = ImageDraw.Draw(image)
-    max_font_size = find_max_font_size(draw, str(text_to_put), base_font, box_width, box_height, str(font_path))
-    
-    # Ensure font size is valid
-    if max_font_size <= 0:
-        print(f"⚠️ Invalid font size: {max_font_size}, using default size of 12")
-        max_font_size = 12
-
-    font = ImageFont.truetype(str(font_path), size=max_font_size)
-
-    text_bbox = font.getbbox(str(text_to_put))
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-    
-    x = coordinate['x'] + (box_width - text_width) / 2
-    y = coordinate['y'] + (box_height - text_height) / 2
-
-    try:
-        draw.text((x, y), str(text_to_put), fill=text_color, font=font)
-    except:
-        draw.text((x, y), str(text_to_put), fill="#000000", font=font)
-
-    return image
+  return image
 
 
 def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
@@ -524,11 +482,11 @@ def preview_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_name=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data, font_name=selected_font, text_color=text_color)
+      image = put_text_on_image(serial, serial_coord, image, event_data, font_path=selected_font, text_color=text_color)
 
     for i in coordinates:
       faculty_key = i
@@ -566,9 +524,7 @@ def preview_certificate(request):
 
 @api_view(['POST'])
 def preview_event_certificate(request):
-    print("KAR JA BHAI")
     try:
-        # Get data from request
         event_data_file = request.FILES.get('event_data')
         certificate_file = request.FILES.get('certificate')
         coords_json = request.POST.get('coords')
@@ -578,20 +534,16 @@ def preview_event_certificate(request):
         selected_font = request.POST.get('font', 'DancingScript-Medium.ttf')
         text_color = request.POST.get('text_color', '#000000')
         
-        # Parse coordinates
         coords = json.loads(coords_json)
         
-        # Read the first row of the Excel file
         df = pd.read_excel(event_data_file)
         if df.empty:
             return Response({'message': 'Excel file is empty'}, status=400)
         
-        first_row = df.iloc[0].to_dict()  # Get the first row as a dictionary
+        first_row = df.iloc[0].to_dict()
         
-        # Open the certificate image
         certificate_img = Image.open(certificate_file)
         
-        # Create a temporary event_data object with needed properties
         class TempEventData:
             def __init__(self, rel_width, rel_height):
                 self.rel_width = rel_width
@@ -605,16 +557,13 @@ def preview_event_certificate(request):
         
         for field, coordinate in coords.items():
             if field in first_row:
-                print(field)
-                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "Serial No":
-                print("Serial No")
-                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image("No._NITRR_CDC_TC_OC_0000_00", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "cdc":
-                certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
+                certificate_img = put_text_on_image("CDC SIGNATURE", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             else:
-                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
-        print(selected_font,text_color)
+                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
         
         img_io = io.BytesIO()
         certificate_img.save(img_io, format='PNG')
@@ -661,11 +610,11 @@ def get_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_name=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data, font_name=selected_font, text_color=text_color)
+      image = put_text_on_image(serial, serial_coord, image, event_data, font_path=selected_font, text_color=text_color)
 
     for i in coordinates:
       faculty_key = i
