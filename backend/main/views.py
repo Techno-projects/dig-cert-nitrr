@@ -368,56 +368,87 @@ def pil_image_to_base64(image):
   return encoded_image
 
 
-def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000'):
-  def find_max_font_size(draw, text, font, max_width, max_height, font_path):
-    font_size = 1
-    while True:
-      text_width = font.getmask(text).getbbox()[2]
-      text_height = font.getmask(text).getbbox()[3]
-
-      if text_height < max_height:
-        font_size += 1
-        font = ImageFont.truetype(font_path,font_size)
-      else:
-        return font_size - 1
-
-  try:
-    default_font = Path(settings.BASE_DIR) / 'main' / 'fonts' / 'DancingScript-Medium.ttf'
-
-    if not font_path:
-        print(f"⚠️ Using default font at: {default_font}")
-        font_path = default_font
-    else:
-        font_path = Path(font_path)
-        if not font_path.is_absolute():
-            font_path = Path("/backend/main/fonts") / font_path
-        
-        if not font_path.exists():
-            print(f"⚠️ Font not found at {font_path}, using default font: {default_font}")
-            font_path = default_font
-
-    print(f"🔍 Attempting to load font from: {font_path}")
+def put_text_on_image(text_to_put, coordinate, image, event_data, font_name=None, text_color='#000000'):
+    if image is None:
+        raise ValueError("Image cannot be None")
     
-  except Exception as e:
-    font = ImageFont.load_default()
+    if not hasattr(image, 'size'):
+        try:
+            if isinstance(image, str):
+                image = Image.open(image)
+            elif hasattr(image, 'read'):
+                image = Image.open(image)
+            else:
+                raise ValueError("Invalid image input")
+        except Exception as e:
+            print(f"🔥 Image loading error: {str(e)}")
+            raise ValueError("Failed to load image")
 
-  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
-  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
-  draw = ImageDraw.Draw(image)
-  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height, font_path)
-  font = ImageFont.truetype(font_path,size=max_font_size)
-  x = coordinate['x'] + (125 / 2)
-  y = coordinate['y'] + (25 / 2)
+    def find_max_font_size(draw, text, font, max_width, max_height, font_path):
+        font_size = 1
+        while True:
+            text_width = font.getmask(text).getbbox()[2]
+            text_height = font.getmask(text).getbbox()[3]
 
-  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
-  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
-  
-  try:
-      draw.text((text_x, text_y), str(text_to_put), fill=text_color, font=font)
-  except:
-      draw.text((text_x, text_y), str(text_to_put), fill="#000000", font=font)
+            if text_height < max_height:
+                font_size += 1
+                font = ImageFont.truetype(font_path, font_size)
+            else:
+                return font_size - 1
 
-  return image
+    FONT_DIR = Path("/backend/main/fonts")
+    
+    try:
+        if not font_name:
+            font_name = 'DancingScript-Medium.ttf'
+            
+        font_path = FONT_DIR / font_name
+        print(f"🔍 Attempting font: {font_path}")
+
+        if not font_path.exists():
+            print(f"⚠️ Font not found, using default")
+            font_path = FONT_DIR / 'DancingScript-Medium.ttf'
+
+        base_font = ImageFont.truetype(str(font_path), size=20)
+        
+    except Exception as e:
+        print(f"🔥 Font error: {str(e)}")
+        print("⚠️ Falling back to system font")
+        base_font = ImageFont.load_default()
+        font_path = "(system-default)"
+
+    # Validate box dimensions
+    box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+    box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+    
+    if box_width <= 0 or box_height <= 0:
+        print(f"⚠️ Invalid box dimensions: width={box_width}, height={box_height}")
+        box_width = 125  # Fallback to reasonable defaults
+        box_height = 20
+
+    draw = ImageDraw.Draw(image)
+    max_font_size = find_max_font_size(draw, str(text_to_put), base_font, box_width, box_height, str(font_path))
+    
+    # Ensure font size is valid
+    if max_font_size <= 0:
+        print(f"⚠️ Invalid font size: {max_font_size}, using default size of 12")
+        max_font_size = 12
+
+    font = ImageFont.truetype(str(font_path), size=max_font_size)
+
+    text_bbox = font.getbbox(str(text_to_put))
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    
+    x = coordinate['x'] + (box_width - text_width) / 2
+    y = coordinate['y'] + (box_height - text_height) / 2
+
+    try:
+        draw.text((x, y), str(text_to_put), fill=text_color, font=font)
+    except:
+        draw.text((x, y), str(text_to_put), fill="#000000", font=font)
+
+    return image
 
 
 def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
@@ -493,11 +524,11 @@ def preview_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_name=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data)
+      image = put_text_on_image(serial, serial_coord, image, event_data, font_name=selected_font, text_color=text_color)
 
     for i in coordinates:
       faculty_key = i
@@ -535,7 +566,7 @@ def preview_certificate(request):
 
 @api_view(['POST'])
 def preview_event_certificate(request):
-    print("AB KAREGA?")
+    print("KAR JA BHAI")
     try:
         # Get data from request
         event_data_file = request.FILES.get('event_data')
@@ -572,24 +603,19 @@ def preview_event_certificate(request):
         
         temp_event_data = TempEventData(rel_width, rel_height)
         
-        # Place each field on the certificate
         for field, coordinate in coords.items():
             if field in first_row:
-                # Place the text from the Excel's first row
-                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                print(field)
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
             elif field == "Serial No":
-                # Place a sample serial number
-                certificate_img = put_text_on_image("SAMPLE-003", coordinate, certificate_img, temp_event_data)
+                print("Serial No")
+                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
             elif field == "cdc":
-                # Place a sample CDC signature text
                 certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
             else:
-                # For faculty signatures or other fields not in Excel
-                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data)
+                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_name=selected_font, text_color=text_color)
         print(selected_font,text_color)
         
-        # Convert the image to base64 to send back
-        # Using an in-memory file to return the image
         img_io = io.BytesIO()
         certificate_img.save(img_io, format='PNG')
         img_io.seek(0)
@@ -635,11 +661,11 @@ def get_certificate(request):
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_name=selected_font, text_color=text_color)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
-      image = put_text_on_image(serial, serial_coord, image, event_data)
+      image = put_text_on_image(serial, serial_coord, image, event_data, font_name=selected_font, text_color=text_color)
 
     for i in coordinates:
       faculty_key = i
