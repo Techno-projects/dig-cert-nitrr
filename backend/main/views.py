@@ -522,6 +522,7 @@ def preview_certificate(request):
 
 @api_view(['POST'])
 def preview_event_certificate(request):
+    print("WORKS?")
     try:
         # Get data from request
         event_data_file = request.FILES.get('event_data')
@@ -565,13 +566,14 @@ def preview_event_certificate(request):
                 certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "Serial No":
                 # Place a sample serial number
-                certificate_img = put_text_on_image("SAMPLE-001", coordinate, certificate_img, temp_event_data)
+                certificate_img = put_text_on_image("SAMPLE-003", coordinate, certificate_img, temp_event_data)
             elif field == "cdc":
                 # Place a sample CDC signature text
                 certificate_img = put_text_on_image("CDC Signature", coordinate, certificate_img, temp_event_data)
             else:
                 # For faculty signatures or other fields not in Excel
                 certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data)
+        print(selected_font,text_color)
         
         # Convert the image to base64 to send back
         # Using an in-memory file to return the image
