@@ -366,6 +366,22 @@ def pil_image_to_base64(image):
   encoded_image = base64.b64encode(img_byte_array.getvalue()).decode('utf-8')
   return encoded_image
 
+def put_serial_on_image(text_to_put, coordinate, image, event_data):
+  font_path = settings.BASE_DIR / 'main' / 'fonts' / 'arial.ttf'
+
+  box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
+  box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
+  draw = ImageDraw.Draw(image)
+  font = ImageFont.truetype(font_path,size=10)
+  x = coordinate['x'] + (125 / 2)
+  y = coordinate['y'] + (25 / 2)
+
+  text_x = x + (box_width - font.getmask(str(text_to_put)).getbbox()[2]) / 2
+  text_y = y + (box_height - font.getmask(str(text_to_put)).getbbox()[3]) / 2
+  
+  draw.text((text_x, text_y), str(text_to_put), font=font)
+
+  return image
 
 def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000'):
   def find_max_font_size(draw, text, font, max_width, max_height, font_path):
@@ -559,7 +575,7 @@ def preview_event_certificate(request):
             if field in first_row:
                 certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "Serial No":
-                certificate_img = put_text_on_image("No._NITRR_CDC_TC_OC_0000_00", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image("No./NITRR/CDC/TC/OC/0000/00", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             elif field == "cdc":
                 certificate_img = put_text_on_image("CDC SIGNATURE", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             else:
