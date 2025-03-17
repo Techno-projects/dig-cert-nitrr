@@ -22,6 +22,8 @@ const Certificate = () => {
   const [ask, setAsk] = useState(false);
   const [selectedField, setSelected] = useState(null);
   const [coords, setCoord] = useState({});
+  const [tempcoords, setTempCoord] = useState({});
+  const [widths, setWidths] = useState({});
   const [selectedFont, setSelectedFont] = useState('DancingScript-Medium.ttf');
   const [textColor, setTextColor] = useState('#000000');
 
@@ -46,57 +48,37 @@ const Certificate = () => {
         const tmpFields = response.data.message;
         const tmp = { ...fieldBox };
 
-        tmpFields.map((tmp_field) => {
+        const createBox = (id, width = 125, height = 25) => {
           const box = document.createElement("div");
           const title = document.createElement("div");
+  
           box.className = "certificateRect";
-          box.style.width = "125px";
-          box.style.height = "25px";
-          box.id = tmp_field;
+          box.style.width = `${width}px`;
+          box.style.height = `${height}px`;
+          box.style.position = "absolute";
+          box.style.border = "2px solid red";
+          box.style.resize = "both";
+          box.style.overflow = "hidden";
+          box.id = id;
+  
           title.className = "certificateRect";
           title.style.border = "none";
-          title.innerHTML = tmp_field;
-          title.id = tmp_field;
-          // fieldBox[tmp_field] = { box: box, title: title }
-          tmp[tmp_field] = { box: box, title: title };
-        });
-        faculties.map((faculty) => {
-          const box = document.createElement("div");
-          const title = document.createElement("div");
-          box.className = "certificateRect";
-          box.style.width = "125px";
-          box.style.height = "25px";
-          box.id = faculty;
-          title.className = "certificateRect";
-          title.style.border = "none";
-          title.innerHTML = faculty;
-          title.id = faculty;
-          tmp[faculty] = { box: box, title: title };
-          // fieldBox[faculty] = { box: box, title: title }
-        });
-        const box = document.createElement("div");
-        const title = document.createElement("div");
-        box.className = "certificateRect";
-        box.style.width = "125px";
-        box.style.height = "25px";
-        box.id = "cdc";
-        title.className = "certificateRect";
-        title.style.border = "none";
-        title.innerHTML = "cdc";
-        title.id = "cdc";
-        tmp["cdc"] = { box: box, title: title };
+          title.innerHTML = id;
+          title.id = id;
+  
+          return { box, title, startX: null, startY: null };
+        };
 
-        const box_serial = document.createElement("div");
-        const title_serial = document.createElement("div");
-        box_serial.className = "certificateRect";
-        box_serial.style.width = "125px";
-        box_serial.style.height = "25px";
-        box_serial.id = "serial";
-        title_serial.className = "certificateRect";
-        title_serial.style.border = "none";
-        title_serial.innerHTML = "serial";
-        title_serial.id = "serial";
-        tmp["Serial No"] = { box: box_serial, title: title_serial };
+        tmpFields.forEach((field) => {
+          tmp[field] = createBox(field);
+        });
+        
+        faculties.forEach((faculty) => {
+          tmp[faculty] = createBox(faculty);
+        });
+
+        tmp["cdc"] = createBox("cdc");
+        tmp["Serial No"] = createBox("serial");
 
         setFieldBox(tmp);
       } catch (error) {
@@ -118,6 +100,9 @@ const Certificate = () => {
   };
 
   function handleClick(e) {
+    //this function is not chatgpt-ed if you thought so :)
+
+    console.log(e.clientX, e.clientY)
     console.log(fieldBox);
     if (!selectedField) {
       alert("Please select at least one field");
@@ -125,56 +110,48 @@ const Certificate = () => {
     }
     setAsk(true);
     const rect = imageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    // console.log(x, y);
+    const x = e.clientX - rect.left; //relative to image
+    const y = e.clientY - rect.top; //relative to image
 
     const imageWidth = imageRef.current.naturalWidth;
     const imageHeight = imageRef.current.naturalHeight;
 
-    // Get the displayed size of the image in the viewport
-    const displayedWidth = imageRef.current.offsetWidth;
-    const displayedHeight = imageRef.current.offsetHeight;
+    const xInPixels = (x / rect.width) * imageWidth; //scaled, but relative to image, changes for each click
+    const yInPixels = (y / rect.height) * imageHeight; //scaled, but relative to image, changes for each click
 
-    // Calculate the coordinates in pixels relative to the image
-    const xInPixels = (x / rect.width) * imageWidth;
-    const yInPixels = (y / rect.height) * imageHeight;
-    // console.log(xInPixels, yInPixels);
+    if (!tempcoords[selectedField]) {
+        tempcoords[selectedField] = { startX: xInPixels, startY: yInPixels }; //temporary, scaled relative to image
+        coords[selectedField] = { x: xInPixels, y: yInPixels }; //to be passed on to the body, scaled relative to image
+    } else {
+        tempcoords[selectedField].endX = xInPixels; //temporary, scaled and relative to image
+        tempcoords[selectedField].endY = yInPixels; //temporary, scaled and relative to image
 
-    coords[selectedField] = { x: xInPixels, y: yInPixels };
+        const width = Math.abs(tempcoords[selectedField].endX - tempcoords[selectedField].startX); //width scaled relative to image
+        const height = Math.abs(tempcoords[selectedField].endY - tempcoords[selectedField].startY); //height scaled relative to image
 
-    // Create a new rectangle element
-    // const rectangle = document.createElement("div");
-    // const title = document.createElement("div");
-    // title.innerHTML = selectedField;
-    // title.style.border = "none"
-    // rectangle.className = "certificateRect";
-    // title.className = "certificateRect";
+        const box = fieldBox[selectedField].box;
+        const title = fieldBox[selectedField].title;
+        title.innerHTML = selectedField;
 
-    // Position the rectangle at the click coordinates
-    // rectangle.style.left = e.clientX + "px";
-    // rectangle.style.top = e.clientY + "px";
-    // title.style.left = e.clientX + "px";
-    // title.style.top = e.clientY - 21 + "px";
+        const left = (tempcoords[selectedField].startX/imageWidth)*rect.width+rect.left+window.scrollX; //temp, absolute pixels
+        const top = (tempcoords[selectedField].endY/imageHeight)*rect.height+rect.top+window.scrollY; //temp, absolute pixels
+        
+        box.style.left = left + "px";
+        box.style.top = top-25 + "px";
+        box.style.width = `${width/imageWidth*rect.width}px`; //box width to be stored in absolute pixels
+        box.style.height = "25px";
+        coords[selectedField].x = coords[selectedField].x + (width-(125/rect.width*imageWidth))/2;
+        coords[selectedField].y = yInPixels - (25/rect.height)*imageHeight; 
+        widths[selectedField] = width;
 
-    // Set the dimensions of the rectangle (for example, 125x25 pixels)
-    // rectangle.style.width = "125px";
-    // rectangle.style.height = "25px";
+        title.style.left = left + "px";
+        title.style.top = top - 42 + "px"; //42 is arbitrary value
 
-    const box = fieldBox[selectedField].box;
-    const title = fieldBox[selectedField].title;
-    title.innerHTML = selectedField;
-    box.style.left = e.clientX + window.scrollX + "px";
-    box.style.top = e.clientY + window.scrollY + "px";
-    title.style.left = e.clientX + window.scrollX + "px";
-    title.style.top = e.clientY + window.scrollY - 21 + "px";
+        rectRef.current.appendChild(box);
+        rectRef.current.appendChild(title);
 
-    rectRef.current.appendChild(box);
-    rectRef.current.appendChild(title);
-
-    // Append the rectangle to the container for rectangles
-    // rectRef.current.appendChild(rectangle);
-    // rectRef.current.appendChild(title);
+        delete tempcoords[selectedField]; //resetting temporary coordinates every 2nd click
+    }
   }
 
   // Add a new preview function in your Certificate component
@@ -197,6 +174,7 @@ const Certificate = () => {
     body.append("rel_height", 25 / imageRef.current.naturalHeight);
     body.append("font", selectedFont);
     body.append("text_color", textColor);
+    body.append("widths", JSON.stringify(widths));
 
     try {
       const response = await axios.post(`${server}/api/preview_event_certificate`, body, {
@@ -238,6 +216,7 @@ const Certificate = () => {
       body.append("rel_height", 25 / imageRef.current.naturalHeight);
       body.append("font", selectedFont);
       body.append("text_color", textColor);
+      body.append("widths", JSON.stringify(widths));
       Object.keys(coords).map((key) => {
         if (faculties.includes(key)) {
           required_faculties.push(key);
