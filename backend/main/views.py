@@ -944,9 +944,7 @@ def approveCDC(data, cdc_sign):
 
     Certificate.objects.filter(serial_no=serial_no).update(cdc_signature=cdc_sign, status="1")
 
-    receipient_email = data.get('email', None)
-    if not receipient_email:
-      receipient_email = data.get('Email', None)
+    recipient_email = next((data.get(key) for key in data.keys() if key.strip().lower() == "email"), None)
 
     if receipient_email:
       serial_no = serial_no.replace("/", "_")
