@@ -62,6 +62,10 @@ def get_text_color(coordinates):
         return color, coordinates
     return '#000000', coordinates
 
+def get_widths(coordinates):
+    widths = coordinates.pop('widths', None)
+    return widths, coordinates
+
 # to verify organisation user's token
 def is_org_auth(token):
   try:
@@ -383,14 +387,14 @@ def put_serial_on_image(text_to_put, coordinate, image, event_data):
 
   return image
 
-def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000'):
-  def find_max_font_size(draw, text, font, max_width, max_height, font_path):
+def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None, text_color='#000000', width=None):
+  def find_max_font_size(draw, text, font, max_width, max_height, font_path, width):
     font_size = 1
     while True:
       text_width = font.getmask(text).getbbox()[2]
       text_height = font.getmask(text).getbbox()[3]
 
-      if text_height < max_height:
+      if (text_height < max_height) and (width is None or (text_width < width)):
         font_size += 1
         font = ImageFont.truetype(font_path,font_size)
       else:
@@ -409,7 +413,7 @@ def put_text_on_image(text_to_put, coordinate, image, event_data, font_path=None
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
   box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height, font_path)
+  max_font_size = find_max_font_size(draw, str(text_to_put), font, box_width, box_height, font_path, width)
   font = ImageFont.truetype(font_path,size=max_font_size)
   x = coordinate['x'] + (125 / 2)
   y = coordinate['y'] + (25 / 2)
@@ -484,6 +488,8 @@ def preview_certificate(request):
     candidate_data = json.loads(certificate[0].event_data)
     image = event_data.certificate
     image = Image.open(image)
+
+    widths, coordinates = get_widths(coordinates.copy())
     selected_font, cleaned_coordinates = get_certificate_font(coordinates.copy())
     text_color, final_coordinates = get_text_color(cleaned_coordinates.copy())
 
@@ -494,11 +500,12 @@ def preview_certificate(request):
       key = i
       key_coordinate = coordinates.get(key, None)
       text_to_put = candidate_data.get(key, None)
+      key_width = widths.get(key, None)
 
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color, width=key_width)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
@@ -549,15 +556,16 @@ def preview_event_certificate(request):
         rel_height = float(request.POST.get('rel_height'))
         selected_font = request.POST.get('font', 'DancingScript-Medium.ttf')
         text_color = request.POST.get('text_color', '#000000')
+        widths_json = request.POST.get('widths', '{}')
         
         coords = json.loads(coords_json)
+        widths = json.loads(widths_json)
         
         df = pd.read_excel(event_data_file)
         if df.empty:
             return Response({'message': 'Excel file is empty'}, status=400)
         
         first_row = df.iloc[0].to_dict()
-        
         certificate_img = Image.open(certificate_file)
         
         class TempEventData:
@@ -573,13 +581,13 @@ def preview_event_certificate(request):
         
         for field, coordinate in coords.items():
             if field in first_row:
-                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color, width=widths[field])
             elif field == "Serial No":
                 certificate_img = put_serial_on_image("No./NITRR/CDC/TC/OC/0000/00", coordinate, certificate_img, temp_event_data)
             elif field == "cdc":
                 certificate_img = put_text_on_image("CDC SIGNATURE", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             else:
-                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color, width=widths[field])
         
         img_io = io.BytesIO()
         certificate_img.save(img_io, format='PNG')
@@ -612,6 +620,7 @@ def get_certificate(request):
     image = event_data.certificate
     image = Image.open(image)
 
+    widths, coordinates = get_widths(coordinates.copy())
     selected_font, cleaned_coordinates = get_certificate_font(coordinates.copy())
     text_color, final_coordinates = get_text_color(cleaned_coordinates.copy())
 
@@ -622,11 +631,12 @@ def get_certificate(request):
       key = i
       key_coordinate = coordinates.get(key, None)
       text_to_put = candidate_data.get(key, None)
+      key_width = widths.get(key, None)
 
       if not key_coordinate or not text_to_put:
         continue
 
-      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color)
+      image = put_text_on_image(text_to_put, key_coordinate, image, event_data, font_path=selected_font, text_color=text_color, width=key_width)
 
     serial_coord = coordinates.get("Serial No", None)
     if serial_coord:
@@ -710,6 +720,7 @@ def register_event(request):
   coordinates = json.loads(data['coords'])
   coordinates['__font__'] = data.get('font', 'DancingScript-Medium.ttf')
   coordinates['__text_color__'] = data.get('text_color', '#000000')
+  coordinates['widths'] = json.loads(data['widths'])
   event_coordinates = json.dumps(coordinates)
 
   if data['cdc'] == 'true':
