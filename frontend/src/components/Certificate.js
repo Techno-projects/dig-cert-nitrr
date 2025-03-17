@@ -26,6 +26,7 @@ const Certificate = () => {
   const [widths, setWidths] = useState({});
   const [selectedFont, setSelectedFont] = useState('DancingScript-Medium.ttf');
   const [textColor, setTextColor] = useState('#000000');
+  const [tempBox, setTempBox] = useState(null);
 
   if (!auth) {
     alert("unauthorized user");
@@ -57,7 +58,6 @@ const Certificate = () => {
           box.style.height = `${height}px`;
           box.style.position = "absolute";
           box.style.border = "2px solid red";
-          box.style.resize = "both";
           box.style.overflow = "hidden";
           box.id = id;
   
@@ -122,6 +122,31 @@ const Certificate = () => {
     if (!tempcoords[selectedField]) {
         tempcoords[selectedField] = { startX: xInPixels, startY: yInPixels }; //temporary, scaled relative to image
         coords[selectedField] = { x: xInPixels, y: yInPixels }; //to be passed on to the body, scaled relative to image
+
+        const guideBox = document.createElement("div");
+        guideBox.style.position = "absolute";
+        guideBox.style.left = (tempcoords[selectedField].startX/imageWidth)*rect.width+rect.left+window.scrollX + "px";
+        guideBox.style.top = (tempcoords[selectedField].startY/imageHeight)*rect.height+rect.top+window.scrollY + "px";
+        guideBox.style.border = "2px dashed red";
+        guideBox.style.pointerEvents = "none";
+        rectRef.current.appendChild(guideBox);
+        setTempBox(guideBox);
+
+        function moveHandler(event) {
+          const newX = event.clientX - rect.left;
+          if (newX < 0 || newX > rect.width) return;
+          const newY = event.clientY - rect.top;
+          if (newY < 0 || newY > rect.height) return;
+
+          const newWidth = Math.abs(newX - x);
+          const newHeight = Math.abs(newY - y);
+          guideBox.style.width = newWidth + "px";
+          guideBox.style.height = newHeight + "px";
+        }
+
+        document.addEventListener("mousemove", moveHandler);
+        tempcoords[selectedField].moveHandler = moveHandler;
+
     } else {
         tempcoords[selectedField].endX = xInPixels; //temporary, scaled and relative to image
         tempcoords[selectedField].endY = yInPixels; //temporary, scaled and relative to image
@@ -150,6 +175,12 @@ const Certificate = () => {
         rectRef.current.appendChild(box);
         rectRef.current.appendChild(title);
 
+        if (tempBox) {
+          tempBox.remove();
+          setTempBox(null);
+        }
+
+        document.removeEventListener("mousemove", tempcoords[selectedField].moveHandler);
         delete tempcoords[selectedField]; //resetting temporary coordinates every 2nd click
     }
   }
