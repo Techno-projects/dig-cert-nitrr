@@ -948,7 +948,7 @@ def approveCDC(data, cdc_sign):
 
     if recipient_email:
       serial_no = serial_no.replace("/", "_")
-      send_certi_email(recipient_email=, serial_no, data['Event'], data['Organisation'])
+      send_certi_email(recipient_email, serial_no, data['Event'], data['Organisation'])
     return Response({'ok': True, 'message': 'Signed'})
   except Exception as e:
     return Response({'ok': False, 'error': str(
