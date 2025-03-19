@@ -469,8 +469,6 @@ def put_image_on_image(image_to_put_base64, coordinate, image, event_data):
 
 @api_view(['GET'])
 def preview_certificate(request):
-  if (not is_faculty_auth(data['token'])):
-    return Response({"ok": False, "message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
   try:
     serial = request.GET.get('serial')
     print(serial)
@@ -481,9 +479,6 @@ def preview_certificate(request):
 
     if not certificate:
       return Response({"message": "No certificate found"}, status=status.HTTP_404_NOT_FOUND)
-
-    if certificate[0].status != "1":
-      return Response({"message": "Certificate not verified"}, status=status.HTTP_401_UNAUTHORIZED)
 
     faculty_signatures = json.loads(certificate[0].faculty_signatures)
     coordinates = json.loads(event_data.coordinates)
