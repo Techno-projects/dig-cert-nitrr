@@ -4,6 +4,6 @@ from main.services.mail import send_email
 celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
 
-@celery.task
+@celery.task(rate_limit='1/5s')
 def send_email_queue(subject, body, recipients):
   send_email(subject, body, recipients)
