@@ -13,6 +13,6 @@ celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:
 def send_email_queue(subject, body, recipients):
   try:
     send_email(subject, body, recipients)
-  except:
+  except Exception as exc:
     print(f"Retrying to send email to {recipients} due to: {exc}")
     raise exc
