@@ -4,6 +4,15 @@ from main.services.mail import send_email
 celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
 
-@celery.task(rate_limit='6/m')
+@celery.task(
+    rate_limit='6/m',
+    autoretry_for=(Exception,),
+    retry_kwargs={'max_retries': 5, 'countdown': 20},
+    retry_backoff=False
+)
 def send_email_queue(subject, body, recipients):
-  send_email(subject, body, recipients)
+  try:
+    send_email(subject, body, recipients)
+  except:
+    print(f"Retrying to send email to {recipients} due to: {exc}")
+    raise exc
