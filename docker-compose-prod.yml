@@ -40,6 +40,7 @@ services:
       - "8080:80"
   redis:
     image: redis:latest
+    restart: always
 
   celery_worker:
     image: technocracynitrr/dig-cert-nitrr-backend:latest

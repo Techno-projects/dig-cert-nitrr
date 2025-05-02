@@ -1,23 +1,43 @@
 from celery import Celery
 from main.services.mail import send_email
 from celery.exceptions import MaxRetriesExceededError
+from django.utils import timezone
+from models import EmailTaskLog
 
 celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
 
 @celery.task(
-    rate_limit='6/m',
-    autoretry_for=(Exception,),
-    retry_kwargs={'max_retries': 5, 'countdown': 60},
-    retry_backoff=False
+  bind=True,
+  rate_limit='6/m',
+  autoretry_for=(Exception,),
+  retry_kwargs={'max_retries': 5, 'countdown': 60},
+  retry_backoff=False
 )
-def send_email_queue(subject, body, recipients):
-  try:
-    send_email(subject, body, recipients)
-  except Exception as exc:
+
+def send_email_queue(self, subject, body, recipients):
+    recipient = recipients[0] if recipients else "unknown"
+
+    task_log = EmailTaskLog.objects.create(
+        subject=subject,
+        body=body,
+        recipient_email=recipient,
+        task_id=self.request.id,
+        status='STARTED',
+        created_at=timezone.now()
+    )
+
     try:
-        print(f"Retrying to send email to {recipients} due to: {exc}")
-        raise exc
-    except MaxRetriesExceededError:
-        print(f"Max retries exceeded for sending email to {recipients}. Task failed.")
-        raise
+        send_email(subject, body, recipients)
+        task_log.status = 'SUCCESS'
+        task_log.completed_at = timezone.now()
+        task_log.save()
+
+    except Exception as exc:
+        task_log.status = 'FAILED'
+        task_log.error_message = str(exc)
+        task_log.retries = self.request.retries
+        task_log.completed_at = timezone.now()
+        task_log.save()
+
+        raise self.retry(exc=exc)
