@@ -2,7 +2,7 @@ from celery import Celery
 from main.services.mail import send_email
 from celery.exceptions import MaxRetriesExceededError
 from django.utils import timezone
-from models import EmailTaskLog
+from .models import EmailTaskLog
 
 celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
