@@ -27,3 +27,5 @@ class EmailTaskLogAdmin(admin.ModelAdmin):
     list_display = ('recipient_email', 'subject', 'status', 'retries', 'created_at', 'completed_at')
     list_filter = ('status', 'created_at')
     search_fields = ('recipient_email', 'subject', 'task_id')
+    ordering = ('-created_at',)
+    readonly_fields = ('task_id', 'created_at', 'completed_at', 'retries', 'error_message')
