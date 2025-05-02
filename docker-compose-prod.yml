@@ -50,7 +50,7 @@ services:
     environment:
       - C_FORCE_ROOT=true
       - CELERY_BROKER=redis://redis:6379/0
-    command: python -m celery -A main.tasks worker --loglevel=DEBUG
+    command: python -m celery -A backend.celery worker --loglevel=DEBUG
 
   watchtower:
     image: containrrr/watchtower
