@@ -27,21 +27,25 @@ def send_email_queue(self, subject, body, recipients):
 
     try:
         send_email(subject, body, recipients)
-        status = 'SUCCESS'
-        error  = ''
+
     except Exception as exc:
-        status = 'FAILED'
-        error  = str(exc)
+        EmailTaskAttempt.objects.create(
+            task=task_obj,
+            attempt_no=attempt_no,
+            status='FAILED',
+            error=str(exc),
+        )
+
+        task_obj.latest_status = 'FAILED'
+        task_obj.save(update_fields=['latest_status', 'updated_at'])
+        raise self.retry(exc=exc)
 
     EmailTaskAttempt.objects.create(
         task=task_obj,
         attempt_no=attempt_no,
-        status=status,
-        error=error
+        status='SUCCESS',
+        error='',
     )
 
-    task_obj.latest_status = status
+    task_obj.latest_status = 'SUCCESS'
     task_obj.save(update_fields=['latest_status', 'updated_at'])
-
-    if status == 'FAILED':
-        raise self.retry(exc=exc)
