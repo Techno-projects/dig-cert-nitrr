@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Event, Faculty_Advisor, Organisation, Faculty_Org, Certificate, Faculty_Event, EmailTaskLog
+from .models import Event, Faculty_Advisor, Organisation, Faculty_Org, Certificate, Faculty_Event, EmailTask, EmailTaskAttempt
+from .tasks import send_email_queue
 
 class EventAdmin(admin.ModelAdmin):
   list_display = ['organisation', 'event_name', 'isCDC']
@@ -22,10 +23,20 @@ admin.site.register(Faculty_Org, FacultyOrgAdmin)
 admin.site.register(Certificate, CertificateAdmin)
 admin.site.register(Faculty_Event)
 
-@admin.register(EmailTaskLog)
-class EmailTaskLogAdmin(admin.ModelAdmin):
-    list_display = ('recipient_email', 'subject', 'status', 'retries', 'created_at', 'completed_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('recipient_email', 'subject', 'task_id')
-    ordering = ('-created_at',)
-    readonly_fields = ('task_id', 'created_at', 'completed_at', 'retries', 'error_message')
+class EmailTaskAttemptInline(admin.TabularInline):
+    model = EmailTaskAttempt
+    fields = ('attempt_no','timestamp','status','error')
+    readonly_fields = fields
+    extra = 0
+
+@admin.register(EmailTask)
+class EmailTaskAdmin(admin.ModelAdmin):
+    list_display  = ('recipient_email','subject','latest_status','num_attempts','created_at','updated_at')
+    list_filter   = ('latest_status','created_at')
+    search_fields = ('recipient_email','subject','task_id')
+    readonly_fields = ('task_id','created_at','updated_at')
+    inlines       = [EmailTaskAttemptInline]
+
+    def num_attempts(self, obj):
+        return obj.attempts.count()
+    num_attempts.short_description = 'Attempts'
