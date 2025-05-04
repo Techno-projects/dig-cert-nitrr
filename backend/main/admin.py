@@ -8,10 +8,19 @@ class EventAdmin(admin.ModelAdmin):
   list_display = ['organisation', 'event_name', 'isCDC']
   search_fields = ['organisation', 'event_name', 'isCDC']
 
+@admin.action(description="Set status = 0")
+def make_status_zero(modeladmin, request, queryset):
+  updated = queryset.update(status=0)
+  modeladmin.message_user(
+    request,
+    f"{updated} certificate(s) status set to 0."
+  )
+
 
 class CertificateAdmin(admin.ModelAdmin):
   list_display = ['serial_no', 'faculty_advisor', 'status']
   search_fields = ['serial_no', 'faculty_advisor', 'status']
+  actions = [make_status_zero]
 
 
 class FacultyOrgAdmin(admin.ModelAdmin):
