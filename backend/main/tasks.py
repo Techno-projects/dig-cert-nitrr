@@ -8,13 +8,13 @@ celery = Celery(__name__, broker='redis://redis:6379/0', backend='redis://redis:
 
 
 @celery.task(
-  bind=True,
-  rate_limit='6/m',
-  autoretry_for=(Exception,),
-  retry_kwargs={'max_retries': 5, 'countdown': 60},
-  retry_backoff=False
+    bind=True,
+    default_retry_delay=60,
+    max_retries=5,
+    rate_limit='6/m',
+    autoretry_for=(Exception,),
+    retry_backoff=False,
 )
-
 def send_email_queue(self, subject, body, recipients):
     recipient = recipients[0] if recipients else "unknown"
 
