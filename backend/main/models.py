@@ -15,19 +15,31 @@ def event_data_upload_path(instance, filename):
 def certificate_upload_path(instance, filename):
   return f'events_db/{instance.organisation}/{instance.event_name}/certificate/{filename}'
 
-class EmailTaskLog(models.Model):
-  task_id = models.CharField(max_length=100, blank=True, null=True)
+class EmailTask(models.Model):
+  task_id = models.CharField(max_length=100, unique=True)
   subject = models.CharField(max_length=255)
   body = models.TextField()
   recipient_email = models.EmailField()
-  status = models.CharField(max_length=20, choices=[("STARTED", "STARTED"), ("SUCCESS", "SUCCESS"), ("FAILED", "FAILED")])
-  error_message = models.TextField(blank=True, null=True)
-  retries = models.IntegerField(default=0)
-  created_at = models.DateTimeField()
-  completed_at = models.DateTimeField(blank=True, null=True)
+  latest_status   = models.CharField(
+    max_length=20,
+    choices=[('PENDING','PENDING'),('SUCCESS','SUCCESS'),('FAILED','FAILED')],
+    default='PENDING'
+  )
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
 
   def __str__(self):
-      return f"{self.recipient_email} - {self.status} - {self.subject}"
+    return f"{self.recipient_email} → {self.latest_status}"
+
+class EmailTaskAttempt(models.Model):
+  task = models.ForeignKey(EmailTask, on_delete=models.CASCADE, related_name='attempts')
+  attempt_no = models.PositiveIntegerField()
+  timestamp = models.DateTimeField(auto_now_add=True)
+  status     = models.CharField(
+    max_length=20,
+    choices=[('SUCCESS','SUCCESS'),('FAILED','FAILED')]
+  )
+  error = models.TextField(blank=True, null=True)
 
 class Organisation(models.Model):
   class Meta:
