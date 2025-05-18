@@ -23,6 +23,8 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 import math
+from django.db.models import OuterRef, Subquery, CharField
+from django.db.models.functions import StrIndex, Substr
 
 load_dotenv()
 
@@ -283,8 +285,78 @@ def cdc_get_certi_by_serial(serial_no, certificate):
 @api_view(["GET"])
 def get_cdc_events(request):
   try:
-    pending_certis = Certificate.objects.filter(status='0')
-    signed_certis = Certificate.objects.filter(status='1')
+
+    pending_certis = Certificate.objects.annotate(
+        org_name=Substr(
+            'event_data',
+            StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+            StrIndex(
+                Substr(
+                    'event_data',
+                    StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+                    len('event_data')
+                ),
+                '"'
+            ) - 1
+        ),
+        event_name=Substr(
+            'event_data',
+            StrIndex('event_data', '"Event": "') + len('"Event": "'),
+            StrIndex(
+                Substr(
+                    'event_data',
+                    StrIndex('event_data', '"Event": "') + len('"Event": "'),
+                    len('event_data')
+                ),
+                '"'
+            ) - 1
+        )
+    ).filter(
+        status='0',
+        org_name__in=Subquery(
+            Event.objects.filter(
+                organisation=OuterRef('org_name'),
+                event_name=OuterRef('event_name'),
+                isCDC=True
+            ).values('organisation')
+        )
+    )
+
+    signed_certis = Certificate.objects.annotate(
+        org_name=Substr(
+            'event_data',
+            StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+            StrIndex(
+                Substr(
+                    'event_data',
+                    StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+                    len('event_data')
+                ),
+                '"'
+            ) - 1
+        ),
+        event_name=Substr(
+            'event_data',
+            StrIndex('event_data', '"Event": "') + len('"Event": "'),
+            StrIndex(
+                Substr(
+                    'event_data',
+                    StrIndex('event_data', '"Event": "') + len('"Event": "'),
+                    len('event_data')
+                ),
+                '"'
+            ) - 1
+        )
+    ).filter(
+        status='0',
+        org_name__in=Subquery(
+            Event.objects.filter(
+                organisation=OuterRef('org_name'),
+                event_name=OuterRef('event_name'),
+                isCDC=True
+            ).values('organisation')
+        )
+    )
 
     event_df_cache = {}
 
