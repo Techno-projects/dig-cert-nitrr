@@ -288,7 +288,7 @@ def get_cdc_events(request):
     pending_certis = Certificate.objects.filter(status='0')
     pending_certis = [
         cert for cert in pending_certis 
-        if (Event.objects.get(organisation=Organisation.objects.get(name=cert.event_data.get("Organisation")).unique_name, event_name=cert.event_data.get("Event")).isCDC)
+        if (cert.is_cdc_certificate())
     ]
 
     signed_certis = Certificate.objects.filter(status='0')
