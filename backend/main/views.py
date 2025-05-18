@@ -292,10 +292,6 @@ def get_cdc_events(request):
     ]
 
     signed_certis = Certificate.objects.filter(status='0')
-    signed_certis = [
-        cert for cert in pending_certis 
-        if (event := cert.get_linked_event()) and event.isCDC
-    ]
 
     event_df_cache = {}
 
