@@ -122,12 +122,16 @@ class Certificate(models.Model):
 
   def get_linked_event(self):
     try:
-        # Parse the JSON-like string from event_data
-        data = json.loads(self.event_data.replace("'", '"'))  # Ensure valid JSON
-        org_name = data.get("Organisation")
-        event_name = data.get("Event")
+        # Clean the string and parse
+        cleaned_data = self.event_data.strip().replace("'", '"')
+        data = json.loads(cleaned_data)
+        org_name = data.get("Organisation")  # Case-sensitive!
+        event_name = data.get("Event")       # Case-sensitive!
+        if not org_name or not event_name:
+            return None
         return Event.objects.get(organisation=org_name, event_name=event_name)
-    except (json.JSONDecodeError, KeyError, Event.DoesNotExist):
+    except (json.JSONDecodeError, KeyError, Event.DoesNotExist) as e:
+        print(f"Error: {e}")
         return None
 
 
