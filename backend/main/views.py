@@ -23,8 +23,8 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password, make_password
 import hashlib
 import math
-from django.db.models import OuterRef, Subquery, CharField
-from django.db.models.functions import StrIndex, Substr
+from django.db.models import OuterRef, Subquery, Value
+from django.db.models.functions import StrIndex, Substr, Length
 
 load_dotenv()
 
@@ -285,30 +285,29 @@ def cdc_get_certi_by_serial(serial_no, certificate):
 @api_view(["GET"])
 def get_cdc_events(request):
   try:
-
     pending_certis = Certificate.objects.annotate(
         org_name=Substr(
             'event_data',
-            StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+            StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
             StrIndex(
                 Substr(
                     'event_data',
-                    StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
-                    len('event_data')
+                    StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
+                    Length('event_data')
                 ),
-                '"'
+                Value('"')
             ) - 1
         ),
         event_name=Substr(
             'event_data',
-            StrIndex('event_data', '"Event": "') + len('"Event": "'),
+            StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
             StrIndex(
                 Substr(
                     'event_data',
-                    StrIndex('event_data', '"Event": "') + len('"Event": "'),
-                    len('event_data')
+                    StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
+                    Length('event_data')
                 ),
-                '"'
+                Value('"')
             ) - 1
         )
     ).filter(
@@ -321,30 +320,29 @@ def get_cdc_events(request):
             ).values('organisation')
         )
     )
-
     signed_certis = Certificate.objects.annotate(
         org_name=Substr(
             'event_data',
-            StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
+            StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
             StrIndex(
                 Substr(
                     'event_data',
-                    StrIndex('event_data', '"Organisation": "') + len('"Organisation": "'),
-                    len('event_data')
+                    StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
+                    Length('event_data')
                 ),
-                '"'
+                Value('"')
             ) - 1
         ),
         event_name=Substr(
             'event_data',
-            StrIndex('event_data', '"Event": "') + len('"Event": "'),
+            StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
             StrIndex(
                 Substr(
                     'event_data',
-                    StrIndex('event_data', '"Event": "') + len('"Event": "'),
-                    len('event_data')
+                    StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
+                    Length('event_data')
                 ),
-                '"'
+                Value('"')
             ) - 1
         )
     ).filter(
