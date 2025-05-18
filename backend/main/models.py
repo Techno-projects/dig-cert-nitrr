@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
 import hashlib
-
+import json
 
 def hashPassword(password):
   result = hashlib.md5(password.encode())
@@ -119,6 +119,16 @@ class Certificate(models.Model):
   faculty_signatures = models.CharField()
   cdc_signature = models.CharField()
   status = models.CharField()
+
+  def get_linked_event(self):
+    try:
+        # Parse the JSON-like string from event_data
+        data = json.loads(self.event_data.replace("'", '"'))  # Ensure valid JSON
+        org_name = data.get("Organisation")
+        event_name = data.get("Event")
+        return Event.objects.get(organisation=org_name, event_name=event_name)
+    except (json.JSONDecodeError, KeyError, Event.DoesNotExist):
+        return None
 
 
 class Faculty_Event(models.Model):

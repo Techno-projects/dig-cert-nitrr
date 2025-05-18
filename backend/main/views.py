@@ -285,76 +285,17 @@ def cdc_get_certi_by_serial(serial_no, certificate):
 @api_view(["GET"])
 def get_cdc_events(request):
   try:
-    pending_certis = Certificate.objects.annotate(
-        org_name=Substr(
-            'event_data',
-            StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
-            StrIndex(
-                Substr(
-                    'event_data',
-                    StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
-                    Length('event_data')
-                ),
-                Value('"')
-            ) - 1
-        ),
-        event_name=Substr(
-            'event_data',
-            StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
-            StrIndex(
-                Substr(
-                    'event_data',
-                    StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
-                    Length('event_data')
-                ),
-                Value('"')
-            ) - 1
-        )
-    ).filter(
-        status='0',
-        org_name__in=Subquery(
-            Event.objects.filter(
-                organisation=OuterRef('org_name'),
-                event_name=OuterRef('event_name'),
-                isCDC=True
-            ).values('organisation')
-        )
-    )
-    signed_certis = Certificate.objects.annotate(
-        org_name=Substr(
-            'event_data',
-            StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
-            StrIndex(
-                Substr(
-                    'event_data',
-                    StrIndex('event_data', Value('"Organisation": "')) + len('"Organisation": "'),
-                    Length('event_data')
-                ),
-                Value('"')
-            ) - 1
-        ),
-        event_name=Substr(
-            'event_data',
-            StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
-            StrIndex(
-                Substr(
-                    'event_data',
-                    StrIndex('event_data', Value('"Event": "')) + len('"Event": "'),
-                    Length('event_data')
-                ),
-                Value('"')
-            ) - 1
-        )
-    ).filter(
-        status='0',
-        org_name__in=Subquery(
-            Event.objects.filter(
-                organisation=OuterRef('org_name'),
-                event_name=OuterRef('event_name'),
-                isCDC=True
-            ).values('organisation')
-        )
-    )
+    pending_certis = Certificate.objects.filter(status='0')
+    pending_certis = [
+        cert for cert in pending_certis 
+        if (event := cert.get_linked_event()) and event.isCDC
+    ]
+
+    signed_certis = Certificate.objects.filter(status='0')
+    signed_certis = [
+        cert for cert in pending_certis 
+        if (event := cert.get_linked_event()) and event.isCDC
+    ]
 
     event_df_cache = {}
 
