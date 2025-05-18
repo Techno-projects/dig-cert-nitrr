@@ -120,19 +120,8 @@ class Certificate(models.Model):
   cdc_signature = models.CharField()
   status = models.CharField()
 
-  def get_linked_event(self):
-    try:
-        # Clean the string and parse
-        cleaned_data = self.event_data.strip().replace("'", '"')
-        data = json.loads(cleaned_data)
-        org_name = data.get("Organisation")  # Case-sensitive!
-        event_name = data.get("Event")       # Case-sensitive!
-        if not org_name or not event_name:
-            return None
-        return Event.objects.get(organisation=org_name, event_name=event_name)
-    except (json.JSONDecodeError, KeyError, Event.DoesNotExist) as e:
-        print(f"Error: {e}")
-        return None
+  def is_cdc_certificate(self):
+    return Event.objects.get(organisation=Organisation.objects.get(name=self.event_data.get("Organisation")).unique_name, event_name=self.event_data.get("Event")).isCDC
 
 
 class Faculty_Event(models.Model):
