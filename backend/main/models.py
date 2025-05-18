@@ -121,7 +121,8 @@ class Certificate(models.Model):
   status = models.CharField()
 
   def is_cdc_certificate(self):
-    return Event.objects.get(organisation=Organisation.objects.get(name=self.event_data.get("Organisation")).unique_name, event_name=self.event_data.get("Event")).isCDC
+    data = json.loads(self.event_data)
+    return Event.objects.get(organisation=Organisation.objects.get(name=data.get("Organisation")).unique_name, event_name=data.get("Event")).isCDC
 
 
 class Faculty_Event(models.Model):
