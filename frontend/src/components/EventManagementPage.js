@@ -154,7 +154,7 @@ const EventManagementPage = () => {
                   checked={eventData.cdc}
                   onChange={handleChange}
                 />{" "}
-                CDC Signature Required?
+                CDC/DSW Signature Required?
                 <p />
               </div>
 

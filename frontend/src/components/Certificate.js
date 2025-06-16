@@ -340,7 +340,7 @@ const Certificate = () => {
                   value="cdc"
                   onChange={(e) => setSelected(e.target.value)}
                 />
-                <label for="cdc_sign">CDC Signature</label>
+                <label for="cdc_sign">CDC/DSW Signature</label>
                 <br />
               </>
             )}

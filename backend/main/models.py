@@ -69,8 +69,8 @@ class Event(models.Model):
   certificate = models.FileField(upload_to=certificate_upload_path)
   coordinates = models.CharField()
   faculties_required = models.CharField()
-  isCDC = models.BooleanField(default=True)
-  dispatch = models.CharField()
+  isCDC = models.BooleanField(default=True) #whether L1 (CDC/DSW) signature required or not
+  dispatch = models.CharField() #dispatched by whom? CDC or DSW?
   rel_width = models.FloatField()
   rel_height = models.FloatField()
 
@@ -120,9 +120,9 @@ class Certificate(models.Model):
   cdc_signature = models.CharField()
   status = models.CharField()
 
-  def is_cdc_certificate(self):
+  def check_dispatch(self):
     data = json.loads(self.event_data)
-    return Event.objects.get(organisation=Organisation.objects.get(name=data.get("Organisation")).unique_name, event_name=data.get("Event")).isCDC
+    return Event.objects.get(organisation=Organisation.objects.get(name=data.get("Organisation")).unique_name, event_name=data.get("Event")).dispatch
 
 
 class Faculty_Event(models.Model):
