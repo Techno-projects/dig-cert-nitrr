@@ -779,7 +779,7 @@ def register_event(request):
 
   event_db = data['event_data']           # event's excel file
   certi = data['certificate']             # event's certificate file
-  dispatch_signature_required = False                           # is cdc signature required for this event
+  isCDC = False                           # is cdc signature required for this event
   faculties_required = json.loads(data['faculties'])
   org_unique_name = Organisation.objects.get(email=data['user']).unique_name
 
@@ -790,7 +790,7 @@ def register_event(request):
   event_coordinates = json.dumps(coordinates)
 
   if data['cdc'] == 'true':
-    dispatch_signature_required = True
+    isCDC = True
   try:
     Event.objects.create(
         organisation=org_unique_name,
@@ -798,7 +798,7 @@ def register_event(request):
         certificate=certi,
         coordinates=event_coordinates,
         event_name=data['event'],
-        dispatch_signature_required=dispatch_signature_required,
+        isCDC=isCDC,
         dispatch=data['dispatch'],
         faculties_required=json.dumps(faculties_required),
         rel_height=float(data['rel_height']),
@@ -918,14 +918,14 @@ def sign_by_fa(data, faculty_sign_image_base64):
 
   org_unique_name = Organisation.objects.get(name=data['Organisation']).unique_name
   event_details = Event.objects.get(event_name=data['Event'], organisation=org_unique_name)
-  dispatch_signature_required = event_details.dispatch_signature_required
+  isCDC = event_details.isCDC
   dispatch = event_details.dispatch
   faculties_required = json.loads(event_details.faculties_required)
 
   cdc_email_send = False
   dsw_email_send = False
   certi_status = "0"
-  if not dispatch_signature_required:
+  if not isCDC:
     certi_status = "1"
 
   current_fac_email = current_fac_data['email']
@@ -938,7 +938,7 @@ def sign_by_fa(data, faculty_sign_image_base64):
   certi = Certificate.objects.filter(serial_no=serial_no)
 
   if len(certi) == 0:
-    if len(faculties_required) == 1 and dispatch_signature_required:
+    if len(faculties_required) == 1 and isCDC:
       if (dispatch=="CDC"):
         cdc_email_send = True
       else:
@@ -967,7 +967,7 @@ def sign_by_fa(data, faculty_sign_image_base64):
         faculty_advisor=fac_ids,
         faculty_signatures=fac_signs_base64)
 
-    if len(signed_faculties) == len(faculties_required) and dispatch_signature_required:
+    if len(signed_faculties) == len(faculties_required) and isCDC:
       if (dispatch=="CDC"):
         cdc_email_send = True
       else:
