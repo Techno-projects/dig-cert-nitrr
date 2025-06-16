@@ -131,7 +131,8 @@ def faculty_login(request):
     if check_password(data["password"], check.password):
       encoded_jwt = jwt.encode({"email": data["email"],
                                 "faculty": 1,
-                                'iscdc': check.isCDC},
+                                'iscdc': check.isCDC,
+                                'isdsw': check.isDSW},
                                os.environ.get('SECRET_KEY'),
                                algorithm="HS256")
       return Response({"ok": True, 'token': encoded_jwt})
@@ -163,6 +164,17 @@ def send_cdc_email(event_name, org_name):
   mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{event_name}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
 
   res = send_email_queue.delay(mail_subject, mail_body, [cdc_email])
+
+def send_dsw_email(event_name, org_name):
+  dsw_faculty = Faculty_Advisor.objects.filter(isDSW=True)
+  if len(dsw_faculty) != 1:
+    return
+  dsw_email = dsw_faculty[0].email
+
+  mail_subject = "Event assigned by Dig-Cert-NITRR app"
+  mail_body = f"<h3>Dear sir/mam,</h3><br/>This is an auto generated email to notify you that you are assigned to approve the participation certificates for the event <b>{event_name}</b> organised by the club/committee: <b>{org_name}<b/> of our college. You may login at <a href=\"https://digcert.nitrr.ac.in/Login?type=faculty\">Login Page</a><br/><br/>Thanking You."
+
+  res = send_email_queue.delay(mail_subject, mail_body, [dsw_email])
 
 
 # return the headers of the excel file
@@ -229,70 +241,21 @@ def get_faculties(request):
   return Response({"ok": True, "message": list(faculties)}, status=status.HTTP_200_OK)
 
 
-def cdc_get_certi_by_serial(serial_no, certificate):
-  try:
-    serial_list = serial_no.split("/")
-    dispatch = serial_list[2]
-    event_id = int(serial_list[5])
-    row_id = int(serial_list[6])
-
-    event = Event.objects.get(id=event_id)
-
-    if certificate:
-      coordinates = json.loads(event.coordinates)
-      email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-      faculties_required = []
-
-      for item in list(coordinates.keys()):
-        if re.match(email_pattern, item):
-          faculties_required.append(item)
-
-      faculties_signed = json.loads(certificate.faculty_advisor)
-
-      c1 = Counter(faculties_required)
-      c2 = Counter(faculties_signed)
-
-      print(serial_no)
-      print(faculties_required)
-      print(faculties_signed)
-
-      if c1 != c2:
-        return None
-
-    # Check if the organisation exists
-    try:
-      org = Organisation.objects.get(unique_name=event.organisation)
-      org_name = org.name
-    except Organisation.DoesNotExist:
-      print(f"Organisation with unique_name '{event.organisation}' does not exist.")
-      return None
-
-    event_name = event.event_name
-    event_data = event.event_data
-    df = pd.read_excel(event_data)
-
-    row_dict = df.iloc[row_id].to_dict()
-    row_dict['Event'] = event_name
-    row_dict['Organisation'] = org_name
-    row_dict['Serial No'] = serial_no
-    return row_dict
-
-  except Exception as e:
-    print(f"Error in cdc_get_certi_by_serial: {e}")
-    return None
-
-
 @api_view(["GET"])
 def get_cdc_events(request):
   try:
     pending_certis = Certificate.objects.filter(status='0')
     pending_certis = [
         cert for cert in pending_certis 
-        if (cert.is_cdc_certificate())
+        if (cert.check_dispatch()=="CDC")
     ]
 
-    signed_certis = Certificate.objects.filter(status='0')
-
+    signed_certis = Certificate.objects.filter(status='1')
+    signed_certis = [
+        cert for cert in signed_certis 
+        if (cert.check_dispatch()=="CDC")
+    ]
+    
     event_df_cache = {}
 
     def get_event_df(event):
@@ -367,6 +330,98 @@ def get_cdc_events(request):
     print(f"Error in get_cdc_events: {e}")
     return Response(
       {"ok": False, "error": str(e), "message": "Error fetching CDC events"},
+      status=500
+    )
+  
+@api_view(["GET"])
+def get_dsw_events(request):
+  try:
+    pending_certis = Certificate.objects.filter(status='0')
+    pending_certis = [
+        cert for cert in pending_certis 
+        if (cert.check_dispatch()=="DSW")
+    ]
+
+    signed_certis = Certificate.objects.filter(status='1')
+    signed_certis = [
+        cert for cert in signed_certis 
+        if (cert.check_dispatch()=="DSW")
+    ]
+    
+    event_df_cache = {}
+
+    def get_event_df(event):
+            if event.id not in event_df_cache:
+                event_df_cache[event.id] = pd.read_excel(event.event_data)
+            return event_df_cache[event.id]
+
+    def process_certificate(certi, check_faculty=True):
+      serial_no = certi.serial_no
+      serial_list = serial_no.split("/")
+      # For example: No./NITRR/dispatch/.../event_id/row_id
+      event_id = int(serial_list[5])
+      row_id = int(serial_list[6])
+      
+      # Retrieve the event record.
+      event = Event.objects.get(id=event_id)
+      
+      # If checking signatures (for pending certificates), perform the faculty match.
+      if check_faculty:
+        coordinates = json.loads(event.coordinates)
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        faculties_required = [
+            item for item in list(coordinates.keys())
+            if re.match(email_pattern, item)
+        ]
+        faculties_signed = json.loads(certi.faculty_advisor)
+        if Counter(faculties_required) != Counter(faculties_signed):
+            return None
+      
+      # Get organisation details.
+      try:
+        org = Organisation.objects.get(unique_name=event.organisation)
+        org_name = org.name
+      except Organisation.DoesNotExist:
+        print(f"Organisation with unique_name '{event.organisation}' does not exist.")
+        return None
+      
+      # Use the cached DataFrame.
+      df = get_event_df(event)
+      try:
+        row_dict = df.iloc[row_id].to_dict()
+      except Exception as e:
+        print(f"Error fetching row {row_id} for event {event_id}: {e}")
+        return None
+      row_dict['Event'] = event.event_name
+      row_dict['Organisation'] = org_name
+      row_dict['Serial No'] = serial_no
+      return row_dict
+
+    pending_rows = [process_certificate(certi, check_faculty=True) for certi in pending_certis]
+    signed_rows = [process_certificate(certi, check_faculty=False) for certi in signed_certis]
+    
+    pending_rows = [row for row in pending_rows if row is not None]
+    signed_rows = [row for row in signed_rows if row is not None]
+
+    def validate_row(row):
+      if not isinstance(row, dict):
+        raise ValueError(f"Row is not a dictionary: {row}")
+      for key, value in row.items():
+        if not isinstance(key, str):
+          raise ValueError(f"Invalid key type in row: {key}")
+        if isinstance(value, float) and math.isnan(value):
+          row[key] = None  # Replace NaN with None
+      return row
+
+    pending_rows = [validate_row(row) for row in pending_rows]
+    signed_rows = [validate_row(row) for row in signed_rows]
+
+    return Response({"ok": True, "pending": pending_rows, "signed": signed_rows})
+      
+  except Exception as e:
+    print(f"Error in get_dsw_events: {e}")
+    return Response(
+      {"ok": False, "error": str(e), "message": "Error fetching DSW events"},
       status=500
     )
 
@@ -591,9 +646,9 @@ def preview_event_certificate(request):
             if field in first_row:
                 certificate_img = put_text_on_image(first_row[field], coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color, width=widths[field])
             elif field == "Serial No":
-                certificate_img = put_serial_on_image("No./NITRR/CDC/TC/OC/0000/00", coordinate, certificate_img, temp_event_data)
+                certificate_img = put_serial_on_image("No./NITRR/XXX/YY/OC/0000/00", coordinate, certificate_img, temp_event_data)
             elif field == "cdc":
-                certificate_img = put_text_on_image("CDC SIGNATURE", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
+                certificate_img = put_text_on_image("Signature", coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color)
             else:
                 certificate_img = put_text_on_image(field, coordinate, certificate_img, temp_event_data, font_path=selected_font, text_color=text_color, width=widths[field])
         
@@ -724,7 +779,7 @@ def register_event(request):
 
   event_db = data['event_data']           # event's excel file
   certi = data['certificate']             # event's certificate file
-  isCDC = False                           # is cdc signature required for this event
+  dispatch_signature_required = False                           # is cdc signature required for this event
   faculties_required = json.loads(data['faculties'])
   org_unique_name = Organisation.objects.get(email=data['user']).unique_name
 
@@ -735,7 +790,7 @@ def register_event(request):
   event_coordinates = json.dumps(coordinates)
 
   if data['cdc'] == 'true':
-    isCDC = True
+    dispatch_signature_required = True
   try:
     Event.objects.create(
         organisation=org_unique_name,
@@ -743,7 +798,7 @@ def register_event(request):
         certificate=certi,
         coordinates=event_coordinates,
         event_name=data['event'],
-        isCDC=isCDC,
+        dispatch_signature_required=dispatch_signature_required,
         dispatch=data['dispatch'],
         faculties_required=json.dumps(faculties_required),
         rel_height=float(data['rel_height']),
@@ -863,12 +918,14 @@ def sign_by_fa(data, faculty_sign_image_base64):
 
   org_unique_name = Organisation.objects.get(name=data['Organisation']).unique_name
   event_details = Event.objects.get(event_name=data['Event'], organisation=org_unique_name)
-  isCDC = event_details.isCDC
+  dispatch_signature_required = event_details.dispatch_signature_required
+  dispatch = event_details.dispatch
   faculties_required = json.loads(event_details.faculties_required)
 
   cdc_email_send = False
+  dsw_email_send = False
   certi_status = "0"
-  if not isCDC:
+  if not dispatch_signature_required:
     certi_status = "1"
 
   current_fac_email = current_fac_data['email']
@@ -881,8 +938,11 @@ def sign_by_fa(data, faculty_sign_image_base64):
   certi = Certificate.objects.filter(serial_no=serial_no)
 
   if len(certi) == 0:
-    if len(faculties_required) == 1 and isCDC:
-      cdc_email_send = True
+    if len(faculties_required) == 1 and dispatch_signature_required:
+      if (dispatch=="CDC"):
+        cdc_email_send = True
+      else:
+        dsw_email_send = True
 
     Certificate.objects.create(
         faculty_advisor=json.dumps([current_fac_email]),
@@ -907,9 +967,12 @@ def sign_by_fa(data, faculty_sign_image_base64):
         faculty_advisor=fac_ids,
         faculty_signatures=fac_signs_base64)
 
-    if len(signed_faculties) == len(faculties_required) and isCDC:
-      cdc_email_send = True
-  return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send,
+    if len(signed_faculties) == len(faculties_required) and dispatch_signature_required:
+      if (dispatch=="CDC"):
+        cdc_email_send = True
+      else:
+        dsw_email_send = True
+  return Response({"ok": True, "message": "Signed", "cdc_email_send": cdc_email_send, "dsw_email_send": dsw_email_send,
                   "organisation": data['Organisation'], "event": data['Event']}, status=status.HTTP_201_CREATED)
 
 
@@ -917,17 +980,26 @@ def sign_by_fa(data, faculty_sign_image_base64):
 def approveL0(request):
   data = request.data
   cdc_emails = set()
+  dsw_emails = set()
   faculty_sign_image_base64 = data[len(data) - 1]
   for i in range(0, len(data) - 1):
     res = sign_by_fa(data[i], faculty_sign_image_base64)
     if res.data['cdc_email_send']:
       cdc_emails.add((res.data['organisation'], res.data['event']))
+    elif res.data['dsw_email_send']:
+      dsw_emails.add((res.data['organisation'], res.data['event']))
 
     if not res.data['ok']:
       return res
+    
+  if (bool(cdc_emails)):
+    for i in cdc_emails:
+      send_cdc_email(i[1], i[0])
 
-  for i in cdc_emails:
-    send_cdc_email(i[1], i[0])
+  if (bool(dsw_emails)):
+    for i in dsw_emails:
+      send_dsw_email(i[1], i[0])
+  
   return Response({"ok": True, "message": "Signed successfully"})
 
 

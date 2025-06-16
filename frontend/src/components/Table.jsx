@@ -96,10 +96,39 @@ const Table = () => {
         setLoading(false);  
       }
     };
-    if (!fac_signed_in.iscdc) {
-      getEvents();
-    } else {
+    const getDSWEvents = async () => {
+      try {
+        const response = await axios.get(`${server}/api/get_dsw_events`, {
+          headers: {
+            "Content-type": "application/json",
+          },
+        });
+        const data = response.data;
+        console.log("Data: ");
+        console.log(response);
+        if (data.ok) {
+          set_my_signed(data.signed);
+          set_pending_data(data.pending);
+        } else {
+          toast.error("Error while fetching events");
+          // window.location.href = "/login?type=faculty";
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message ?? "Something went wrong");
+        // history.pushState("/login?type=faculty");
+        // window.location.href = "/login?type=faculty";
+      } finally {
+        setLoading(false);  
+      }
+    };
+
+    if (fac_signed_in.iscdc && !fac_signed_in.isdsw) {
       getCDCEvents();
+    } else if (fac_signed_in.isdsw && !fac_signed_in.iscdc){
+      getDSWEvents();
+    } else {
+      getEvents();
     }
   }, [fac_email]);
 
