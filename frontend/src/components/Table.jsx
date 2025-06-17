@@ -271,7 +271,7 @@ const Table = () => {
       selectedRows.push(signature);
       try {
         let response;
-        if (!fac_signed_in.iscdc) {
+        if (!fac_signed_in.iscdc && !fac_signed_in.isdsw) {
           response = await axios.post(`${server}/api/approveL0`, selectedRows, {
             headers: {
               "Content-type": "application/json",
