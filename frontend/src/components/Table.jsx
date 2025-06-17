@@ -123,6 +123,9 @@ const Table = () => {
       }
     };
 
+    console.log("Decoded token:", fac_signed_in);
+    console.log(decodeToken(localStorage.getItem("login")));
+
     if (fac_signed_in.iscdc && !fac_signed_in.isdsw) {
       getCDCEvents();
     } else if (fac_signed_in.isdsw && !fac_signed_in.iscdc){
