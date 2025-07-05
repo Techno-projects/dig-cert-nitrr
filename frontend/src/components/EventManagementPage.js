@@ -15,7 +15,7 @@ const EventManagementPage = () => {
     user: user.email,
     file: null,
     event: "",
-    cdc: false,
+    cdc: true,
   });
 
   if (!auth) {
@@ -25,7 +25,7 @@ const EventManagementPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [partners, setPartners] = useState([]);
   const [selectedPartners, setSelectedPartners] = useState({});
-  const [dispatch, setDispatch] = useState("CDC");
+  const [dispatch, setDispatch] = useState("");
   const [faculties, setFaculties] = useState([]);
 
   useEffect(() => {
@@ -79,6 +79,10 @@ const EventManagementPage = () => {
   const rectRef = useRef(null);
 
   const upload = async () => {
+    if (!dispatch) {
+      alert("Please select 'Dispatched by' before uploading the certificate");
+      return;
+    }
     if (eventData.event !== "" && selectedFile !== null) {
       eventData.file = selectedFile;
 
@@ -152,6 +156,7 @@ const EventManagementPage = () => {
                   }}
                   name="cdc"
                   checked={eventData.cdc}
+                  disabled
                   onChange={handleChange}
                 />{" "}
                 CDC/DSW Signature Required?
@@ -164,6 +169,7 @@ const EventManagementPage = () => {
                   type="radio"
                   name="dispatch"
                   value="CDC"
+                  checked={dispatch === "CDC"}
                   onChange={handleDispatch}
                 />{" "}
                 CDC
@@ -173,6 +179,7 @@ const EventManagementPage = () => {
                   type="radio"
                   name="dispatch"
                   value="DSW"
+                  checked={dispatch === "DSW"}
                   onChange={handleDispatch}
                 />{" "}
                 DSW
