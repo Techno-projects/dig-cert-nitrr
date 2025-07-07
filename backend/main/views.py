@@ -438,7 +438,7 @@ def put_serial_on_image(text_to_put, coordinate, image, event_data):
   box_width = (event_data.rel_width * image.size[0]) * image.size[0] / 1000
   box_height = (event_data.rel_height * image.size[1]) * image.size[1] / 775
   draw = ImageDraw.Draw(image)
-  font = ImageFont.truetype(font_path,size=40)
+  font = ImageFont.truetype(font_path,size=10)
   x = coordinate['x'] + (125 / 2)
   y = coordinate['y'] + (25 / 2)
 
