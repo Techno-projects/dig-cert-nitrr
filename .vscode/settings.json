@@ -4,4 +4,5 @@
     "--load-plugins=pylint_django",
     "--django-settings-module=backend.settings"
   ],
+  "postman.settings.dotenv-detection-notification-visibility": false,
 }
