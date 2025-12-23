@@ -7,3 +7,6 @@ nginx/static/
 backend/static/
 env/
 .env
+backend/.DS_Store
+backend/main/.DS_Store
+.DS_Store

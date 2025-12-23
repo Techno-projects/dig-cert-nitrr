@@ -372,6 +372,7 @@ const Certificate = () => {
               <option value="Italianno-Regular.ttf">Italianno</option>
               <option value="Montserrat-Medium.ttf">Montserrat</option>
               <option value="PinyonScript-Regular.ttf">PinyonScript</option>
+              <option value="LibreBaskerville-SemiBold.ttf">LibreBaskerville</option>
               <option value="ChakraPetch-Regular.ttf">ChakraPetch</option>
               <option value="Oxanium-Regular.ttf">Oxanium</option>
               <option value="NotoSans-Regular.ttf">Mangal (Hindi)</option>
