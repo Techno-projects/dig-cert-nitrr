@@ -9,15 +9,26 @@
   position: relative;
   margin: 12.5%;
   width: fit-content;
-  border-radius: 15px;
-  padding: 40px;
-  background: #3030303d;
-  backdrop-filter: blur(10px);
-  border: 1px solid #30303052;
+  border-radius: 16px;
+  padding: 48px;
+  background: rgba(48, 48, 48, 0.2);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   font-family: "Electrolize", sans-serif;
   font-weight: 400;
   font-style: normal;
+  animation: slideUp 0.4s ease-out;
+}
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .HomePage-Container {
@@ -41,19 +52,22 @@
   font-size: 100px;
   font-weight: 900;
   color: white;
-  opacity: 0.1;
+  opacity: 0.06;
   transition: 0.4s ease-in;
   cursor: pointer;
   font-family: "Electrolize", sans-serif;
+  user-select: none;
+}
 
+.vertical-text:hover {
+  letter-spacing: 2px;
+  opacity: 0.1;
 }
-.vertical-text:hover{
-    letter-spacing: 2px;
-    
-}
-.highlight{
-    color: #00a706;
-    font-style: bold;
+
+.highlight {
+  color: #5a9cf5;
+  font-style: normal;
+  font-weight: bold;
 }
 
 .blob {
@@ -80,7 +94,6 @@
     inset 100px 100px 0 0px #fa709a, inset 200px 200px 0 0px #784ba8,
     inset 300px 300px 0 0px #2b86c5;
 }
-
 
 @keyframes move {
   from {

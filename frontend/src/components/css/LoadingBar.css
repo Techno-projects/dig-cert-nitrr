@@ -1,21 +1,27 @@
 .loading-bar-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 9999;
-  }
-  
-  .loading-bar {
-    width: 0%;
-    height: 4px;
-    background-color: #3498db;
-    animation: loadingAnimation 2s ease-out infinite;
-  }
-  
-  @keyframes loadingAnimation {
-    0% { width: 0%; }
-    50% { width: 50%; }
-    100% { width: 100%; }
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+}
+
+.loading-bar {
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, #5a9cf5, #a78bfa, #5a9cf5);
+  background-size: 200% 100%;
+  animation: loadingAnimation 1.8s ease-out infinite, shimmer 1.5s linear infinite;
+  border-radius: 0 2px 2px 0;
+}
+
+@keyframes loadingAnimation {
+  0% { width: 0%; }
+  50% { width: 60%; }
+  100% { width: 100%; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

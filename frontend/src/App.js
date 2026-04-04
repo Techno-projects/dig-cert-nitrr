@@ -53,7 +53,30 @@ const App = () => {
       <Router>
         <div className="App">
           <Navbar />
-          <Toaster position="top-center" reverseOrder={true} />
+          <Toaster
+            position="top-center"
+            reverseOrder={true}
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: 'rgba(30, 30, 50, 0.92)',
+                color: '#fff',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: '"Electrolize", sans-serif',
+                padding: '10px 16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              },
+              success: {
+                iconTheme: { primary: '#5a9cf5', secondary: '#fff' },
+              },
+              error: {
+                iconTheme: { primary: '#f56565', secondary: '#fff' },
+              },
+            }}
+          />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/Login" element={<Login />} />

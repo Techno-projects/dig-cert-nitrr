@@ -1,45 +1,404 @@
+/* ===== Certificate Field Placement ===== */
+
 .certificateRect {
   position: absolute;
-  border: 2px solid red;
+  border: 2px solid rgba(90, 156, 245, 0.8);
   pointer-events: none;
+  border-radius: 2px;
 }
 
+/* Upload box */
 .Certificate_box {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 15px;
-  /* margin-top: 25%; */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  width: fit-content;
-  padding: 50px 30px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  width: 420px;
+  padding: 60px 40px;
   height: fit-content;
-
+  backdrop-filter: blur(8px);
+  animation: slideUp 0.35s ease-out;
+  transition: border-color 0.3s ease, background 0.3s ease;
+  cursor: pointer;
 }
 
-.Certificate_file{
-
-    text-align: center;
-    padding-left: 20%;
+.Certificate_box:hover {
+  border-color: rgba(90, 156, 245, 0.4);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-.Certificate_heading{
-    text-align: center;
-    font-size: 24px;
-    font-weight: bolder;
-    color: #ffffff;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.Certificate_file {
+  text-align: center;
+  padding: 0;
+  width: 100%;
+}
+
+.Certificate_file::file-selector-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
   font-family: "Electrolize", sans-serif;
-  margin-bottom: 30px;
-
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(90, 156, 245, 0.12);
+  color: #93c5fd;
+  margin-bottom: 0.5rem;
 }
 
-.Certificate_fields{
-    margin-left: 2rem;
-    color: white;
-    font-family: "Electrolize", sans-serif;
-    
+.Certificate_file::file-selector-button:hover {
+  background: #5a9cf5;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(90, 156, 245, 0.3);
+}
+
+/* Upload heading */
+.Certificate_heading {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: "Electrolize", sans-serif;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.Certificate_heading_sub {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 24px;
+}
+
+.upload-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+/* ===== Field Selection Panel ===== */
+.Certificate_fields {
+  margin-left: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "Electrolize", sans-serif;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-height: 580px;
+  overflow-y: auto;
+  min-width: 240px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Panel header */
+.fields-panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px 14px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.fields-panel-title {
+  font-family: "Electrolize", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fields-panel-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 0.25rem;
+}
+
+/* Field sections */
+.field-section {
+  padding: 0.75rem 1.25rem;
+}
+
+.field-section + .field-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.field-section-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+/* Radio items */
+.field-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  margin-bottom: 0.2rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.field-radio-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.field-radio-item.selected {
+  background: rgba(90, 156, 245, 0.1);
+  border: 1px solid rgba(90, 156, 245, 0.2);
+  margin-left: -1px;
+  margin-right: -1px;
+}
+
+.field-radio-item input[type="radio"] {
+  cursor: pointer;
+  accent-color: #5a9cf5;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.field-radio-item label {
+  cursor: pointer;
+  padding: 0;
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+}
+
+.field-radio-item.selected label {
+  color: #93c5fd;
+}
+
+/* Settings section (font + color) */
+.settings-section {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.setting-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 70px;
+  letter-spacing: 0.2px;
+}
+
+.Certificate_fields select {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  flex: 1;
+}
+
+.Certificate_fields select:focus {
+  border-color: #5a9cf5;
+}
+
+.Certificate_fields select option {
+  background: #1a1a2e;
+  color: white;
+}
+
+.Certificate_fields input[type="color"] {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  background: transparent;
+  transition: border-color 0.2s ease;
+}
+
+.Certificate_fields input[type="color"]:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Action buttons in panel */
+.panel-actions {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.panel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-family: "Electrolize", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+  width: 100%;
+}
+
+.panel-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0e0e1e;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.12);
+}
+
+.panel-btn.preview {
+  background: rgba(90, 156, 245, 0.12);
+  border-color: rgba(90, 156, 245, 0.3);
+  color: #93c5fd;
+}
+
+.panel-btn.preview:hover {
+  background: #5a9cf5;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(90, 156, 245, 0.35);
+}
+
+.panel-btn.submit {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #6ee7b7;
+}
+
+.panel-btn.submit:hover {
+  background: #34d399;
+  color: #064e3b;
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(52, 211, 153, 0.35);
+}
+
+.panel-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.panel-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Certificate image area */
+.certificate-workspace {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-top: 1rem;
+  animation: slideUp 0.4s ease-out;
+}
+
+.certificate-image-wrapper {
+  position: relative;
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+}
+
+.certificate-image-wrapper img {
+  user-select: none;
+  display: block;
+  border-radius: 8px;
+}
+
+/* Active field indicator */
+.active-field-badge {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  background: rgba(20, 20, 35, 0.92);
+  border: 1px solid rgba(90, 156, 245, 0.25);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: badgeSlideUp 0.3s ease-out;
+}
+
+@keyframes badgeSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.active-field-badge span {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.active-field-badge strong {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+/* Container layout */
+.certificate-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
 }

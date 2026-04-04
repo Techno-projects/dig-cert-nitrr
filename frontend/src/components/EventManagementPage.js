@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { decodeToken } from "react-jwt";
 import axios from "axios";
 import "./css/Form.css";
+import "./css/EventManagement.css";
 import urls from "../urls.json";
+import toast from "react-hot-toast";
+import { Spinner, ButtonSpinner } from "./Spinner";
 
 const server = urls.SERVER_URL;
 
@@ -19,14 +22,16 @@ const EventManagementPage = () => {
   });
 
   if (!auth) {
-    alert("unauthorized user");
-    window.location.href("/");
+    toast.error("Unauthorized user. Please login first.");
+    window.location.href = "/";
   }
   const [selectedFile, setSelectedFile] = useState(null);
   const [partners, setPartners] = useState([]);
   const [selectedPartners, setSelectedPartners] = useState({});
   const [dispatch, setDispatch] = useState("");
   const [faculties, setFaculties] = useState([]);
+  const [orgsLoading, setOrgsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!auth || !user) {
@@ -45,8 +50,10 @@ const EventManagementPage = () => {
         );
         setPartners(response.data.message);
       } catch (error) {
-        alert(error.response.data.message);
+        toast.error(error.response?.data?.message || "Error fetching organisations");
         window.location.reload();
+      } finally {
+        setOrgsLoading(false);
       }
     };
     get_orgs();
@@ -80,11 +87,13 @@ const EventManagementPage = () => {
 
   const upload = async () => {
     if (!dispatch) {
-      alert("Please select 'Dispatched by' before uploading the certificate");
+      toast.error("Please select 'Dispatched by' before uploading the certificate");
       return;
     }
     if (eventData.event !== "" && selectedFile !== null) {
       eventData.file = selectedFile;
+
+      setUploading(true);
 
       const tmpBody = { partners: selectedPartners, token: auth };
       try {
@@ -105,110 +114,124 @@ const EventManagementPage = () => {
           },
         });
       } catch (error) {
-        alert(error.response.data.message);
+        toast.error(error.response?.data?.message || "Error fetching faculties");
         window.location.href = "/event_management";
+      } finally {
+        setUploading(false);
       }
     } else {
-      alert("Please fill all the data");
+      toast.error("Please fill all the required data");
     }
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ flexGrow: "1", overflowY: "auto" }}>
-        <form>
-          <div className="form-container">
-            <div
-              className="form-internal"
-              style={{ textAlign: "center", margin: "10%" }}
-            >
-              <h1 className="title">Event Management</h1>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      {orgsLoading && <Spinner message="Loading organisations..." />}
+      {uploading && <Spinner message="Preparing certificate..." />}
 
-              <input
-                className="input_text"
-                placeholder="Event Name:"
-                type="text"
-                id="event_name"
-                name="event"
-                value={eventData.event}
-                onChange={handleChange}
-                required
-              />
-              <p />
+      <div style={{ flexGrow: "1", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+        <div className="em-card">
+          <h1>Event Management</h1>
 
+          {/* Event Name */}
+          <div className="em-section">
+            <span className="em-section-label">Event Name</span>
+            <input
+              className="em-input"
+              placeholder="Enter event name"
+              type="text"
+              id="event_name"
+              name="event"
+              value={eventData.event}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          {/* Participants Upload */}
+          <div className="em-section">
+            <span className="em-section-label">Participants List</span>
+            <div className="em-file-zone">
               <input
-                className="input_text"
-                placeholder="Participants"
                 type="file"
                 id="participants"
+                accept=".xlsx,.xls,.csv"
                 onChange={handleFileChange}
                 required
               />
-              <p />
-              <div className="input_class">
-                <input
-                  type="checkbox"
-                  style={{
-                    display: "inline-block",
-                    verticalAlign: "top",
-                    width: "14px",
-                    height: "14px",
-                  }}
-                  name="cdc"
-                  checked={eventData.cdc}
-                  disabled
-                  onChange={handleChange}
-                />{" "}
-                CDC/DSW Signature Required?
-                <p />
-              </div>
+              <div className="em-file-hint">Upload Excel file (.xlsx) with participant details</div>
+            </div>
+          </div>
 
-              <label for="dispatch">Dispatched by:</label>
-              <div className="input_class">
+          {/* CDC checkbox */}
+          <div className="em-section">
+            <div className="em-check-item">
+              <input
+                type="checkbox"
+                name="cdc"
+                checked={eventData.cdc}
+                disabled
+                onChange={handleChange}
+              />
+              <span>CDC/DSW Signature Required</span>
+            </div>
+          </div>
+
+          {/* Dispatch & Partners side by side */}
+          <div className="em-options-row">
+            <div className="em-option-group">
+              <span className="em-section-label">Dispatched by</span>
+              <div className="em-check-item">
                 <input
                   type="radio"
                   name="dispatch"
                   value="CDC"
+                  id="dispatch-cdc"
                   checked={dispatch === "CDC"}
                   onChange={handleDispatch}
-                />{" "}
-                CDC
+                />
+                <label htmlFor="dispatch-cdc">CDC</label>
               </div>
-              <div className="input_class">
+              <div className="em-check-item">
                 <input
                   type="radio"
                   name="dispatch"
                   value="DSW"
+                  id="dispatch-dsw"
                   checked={dispatch === "DSW"}
                   onChange={handleDispatch}
-                />{" "}
-                DSW
+                />
+                <label htmlFor="dispatch-dsw">DSW</label>
               </div>
+            </div>
 
-              <label for="partners">Partner Organisation:</label>
-              {partners.map((partner) => (
-                <>
-                  <div className="input_class">
+            <div className="em-option-group">
+              <span className="em-section-label">Partners</span>
+              <div className="em-partners-grid">
+                {partners.map((partner, idx) => (
+                  <div className="em-check-item" key={idx}>
                     <input
                       type="checkbox"
                       value={partner}
+                      id={`partner-${idx}`}
                       onChange={handlePartners}
-                    />{" "}
-                    {partner}
+                    />
+                    <label htmlFor={`partner-${idx}`}>{partner}</label>
                   </div>
-                </>
-              ))}
-              {/* <label htmlFor="cdcHead">CDC Head:</label>
-        <input type="text" id="cdcHead" name="cdcHead" value={eventData.cdcHead} onChange={handleChange} required /> */}
-              <button className="submit-btn" type="button" onClick={upload}>
-                Upload Certificate
-              </button>
+                ))}
+              </div>
             </div>
           </div>
-        </form>
+
+          <button className="em-submit" type="button" onClick={upload} disabled={uploading}>
+            {uploading ? <ButtonSpinner text="Processing..." /> : "Next: Design Certificate →"}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
 export default EventManagementPage;
+
+
