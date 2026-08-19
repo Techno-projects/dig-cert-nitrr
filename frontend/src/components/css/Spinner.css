@@ -1,0 +1,160 @@
+/* ======= Overlay ======= */
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(8, 8, 20, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: overlayIn 0.25s ease;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.spinner-text {
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-family: 'Electrolize', sans-serif;
+  letter-spacing: 0.8px;
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ======= Certificate Loader ======= */
+.certi-loader {
+  position: relative;
+  width: 80px;
+  height: 100px;
+}
+
+/* Document */
+.certi-doc {
+  width: 70px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: docFloat 2.5s ease-in-out infinite;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes docFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Lines inside document */
+.certi-doc-line {
+  height: 3px;
+  background: rgba(90, 156, 245, 0.4);
+  border-radius: 2px;
+  animation: lineWrite 1.8s ease-in-out infinite;
+  transform-origin: left;
+}
+
+.certi-doc-line.short {
+  width: 60%;
+}
+
+.certi-doc-line:nth-child(1) { animation-delay: 0s; }
+.certi-doc-line:nth-child(2) { animation-delay: 0.2s; }
+.certi-doc-line:nth-child(3) { animation-delay: 0.4s; }
+.certi-doc-line:nth-child(4) { animation-delay: 0.6s; }
+.certi-doc-line:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes lineWrite {
+  0% { transform: scaleX(0); opacity: 0.3; }
+  30% { transform: scaleX(1); opacity: 1; }
+  70% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0); opacity: 0.3; }
+}
+
+/* Seal/Stamp */
+.certi-seal {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  width: 38px;
+  height: 38px;
+  background: rgba(90, 156, 245, 0.12);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sealStamp 2.5s ease-in-out infinite;
+  border: 1.5px solid rgba(90, 156, 245, 0.25);
+}
+
+.certi-seal-svg {
+  width: 28px;
+  height: 28px;
+  color: #5a9cf5;
+}
+
+.seal-ring {
+  animation: ringDraw 2.5s ease-in-out infinite;
+}
+
+.seal-check {
+  animation: checkDraw 2.5s ease-in-out infinite;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+
+@keyframes sealStamp {
+  0%, 40% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  70%, 85% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
+@keyframes ringDraw {
+  0%, 40% { stroke-dashoffset: 100; }
+  60%, 85% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 100; }
+}
+
+@keyframes checkDraw {
+  0%, 55% { stroke-dashoffset: 20; }
+  70%, 85% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 20; }
+}
+
+/* ======= Inline Button Spinner ======= */
+.spinner-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner-inline .spinner-ring-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spinnerRotate 0.7s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

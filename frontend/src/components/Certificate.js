@@ -3,6 +3,8 @@ import "./css/Certificate.css";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import urls from "../urls.json";
+import toast from "react-hot-toast";
+import { Spinner, ButtonSpinner } from "./Spinner";
 
 const server = urls.SERVER_URL;
 
@@ -28,9 +30,14 @@ const Certificate = () => {
   const [textColor, setTextColor] = useState('#000000');
   const [tempBox, setTempBox] = useState(null);
 
+  // Loading states
+  const [fieldsLoading, setFieldsLoading] = useState(true);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
   if (!auth) {
-    alert("unauthorized user");
-    window.location.href("/");
+    toast.error("Unauthorized user. Please login first.");
+    window.location.href = "/";
   }
 
   useEffect(() => {
@@ -83,8 +90,10 @@ const Certificate = () => {
         setFieldBox(tmp);
       } catch (error) {
         console.log(error);
-        alert(error.response.data.message);
+        toast.error(error.response?.data?.message || "Error loading field data");
         window.location.href = "/";
+      } finally {
+        setFieldsLoading(false);
       }
     }
     getRows();
@@ -105,7 +114,7 @@ const Certificate = () => {
     console.log(e.clientX, e.clientY)
     console.log(fieldBox);
     if (!selectedField) {
-      alert("Please select at least one field");
+      toast.error("Please select a field first");
       return;
     }
     setAsk(true);
@@ -182,6 +191,8 @@ const Certificate = () => {
 
         document.removeEventListener("mousemove", tempcoords[selectedField].moveHandler);
         delete tempcoords[selectedField]; //resetting temporary coordinates every 2nd click
+
+        toast.success(`Field "${selectedField}" placed successfully`);
     }
   }
 
@@ -193,9 +204,11 @@ const Certificate = () => {
       certificate === null ||
       eventData.file === null
     ) {
-      alert("Please place all required fields on the certificate first");
+      toast.error("Please place all required fields on the certificate first");
       return;
     }
+
+    setPreviewLoading(true);
 
     body.append("event_data", eventData.file);
     body.append("certificate", certificate);
@@ -218,9 +231,11 @@ const Certificate = () => {
       const previewUrl = URL.createObjectURL(response.data);
       
       setCerti(previewUrl);
-      alert("This is a preview. Click Submit when you're satisfied with the placement.");
+      toast.success("Preview generated! Click Submit when you're satisfied with the placement.");
     } catch (error) {
-      alert("Error generating preview: " + (error.response?.data?.message || error.message));
+      toast.error("Error generating preview: " + (error.response?.data?.message || error.message));
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -255,9 +270,11 @@ const Certificate = () => {
       });
       body.append("faculties", JSON.stringify(required_faculties));
     } else {
-      alert("Looks like some fields are missing");
+      toast.error("Some required fields are missing. Please fill all data.");
       return;
     }
+
+    setSubmitLoading(true);
 
     try {
       const response = await axios.post(`${server}/api/register_event`, body, {
@@ -265,10 +282,12 @@ const Certificate = () => {
           "content-type": "multipart/form-data",
         },
       });
-      alert(response.data.message);
+      toast.success(response.data.message || "Event registered successfully!");
       window.location.href = "/Event_management";
     } catch (error) {
-      alert(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to submit the event");
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -280,6 +299,10 @@ const Certificate = () => {
         alignItems: "center",
       }}
     >
+      {fieldsLoading && <Spinner message="Loading certificate fields..." />}
+      {previewLoading && <Spinner message="Generating preview..." />}
+      {submitLoading && <Spinner message="Submitting event..." />}
+
       <div style={{ display: "flex", margin: "10%" }}>
         {!certi && (
           <div className="Certificate_box">
@@ -352,11 +375,11 @@ const Certificate = () => {
             />
             <label for="Serial No">Serial No.</label>
             <br />
-            <button onClick={previewCertificate} className="submit-btn" style={{ marginBottom: "10px" }}>
-              Preview
+            <button onClick={previewCertificate} className="submit-btn" style={{ marginBottom: "10px" }} disabled={previewLoading}>
+              {previewLoading ? <ButtonSpinner text="Previewing..." /> : "Preview"}
             </button>
-            <button onClick={submit} className="submit-btn">
-              Submit
+            <button onClick={submit} className="submit-btn" disabled={submitLoading}>
+              {submitLoading ? <ButtonSpinner text="Submitting..." /> : "Submit"}
             </button>
             <br/>
             <br/>

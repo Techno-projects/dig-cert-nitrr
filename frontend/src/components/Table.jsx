@@ -23,6 +23,113 @@ ModuleRegistry.registerModules([
 
 const server = urls.SERVER_URL;
 
+/* ─── Certificate Preview Modal ─── */
+const CertificatePreviewModal = ({ previewUrl, serial, onClose, previewLoading }) => {
+  const [zoom, setZoom] = useState(100);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(z + 15, 200));
+      if (e.key === "-") setZoom((z) => Math.max(z - 15, 30));
+      if (e.key === "0") setZoom(100);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const handleDownload = () => {
+    if (!previewUrl) return;
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    a.download = `certificate_${serial || "preview"}.png`;
+    a.click();
+  };
+
+  return (
+    <div className="preview-modal-overlay" onClick={onClose}>
+      <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="preview-modal-card">
+          {/* Header */}
+          <div className="preview-modal-header">
+            <div className="preview-modal-title">
+              <span className="modal-icon">📜</span>
+              Certificate Preview
+              {serial && <span className="serial-badge">SN: {serial}</span>}
+            </div>
+            <div className="preview-modal-actions">
+              {/* Zoom controls */}
+              <div className="zoom-controls">
+                <button
+                  className="zoom-btn"
+                  onClick={() => setZoom((z) => Math.max(z - 15, 30))}
+                  title="Zoom out (−)"
+                >
+                  −
+                </button>
+                <span className="zoom-level">{zoom}%</span>
+                <button
+                  className="zoom-btn"
+                  onClick={() => setZoom((z) => Math.min(z + 15, 200))}
+                  title="Zoom in (+)"
+                >
+                  +
+                </button>
+                <button
+                  className="zoom-btn"
+                  onClick={() => setZoom(100)}
+                  title="Reset zoom (0)"
+                  style={{ fontSize: "0.65rem" }}
+                >
+                  ⟲
+                </button>
+              </div>
+
+              <button className="modal-action-btn download-btn" onClick={handleDownload}>
+                ⬇ Download
+              </button>
+              <button className="modal-action-btn close-btn" onClick={onClose}>
+                ✕ Close
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="preview-modal-body">
+            {previewLoading ? (
+              <div className="preview-loading">
+                <div className="preview-loading-spinner" />
+                <span>Generating certificate preview…</span>
+              </div>
+            ) : previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Certificate Preview"
+                style={{ transform: `scale(${zoom / 100})` }}
+                draggable={false}
+              />
+            ) : (
+              <div className="preview-loading">
+                <span>No preview available</span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer shortcuts */}
+          <div className="shortcut-hint">
+            <span>
+              <kbd>Esc</kbd> close &nbsp;·&nbsp; <kbd>+</kbd> <kbd>−</kbd> zoom
+              &nbsp;·&nbsp; <kbd>0</kbd> reset
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Table Component ─── */
 const Table = () => {
   const auth = localStorage.getItem("login");
   const fac_signed_in = decodeToken(auth);
@@ -37,9 +144,15 @@ const Table = () => {
   const selectedCellValue = null;
   const [submitting, setSubmitting] = useState(false);
 
+  // Preview modal state
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewSerial, setPreviewSerial] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   if (!auth) {
-    toast.error("Unauthorized user");
-    window.location.href("/");
+    toast.error("Unauthorized user. Please login first.");
+    window.location.href = "/";
   }
 
   useEffect(() => {
@@ -64,7 +177,6 @@ const Table = () => {
         }
       } catch (error) {
         toast.error(error.response.data.message ?? "Something went wrong");
-        // history.pushState("/login?type=faculty");
         window.location.href = "/login?type=faculty";
       } finally {
         setLoading(false);
@@ -85,15 +197,12 @@ const Table = () => {
           set_pending_data(data.pending);
         } else {
           toast.error("Error while fetching events");
-          // window.location.href = "/login?type=faculty";
         }
       } catch (error) {
         console.log(error);
         toast.error(error.response.data.message ?? "Something went wrong");
-        // history.pushState("/login?type=faculty");
-        // window.location.href = "/login?type=faculty";
       } finally {
-        setLoading(false);  
+        setLoading(false);
       }
     };
     const getDSWEvents = async () => {
@@ -111,15 +220,12 @@ const Table = () => {
           set_pending_data(data.pending);
         } else {
           toast.error("Error while fetching events");
-          // window.location.href = "/login?type=faculty";
         }
       } catch (error) {
         console.log(error);
         toast.error(error.response.data.message ?? "Something went wrong");
-        // history.pushState("/login?type=faculty");
-        // window.location.href = "/login?type=faculty";
       } finally {
-        setLoading(false);  
+        setLoading(false);
       }
     };
 
@@ -128,7 +234,7 @@ const Table = () => {
 
     if (fac_signed_in.iscdc && !fac_signed_in.isdsw) {
       getCDCEvents();
-    } else if (fac_signed_in.isdsw && !fac_signed_in.iscdc){
+    } else if (fac_signed_in.isdsw && !fac_signed_in.iscdc) {
       getDSWEvents();
     } else {
       getEvents();
@@ -161,9 +267,6 @@ const Table = () => {
       field: "Event",
       sortable: "sortableColumn",
       filter: "agSetColumnFilter",
-      // headerCheckboxSelection: true,
-      // headerCheckboxSelectionFilteredOnly: true,
-      // checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
     columnDef = {
@@ -171,9 +274,6 @@ const Table = () => {
       field: "Serial No",
       sortable: "sortableColumn",
       filter: "agSetColumnFilter",
-      // headerCheckboxSelection: true,
-      // headerCheckboxSelectionFilteredOnly: true,
-      // checkboxSelection: true,
     };
     columnDefs1.push(columnDef);
     for (const key of allProperties) {
@@ -183,9 +283,6 @@ const Table = () => {
           field: key,
           sortable: key === "sortableColumn",
           filter: key === "column" ? "agDateColumnFilter" : "agSetColumnFilter",
-          // headerCheckboxSelection: true,
-          // headerCheckboxSelectionFilteredOnly: true,
-          // checkboxSelection: true,
         };
         columnDefs1.push(columnDef);
       }
@@ -193,7 +290,6 @@ const Table = () => {
   }
 
   if (my_signed.length > 0) {
-    // const firstObject = my_signed[0];
     let allProperties = Array.from(
       new Set(my_signed.flatMap((obj) => Object.keys(obj)))
     );
@@ -232,15 +328,6 @@ const Table = () => {
     }
   }
 
-  // const convertFileToBase64 = (file) => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.readAsDataURL(file);
-  //     reader.onload = () => resolve(reader.result.split(",")[1]);
-  //     reader.onerror = (error) => reject(error);
-  //   });
-  // };
-
   const gridApi1 = useRef(null);
   const signedRef = useRef();
 
@@ -257,15 +344,12 @@ const Table = () => {
       const selectedRows = gridApi1.current.getSelectedRows();
       if (!signature) {
         localStorage.setItem("toast-error", "Please upload your signature");
-        // toast.error("Please upload your signature");
         setSubmitting(false);
         reject();
       }
       for (let i = 0; i < selectedRows.length; i++) {
         selectedRows[i].organisation = location.state.org_name;
         selectedRows[i].event_name = location.state.event_name;
-        // selectedRows[i].faculty_sign = signature;
-        // selectedRows[i].fac_signed_in = fac_signed_in.email;
         selectedRows[i].token = auth;
       }
       selectedRows.push(signature);
@@ -293,7 +377,6 @@ const Table = () => {
           "toast-error",
           error?.response?.data?.message ?? "Something went wrong"
         );
-        // toast.error(error.response.data.message ?? "Something went wrong");
         setSubmitting(false);
         reject(error?.response?.data?.message ?? "Something went wrong");
       }
@@ -327,26 +410,20 @@ const Table = () => {
     if (signedRef.current) {
       const csvData = signedRef.current.getDataAsCsv();
       const workbook = XLSX.read(csvData, { type: 'string' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       XLSX.writeFile(workbook, "SignedCertificatesReport.xlsx");
-
     } else {
       console.error("Grid API not available!");
     }
-    console.log("mast");
   }, []);
 
   const onBtExportPending = useCallback(() => {
     if (gridApi1.current) {
       const csvData = gridApi1.current.getDataAsCsv();
       const workbook = XLSX.read(csvData, { type: 'string' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       XLSX.writeFile(workbook, "PendingCertificatesReport.xlsx");
-
     } else {
       console.error("Grid API not available!");
     }
-    console.log("mast");
   }, []);
 
   const handlePreviewCertificate = async () => {
@@ -355,126 +432,200 @@ const Table = () => {
       return;
     }
     const selectedRows = signedRef.current.getSelectedRows();
-    
+
     if (selectedRows.length === 0 || !selectedRows[0]["Serial No"]) {
       toast.error("Please select an event with a valid serial number.");
       return;
     }
-  
+
     const serial = selectedRows[0]["Serial No"];
+    setPreviewSerial(serial);
+    setShowPreview(true);
+    setPreviewLoading(true);
+    setPreviewUrl(null);
+
     try {
       const response = await axios.get(
-        `${server}/api/preview_certificate?serial=${serial}&preview=true`, {responseType: 'blob'}
+        `${server}/api/preview_certificate?serial=${serial}&preview=true`,
+        { responseType: "blob" }
       );
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head><title>Certificate Preview</title></head>
-            <body>
-              <img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-            </body>
-          </html>
-        `);
-        newWindow.document.close();
-      }
+      setPreviewUrl(url);
     } catch (error) {
       toast.error("Failed to load certificate preview.");
+      setShowPreview(false);
+    } finally {
+      setPreviewLoading(false);
     }
   };
-  
+
+  const closePreview = useCallback(() => {
+    setShowPreview(false);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewSerial(null);
+  }, [previewUrl]);
 
   return (
-    <div className="table-container" style={{ padding: "4rem" }}>
-      {/* Display the loading bar at the very top if loading */}
+    <div className="table-container">
+      {/* Loading bar */}
       {loading && <LoadingBar />}
-      
+
+      {/* Dashboard Header */}
+      <div className="dashboard-header">
+        <h1>Faculty Dashboard</h1>
+        <p>Manage and sign certificates for your events</p>
+      </div>
+
+      {/* Stat Badges */}
+      {!loading && (
+        <div className="dashboard-stats">
+          <div className="stat-badge">
+            <div className="stat-icon pending">⏳</div>
+            <div>
+              <div className="stat-number">{pending_data.length}</div>
+              <div className="stat-label">Pending</div>
+            </div>
+          </div>
+          <div className="stat-badge">
+            <div className="stat-icon signed">✓</div>
+            <div>
+              <div className="stat-number">{my_signed.length}</div>
+              <div className="stat-label">Signed</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tables Side-by-Side */}
       <div className="tables" style={{ display: "flex" }}>
-        <div
-          className="ag-theme-alpine-dark text"
-          style={{
-            height: 400,
-            width: "40vw",
-            padding: "1rem",
-            textAlign: "center",
-            color: "white",
-          }}
-        >
-          <h1>Pending Certificates</h1>
-          {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
-          <AgGridReact
-            onGridReady={(params) => {
-              gridApi1.current = params.api;
-            }}
-            onCellClicked={onCellClicked}
-            columnDefs={columnDefs1}
-            rowData={pending_data}
-            rowSelection={"multiple"}
-          />
-          <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1rem" }}>
-            {!submitting ? (
-              <button className="submit-btn" onClick={submitSelectedRows}>
-                Submit
-              </button>
-            ) : (
-              <>Please wait...</>
+        {/* Pending Certificates */}
+        <div className="table-section">
+          <div className="section-title">
+            <span className="title-dot pending"></span>
+            Pending Certificates
+          </div>
+          <div className="table-card">
+            <div
+              className="ag-theme-alpine-dark"
+              style={{ height: 380, width: "100%" }}
+            >
+              {pending_data.length > 0 ? (
+                <AgGridReact
+                  onGridReady={(params) => {
+                    gridApi1.current = params.api;
+                  }}
+                  onCellClicked={onCellClicked}
+                  columnDefs={columnDefs1}
+                  rowData={pending_data}
+                  rowSelection={"multiple"}
+                />
+              ) : (
+                !loading && (
+                  <div className="empty-state">
+                    <div className="empty-state-icon">🎉</div>
+                    <div className="empty-state-text">No pending certificates</div>
+                    <div className="empty-state-subtext">You're all caught up!</div>
+                  </div>
+                )
+              )}
+            </div>
+            {pending_data.length > 0 && (
+              <div className="btn-group">
+                {!submitting ? (
+                  <button
+                    className="action-btn primary"
+                    onClick={submitSelectedRows}
+                  >
+                    <span className="btn-icon">✍</span> Sign Selected
+                  </button>
+                ) : (
+                  <button className="action-btn primary" disabled>
+                    <span className="btn-icon">⏳</span> Signing…
+                  </button>
+                )}
+                <button className="action-btn" onClick={onBtExportPending}>
+                  <span className="btn-icon">📥</span> Export Report
+                </button>
+              </div>
             )}
-            <button className="submit-btn" onClick={onBtExportPending}>
-              Preview Pending Certificates
-            </button>
           </div>
-
         </div>
-        <div
-          className="ag-theme-alpine-dark text"
-          style={{
-            height: 400,
-            width: "40vw",
-            padding: "1rem",
-            textAlign: "center",
-          }}
-        >
-          <h1>Your Signed Certificates</h1>
-          {selectedCellValue && <>Selected Cell: {selectedCellValue}</>}
-          <AgGridReact
-            onGridReady={(params) => {
-              signedRef.current = params.api;
-              console.log("Grid API:", signedRef.current);
-            }}
-            onCellClicked={onCellClicked}
-            ref={signedRef}
-            columnDefs={columnDefs2}
-            rowData={my_signed}
-            rowSelection={"single"}
-          />
 
-          <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1rem" }}>
-            <button className="submit-btn" onClick={handlePreviewCertificate}>
-              Preview Certificate
-            </button>
-            <button className="submit-btn" onClick={onBtExportSigned}>
-              Export Report
-            </button>
+        {/* Signed Certificates */}
+        <div className="table-section">
+          <div className="section-title">
+            <span className="title-dot signed"></span>
+            Your Signed Certificates
+          </div>
+          <div className="table-card">
+            <div
+              className="ag-theme-alpine-dark"
+              style={{ height: 380, width: "100%" }}
+            >
+              {my_signed.length > 0 ? (
+                <AgGridReact
+                  onGridReady={(params) => {
+                    signedRef.current = params.api;
+                    console.log("Grid API:", signedRef.current);
+                  }}
+                  onCellClicked={onCellClicked}
+                  ref={signedRef}
+                  columnDefs={columnDefs2}
+                  rowData={my_signed}
+                  rowSelection={"single"}
+                />
+              ) : (
+                !loading && (
+                  <div className="empty-state">
+                    <div className="empty-state-icon">📋</div>
+                    <div className="empty-state-text">No signed certificates yet</div>
+                    <div className="empty-state-subtext">
+                      Sign pending certificates to see them here
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+            {my_signed.length > 0 && (
+              <div className="btn-group">
+                <button
+                  className="action-btn success"
+                  onClick={handlePreviewCertificate}
+                >
+                  <span className="btn-icon">👁</span> Preview Certificate
+                </button>
+                <button className="action-btn" onClick={onBtExportSigned}>
+                  <span className="btn-icon">📥</span> Export Report
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div
-        className="Table_button"
-        style={{
-          position: "relative",
-          marginTop: "7rem",
-          paddingLeft: "2rem",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "flex-start",
-        }}
-      >
-        <ImageCrop setSignature={setSignature} />
+      {/* Signature Upload Section */}
+      <div className="signature-section">
+        <div className="signature-card">
+          <div className="signature-card-title">
+            <span className="sig-icon">✒️</span>
+            Upload Your Signature
+          </div>
+          <ImageCrop setSignature={setSignature} />
+        </div>
       </div>
+
+      {/* Certificate Preview Modal */}
+      {showPreview && (
+        <CertificatePreviewModal
+          previewUrl={previewUrl}
+          serial={previewSerial}
+          onClose={closePreview}
+          previewLoading={previewLoading}
+        />
+      )}
     </div>
   );
 };

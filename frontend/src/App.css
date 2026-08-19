@@ -5,45 +5,70 @@ body {
   box-sizing: border-box;
   overflow-x: hidden;
   min-height: 100vh;
-  background: #0e0e1e; /* fallback for old browsers */
+  background: #0e0e1e;
 }
 
 .title {
   color: aliceblue;
+  letter-spacing: 0.5px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* margin-top: 20px; */
 }
 
 button {
   margin: 10px;
   border: none;
-  border-radius: 0px;
+  border-radius: 4px;
   padding: 10px 20px;
   cursor: pointer;
   color: white;
   font-family: "Electrolize", sans-serif;
   font-size: 14px;
-  border: 1px solid white;
-  transition: 0.2s ease-in;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+  background: transparent;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  box-shadow: none;
+  background: transparent;
+  color: white;
 }
 
 .register-button {
   background: transparent;
   margin-top: 20px;
+  padding: 12px 32px;
+  letter-spacing: 0.5px;
 }
 
 .register-button:hover {
-  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
   background: white;
-  color: black;
+  color: #0e0e1e;
 }
 
 .register-options {
   display: flex;
   justify-content: space-around;
+  gap: 16px;
+}
+
+/* Smooth page transitions */
+.App {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

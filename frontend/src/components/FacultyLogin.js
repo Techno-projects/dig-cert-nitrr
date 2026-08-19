@@ -6,8 +6,9 @@ import "./css/Form.css";
 import urls from "../urls.json";
 import { Blob } from "./Blob";
 import toast from "react-hot-toast";
+import { Spinner, ButtonSpinner } from "./Spinner";
+
 const server = urls.SERVER_URL;
-// import './css/Faculty_login.css';
 
 const FacultyLogin = () => {
   const { setFacultyLoggedIn } = useContext(LoginContext);
@@ -17,6 +18,7 @@ const FacultyLogin = () => {
     password: "",
   });
   const [error, setError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -26,6 +28,8 @@ const FacultyLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginLoading(true);
+
     try {
       let response = await fetch(`${server}/api/faculty_login `, {
         method: "POST",
@@ -39,6 +43,7 @@ const FacultyLogin = () => {
       if (response.ok) {
         setFacultyLoggedIn(true);
         localStorage.setItem("login", response.token);
+        toast.success("Logged in successfully!");
         navigate("/table", {
           state: { email: formData.email },
         });
@@ -48,8 +53,11 @@ const FacultyLogin = () => {
             "Authentication failed. Please check your username and password."
         );
       }
-    } catch {
-      console.error("Error:", error);
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -84,8 +92,8 @@ const FacultyLogin = () => {
               required
             />
 
-            <button type="submit" className="submit-btn">
-              Submit
+            <button type="submit" className="submit-btn" disabled={loginLoading}>
+              {loginLoading ? <ButtonSpinner text="Logging in..." /> : "Submit"}
             </button>
           </form>
           {

@@ -1,0 +1,195 @@
+.em-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  margin: 100px auto 60px auto;
+  position: relative;
+  width: 440px;
+  max-width: 90vw;
+  font-family: "Electrolize", sans-serif;
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  animation: emSlideUp 0.4s ease-out;
+  color: white;
+}
+
+@keyframes emSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.em-card h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 1.2rem 0;
+  color: #fff;
+}
+
+/* Section groups */
+.em-section {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.em-section-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+/* Event name input */
+.em-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px;
+  color: white !important;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.em-input:focus {
+  border-color: rgba(90, 156, 245, 0.5) !important;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.em-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* File upload area */
+.em-file-zone {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+}
+
+.em-file-zone:hover {
+  border-color: rgba(90, 156, 245, 0.4);
+  background: rgba(90, 156, 245, 0.04);
+}
+
+.em-file-zone input[type="file"] {
+  border: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.em-file-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 4px;
+}
+
+/* Inline options row */
+.em-options-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.em-option-group {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.em-option-group .em-section-label {
+  margin-bottom: 6px;
+}
+
+/* Checkbox / radio items */
+.em-check-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 2px 0;
+}
+
+.em-check-item input[type="radio"],
+.em-check-item input[type="checkbox"] {
+  accent-color: #5a9cf5;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.em-check-item label {
+  cursor: pointer;
+}
+
+/* Partners grid */
+.em-partners-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+/* Divider */
+.em-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 4px 0 12px 0;
+}
+
+/* Submit button */
+.em-submit {
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px 20px;
+  background: linear-gradient(135deg, rgba(90, 156, 245, 0.2), rgba(90, 156, 245, 0.08));
+  border: 1px solid rgba(90, 156, 245, 0.3);
+  border-radius: 10px;
+  color: white;
+  font-family: "Electrolize", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.em-submit:hover {
+  background: linear-gradient(135deg, rgba(90, 156, 245, 0.35), rgba(90, 156, 245, 0.15));
+  border-color: rgba(90, 156, 245, 0.5);
+  box-shadow: 0 4px 20px rgba(90, 156, 245, 0.2);
+  transform: translateY(-1px);
+}
+
+.em-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.em-submit:disabled:hover {
+  box-shadow: none;
+  background: linear-gradient(135deg, rgba(90, 156, 245, 0.2), rgba(90, 156, 245, 0.08));
+  transform: none;
+}

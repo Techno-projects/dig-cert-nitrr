@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './css/DashboardAd.css';
+import toast from 'react-hot-toast';
 
 const Dashboard_Admin = () => {
     const [name, setName] = useState('');
@@ -11,7 +12,7 @@ const Dashboard_Admin = () => {
     const handleAddEvent = () => {
         for (const key in newEvent) {
             if (!newEvent[key] || newEvent[key] === '') {
-                alert(`Please fill out the ${key} fields.`);
+                toast.error(`Please fill out the ${key} field.`);
             }
         }
         setEvents([...events, newEvent]);

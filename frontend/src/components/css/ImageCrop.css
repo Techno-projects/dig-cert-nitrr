@@ -1,20 +1,17 @@
 .file-input {
   display: block;
   width: 100%;
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-right: 0.75rem;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  border-radius: 9999px;
-  border: none;
-  background-color: #4a5568;
-  font-size: 0.625rem;
+  font-size: 0.8rem;
   color: #a0aec0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .file-input:hover {
-  background-color: #2d3748;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }

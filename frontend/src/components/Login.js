@@ -6,11 +6,11 @@ import { LoginContext } from "../App";
 import urls from "../urls.json";
 import { Blob } from "./Blob";
 import toast from "react-hot-toast";
+import { Spinner, ButtonSpinner } from "./Spinner";
+
 const server = urls.SERVER_URL;
 
 const Login = () => {
-  // let { name } = useContext(AuthContext);
-
   const { setUserLoggedIn } = useContext(LoginContext);
 
   const searchParams = new URLSearchParams(window.location.search);
@@ -20,6 +20,7 @@ const Login = () => {
   });
   const [userType, setUserType] = useState(0);
   const [error, setError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     const type = searchParams.get("type");
@@ -37,6 +38,8 @@ const Login = () => {
     console.log(e.target);
     e.preventDefault();
 
+    setLoginLoading(true);
+
     try {
       let response = await fetch(`${server}/api/user_login `, {
         method: "POST",
@@ -50,6 +53,7 @@ const Login = () => {
       if (response.ok) {
         setUserLoggedIn(true);
         localStorage.setItem("login", response.token);
+        toast.success("Logged in successfully!");
         window.location.href = "/event_management";
       } else {
         toast.error(
@@ -57,8 +61,11 @@ const Login = () => {
             "Authentication failed. Please check your username and password."
         );
       }
-    } catch {
-      console.error("Error:", error);
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -69,11 +76,6 @@ const Login = () => {
       ) : (
         <div>
           <Blob />
-          {/* <div>
-            <a href='?type=faculty'>
-              <input type='button' value="Faculty" />
-            </a>
-          </div> */}
           <div className="form-container" id="default">
             <div className="form-internal">
               <h1 className="title">Login</h1>
@@ -99,12 +101,11 @@ const Login = () => {
                   onChange={handleInputChange}
                   required
                 />
-                <button className="submit-btn" type="submit">
-                  Submit
+                <button className="submit-btn" type="submit" disabled={loginLoading}>
+                  {loginLoading ? <ButtonSpinner text="Logging in..." /> : "Submit"}
                 </button>
               </form>
             </div>
-            {error && <p style={{ color: "red" }}>{error}</p>}
           </div>
         </div>
       )}

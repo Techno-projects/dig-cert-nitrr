@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "./css/Form.css";
 import urls from "../urls.json";
+import toast from "react-hot-toast";
+import { ButtonSpinner } from "./Spinner";
 
 const server = urls.SERVER_URL;
 
@@ -8,29 +10,40 @@ const FacultyRegistration = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    // organisation_code: '',
-    // name: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
-    // console.log(e.target)
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
 
-    const response = await fetch(`${server}/api/faculty_register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    const data = await response.json();
-    alert(data.message);
+    try {
+      const response = await fetch(`${server}/api/faculty_register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        toast.success(data.message || "Faculty registered successfully!");
+      } else {
+        toast.error(data.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
   return (
     <div className="form-container">
         <div className="form-internal">
@@ -47,26 +60,6 @@ const FacultyRegistration = () => {
           required
         />
 
-        {/* <input
-          placeholder="Name:"
-          className="input_text"
-          type="text"
-          id="Name"
-          name="name"
-          onChange={handleInputChange}
-          required
-        />
-
-        <input
-          placeholder="Organisation Code:"
-          className="input_text"
-          type="text"
-          id="Name"
-          name="organisation_code"
-          onChange={handleInputChange}
-          required
-        /> */}
-
         <input
           placeholder="Password:"
           className="input_text"
@@ -78,7 +71,9 @@ const FacultyRegistration = () => {
           required
         />
 
-        <button type="submit" className="submit-btn">Submit</button>
+        <button type="submit" className="submit-btn" disabled={submitting}>
+          {submitting ? <ButtonSpinner text="Registering..." /> : "Submit"}
+        </button>
       </form>
       </div>
     </div>
